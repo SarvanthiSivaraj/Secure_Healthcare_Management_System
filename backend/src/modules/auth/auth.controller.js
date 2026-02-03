@@ -20,10 +20,10 @@ const config = require('../../config/env');
  */
 const registerPatient = async (req, res) => {
     try {
-        const { email, phone, password, govtId, dateOfBirth } = req.body;
+        const { email, phone, password, govtId, dateOfBirth, firstName, lastName } = req.body;
 
         // Validate required fields
-        const validation = validateRequiredFields(req.body, ['password', 'govtId']);
+        const validation = validateRequiredFields(req.body, ['password']);
         if (!validation.isValid) {
             return res.status(HTTP_STATUS.BAD_REQUEST).json({
                 success: false,
@@ -83,8 +83,8 @@ const registerPatient = async (req, res) => {
         const result = await transaction(async (client) => {
             // Create user
             const userQuery = `
-        INSERT INTO users (email, phone, password_hash, role_id, status)
-        VALUES ($1, $2, crypt($3, gen_salt('bf', 12)), $4, 'pending')
+        INSERT INTO users (email, phone, password_hash, role_id, first_name, last_name, status)
+        VALUES ($1, $2, crypt($3, gen_salt('bf', 12)), $4, $5, $6, 'pending')
         RETURNING id, email, phone, role_id, status, created_at
       `;
 
@@ -93,6 +93,8 @@ const registerPatient = async (req, res) => {
                 phone || null,
                 password,
                 patientRole.id,
+                firstName || null,
+                lastName || null,
             ]);
 
             const user = userResult.rows[0];
@@ -100,8 +102,8 @@ const registerPatient = async (req, res) => {
             // Create patient profile
             const profile = await createPatientProfile({
                 userId: user.id,
-                govtId,
-                dateOfBirth,
+                govtId: govtId || null,
+                dateOfBirth: dateOfBirth || null,
             }, client);
 
             return { user, profile };

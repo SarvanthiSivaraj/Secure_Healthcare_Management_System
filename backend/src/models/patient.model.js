@@ -48,17 +48,20 @@ const createPatientProfile = async (profileData, client = null) => {
             throw new Error('Failed to generate unique health ID');
         }
 
-        // Hash government ID for privacy
-        const govtIdHash = hashGovtIdService(govtId);
+        // Hash government ID for privacy (if provided)
+        let govtIdHash = null;
+        if (govtId) {
+            govtIdHash = hashGovtIdService(govtId);
 
-        // Check for duplicate government ID
-        const duplicateCheck = await dbQuery(
-            'SELECT id FROM patient_profiles WHERE govt_id_hash = $1',
-            [govtIdHash]
-        );
+            // Check for duplicate government ID
+            const duplicateCheck = await dbQuery(
+                'SELECT id FROM patient_profiles WHERE govt_id_hash = $1',
+                [govtIdHash]
+            );
 
-        if (duplicateCheck.rows.length > 0) {
-            throw new Error('Patient with this government ID already exists');
+            if (duplicateCheck.rows.length > 0) {
+                throw new Error('Patient with this government ID already exists');
+            }
         }
 
         const insertQuery = `

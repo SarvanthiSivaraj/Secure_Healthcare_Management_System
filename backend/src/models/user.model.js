@@ -10,14 +10,14 @@ const { USER_STATUS } = require('../utils/constants');
  */
 const createUser = async (userData) => {
     try {
-        const { email, phone, password, roleId } = userData;
+        const { email, phone, password, roleId, firstName, lastName } = userData;
 
         const passwordHash = await hashPassword(password);
 
         const insertQuery = `
-      INSERT INTO users (email, phone, password_hash, role_id, status)
-      VALUES ($1, $2, $3, $4, $5)
-      RETURNING id, email, phone, role_id, is_verified, status, created_at
+      INSERT INTO users (email, phone, password_hash, role_id, first_name, last_name, status)
+      VALUES ($1, $2, $3, $4, $5, $6, $7)
+      RETURNING id, email, phone, first_name, last_name, role_id, is_verified, status, created_at
     `;
 
         const result = await query(insertQuery, [
@@ -25,6 +25,8 @@ const createUser = async (userData) => {
             phone || null,
             passwordHash,
             roleId,
+            firstName || null,
+            lastName || null,
             USER_STATUS.PENDING,
         ]);
 

@@ -111,6 +111,8 @@ const registerDoctor = async (req, res) => {
             phone: phone || null,
             password,
             roleId: doctorRole.id,
+            firstName,
+            lastName,
         });
 
         // Generate and send OTP
