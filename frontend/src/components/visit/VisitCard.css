@@ -1,0 +1,153 @@
+/* ========================================
+   VISIT CARD - Professional Blue Theme
+   ======================================== */
+
+.visit-card {
+    background: linear-gradient(135deg, #FFFFFF 0%, #F0F9FF 100%);
+    border-radius: 12px;
+    padding: 24px;
+    border: 2px solid #BFDBFE;
+    margin-bottom: 16px;
+    transition: all 0.3s ease;
+}
+
+.visit-card:hover {
+    border-color: #0066CC;
+    box-shadow: 0 4px 12px rgba(0, 102, 204, 0.15);
+    transform: translateY(-2px);
+}
+
+/* ========================================
+   CARD HEADER
+   ======================================== */
+.visit-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 20px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid #E5E7EB;
+}
+
+.visit-info h3 {
+    margin: 0 0 6px 0;
+    font-size: 18px;
+    font-weight: 600;
+    color: #0066CC;
+}
+
+.visit-specialization {
+    margin: 0;
+    font-size: 13px;
+    color: #6B7280;
+}
+
+/* ========================================
+   STATUS BADGES
+   ======================================== */
+.visit-status-badge {
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.status-scheduled {
+    background: linear-gradient(135deg, #DBEAFE 0%, #BFDBFE 100%);
+    color: #1E40AF;
+    border: 1px solid #3399FF;
+}
+
+.status-checked-in {
+    background: linear-gradient(135deg, #FEF3C7 0%, #FDE68A 100%);
+    color: #92400E;
+    border: 1px solid #FFA726;
+}
+
+.status-active {
+    background: linear-gradient(135deg, #D1FAE5 0%, #A7F3D0 100%);
+    color: #065F46;
+    border: 1px solid #00C48C;
+}
+
+.status-completed {
+    background: linear-gradient(135deg, #F3F4F6 0%, #E5E7EB 100%);
+    color: #4B5563;
+    border: 1px solid #94A3B8;
+}
+
+/* ========================================
+   VISIT DETAILS
+   ======================================== */
+.visit-details {
+    margin-bottom: 20px;
+}
+
+.visit-detail-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 0;
+    border-bottom: 1px solid #F3F4F6;
+}
+
+.visit-detail-row:last-child {
+    border-bottom: none;
+}
+
+.detail-label {
+    font-size: 13px;
+    color: #6B7280;
+    font-weight: 500;
+}
+
+.detail-value {
+    font-size: 14px;
+    color: #1F2937;
+    font-weight: 600;
+}
+
+.visit-code {
+    font-family: 'Courier New', monospace;
+    font-size: 18px;
+    color: #0066CC;
+    letter-spacing: 2px;
+}
+
+/* ========================================
+   CARD ACTIONS
+   ======================================== */
+.visit-card-actions {
+    display: flex;
+    gap: 12px;
+    padding-top: 16px;
+    border-top: 1px solid #E5E7EB;
+}
+
+.visit-card-actions button {
+    flex: 1;
+}
+
+/* ========================================
+   RESPONSIVE
+   ======================================== */
+@media (max-width: 768px) {
+    .visit-card {
+        padding: 20px;
+    }
+
+    .visit-card-header {
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .visit-card-actions {
+        flex-direction: column;
+    }
+
+    .visit-card-actions button {
+        width: 100%;
+    }
+}

@@ -9,6 +9,9 @@ import AdminDashboard from '../pages/admin/Dashboard';
 import StaffDashboard from '../pages/staff/Dashboard';
 import ProtectedRoute from './ProtectedRoute';
 import Consent from '../pages/patient/Consent';
+import Visits from '../pages/patient/Visits';
+import VisitQueue from '../pages/staff/VisitQueue';
+import ActiveVisits from '../pages/doctor/ActiveVisits';
 function AppRoutes() {
     return (
         <BrowserRouter>
@@ -41,6 +44,33 @@ function AppRoutes() {
                     element={
                         <ProtectedRoute allowedRoles={['PATIENT']}>
                             <Consent />
+                        </ProtectedRoute>
+                    }
+                />
+
+                <Route
+                    path="/patient/visits"
+                    element={
+                        <ProtectedRoute allowedRoles={['PATIENT']}>
+                            <Visits />
+                        </ProtectedRoute>
+                    }
+                />
+
+                <Route
+                    path="/staff/visit-queue"
+                    element={
+                        <ProtectedRoute allowedRoles={['STAFF']}>
+                            <VisitQueue />
+                        </ProtectedRoute>
+                    }
+                />
+
+                <Route
+                    path="/doctor/active-visits"
+                    element={
+                        <ProtectedRoute allowedRoles={['DOCTOR']}>
+                            <ActiveVisits />
                         </ProtectedRoute>
                     }
                 />

@@ -78,7 +78,7 @@ function PatientDashboard() {
                             </p>
                         </div>
 
-                        <div className="nav-card">
+                        <div className="nav-card" onClick={() => navigate('/patient/visits')}>
                             <div className="nav-card-header">
                                 <h3>Visit Management</h3>
                                 <span className="nav-arrow">→</span>

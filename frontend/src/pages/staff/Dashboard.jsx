@@ -1,9 +1,11 @@
 import React, { useContext } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { AuthContext } from '../../context/AuthContext';
 import Button from '../../components/common/Button';
 import '../patient/Dashboard.css';
 
 function StaffDashboard() {
+    const navigate = useNavigate();
     const { user, logout } = useContext(AuthContext);
 
     return (
@@ -66,7 +68,7 @@ function StaffDashboard() {
                             </p>
                         </div>
 
-                        <div className="nav-card">
+                        <div className="nav-card" onClick={() => navigate('/staff/visit-queue')}>
                             <div className="nav-card-header">
                                 <h3>Visit Management</h3>
                                 <span className="nav-arrow">→</span>

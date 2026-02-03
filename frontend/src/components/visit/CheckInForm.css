@@ -1,0 +1,152 @@
+/* ========================================
+   CHECK-IN FORM - Professional Blue Theme
+   ======================================== */
+
+.checkin-form-container {
+    background: linear-gradient(135deg, #FFFFFF 0%, #F0F9FF 100%);
+    border-radius: 16px;
+    padding: 40px;
+    border: 2px solid #BFDBFE;
+    box-shadow: 0 4px 12px rgba(0, 102, 204, 0.1);
+    max-width: 500px;
+    margin: 0 auto;
+}
+
+/* ========================================
+   HEADER
+   ======================================== */
+.checkin-header {
+    text-align: center;
+    margin-bottom: 32px;
+}
+
+.checkin-header h3 {
+    margin: 0 0 8px 0;
+    font-size: 24px;
+    font-weight: 700;
+    color: #0066CC;
+}
+
+.checkin-subtitle {
+    margin: 0;
+    font-size: 14px;
+    color: #6B7280;
+}
+
+/* ========================================
+   FORM
+   ======================================== */
+.checkin-form {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+}
+
+/* ========================================
+   VISIT CODE INPUT
+   ======================================== */
+.visit-code-input-group {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.visit-code-label {
+    font-size: 14px;
+    font-weight: 600;
+    color: #0066CC;
+    text-align: center;
+}
+
+.visit-code-input {
+    width: 100%;
+    padding: 20px;
+    border: 3px solid #BFDBFE;
+    border-radius: 12px;
+    font-size: 32px;
+    font-weight: 700;
+    font-family: 'Courier New', monospace;
+    text-align: center;
+    letter-spacing: 8px;
+    color: #0066CC;
+    background: #FFFFFF;
+    transition: all 0.3s ease;
+}
+
+.visit-code-input:focus {
+    outline: none;
+    border-color: #0066CC;
+    box-shadow: 0 0 0 4px rgba(0, 102, 204, 0.1);
+}
+
+.visit-code-input::placeholder {
+    color: #CBD5E1;
+    letter-spacing: 8px;
+}
+
+.code-hint {
+    text-align: center;
+    font-size: 13px;
+    color: #6B7280;
+    font-weight: 500;
+}
+
+/* ========================================
+   ERROR MESSAGE
+   ======================================== */
+.checkin-error {
+    padding: 14px 18px;
+    background: linear-gradient(135deg, #FEE2E2 0%, #FECACA 100%);
+    color: #991B1B;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 500;
+    text-align: center;
+    border-left: 4px solid #EF5350;
+}
+
+/* ========================================
+   HELP TEXT
+   ======================================== */
+.checkin-help {
+    text-align: center;
+    padding-top: 20px;
+    border-top: 1px solid #E5E7EB;
+}
+
+.checkin-help p {
+    margin: 0 0 8px 0;
+    font-size: 14px;
+    color: #1F2937;
+    font-weight: 600;
+}
+
+.help-text {
+    font-size: 13px;
+    color: #6B7280;
+    font-weight: 400;
+    line-height: 1.6;
+}
+
+/* ========================================
+   RESPONSIVE
+   ======================================== */
+@media (max-width: 768px) {
+    .checkin-form-container {
+        padding: 32px 24px;
+    }
+
+    .checkin-header h3 {
+        font-size: 20px;
+    }
+
+    .visit-code-input {
+        font-size: 28px;
+        padding: 16px;
+        letter-spacing: 6px;
+    }
+
+    .visit-code-input::placeholder {
+        letter-spacing: 6px;
+    }
+}
