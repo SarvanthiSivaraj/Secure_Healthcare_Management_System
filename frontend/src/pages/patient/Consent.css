@@ -1,0 +1,79 @@
+.consent-page {
+    min-height: 100vh;
+    background-color: var(--bg-secondary);
+}
+
+.page-header {
+    background-color: var(--bg-primary);
+    padding: 24px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: var(--shadow);
+    margin-bottom: 24px;
+}
+
+.page-header h1 {
+    margin: 0 0 4px 0;
+    font-size: 28px;
+    color: var(--text-primary);
+}
+
+.page-subtitle {
+    margin: 0;
+    color: var(--text-secondary);
+    font-size: 14px;
+}
+
+.consent-content {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 0 20px 40px;
+}
+
+.consent-actions-bar {
+    margin-bottom: 24px;
+}
+
+.consents-section {
+    margin-top: 32px;
+}
+
+.consents-section h2 {
+    margin-bottom: 16px;
+    color: var(--text-primary);
+}
+
+.empty-state {
+    background: var(--bg-primary);
+    border-radius: 8px;
+    padding: 40px;
+    text-align: center;
+    color: var(--text-secondary);
+}
+
+.empty-state p {
+    margin: 8px 0;
+}
+
+.consent-info-box {
+    margin-top: 32px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border-radius: 12px;
+    padding: 24px;
+}
+
+.consent-info-box h3 {
+    margin: 0 0 16px 0;
+}
+
+.consent-info-box ul {
+    margin: 0;
+    padding-left: 20px;
+}
+
+.consent-info-box li {
+    margin: 8px 0;
+    line-height: 1.6;
+}

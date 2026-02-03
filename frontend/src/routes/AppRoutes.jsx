@@ -8,6 +8,7 @@ import DoctorDashboard from '../pages/doctor/Dashboard';
 import AdminDashboard from '../pages/admin/Dashboard';
 import StaffDashboard from '../pages/staff/Dashboard';
 import ProtectedRoute from './ProtectedRoute';
+import Consent from '../pages/patient/Consent';
 function AppRoutes() {
     return (
         <BrowserRouter>
@@ -32,6 +33,14 @@ function AppRoutes() {
                     element={
                         <ProtectedRoute allowedRoles={['DOCTOR']}>
                             <DoctorDashboard />
+                        </ProtectedRoute>
+                    }
+                />
+                <Route
+                    path="/patient/consent"
+                    element={
+                        <ProtectedRoute allowedRoles={['PATIENT']}>
+                            <Consent />
                         </ProtectedRoute>
                     }
                 />
