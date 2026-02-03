@@ -1,14 +1,14 @@
-import { AuthProvider } from "./context/AuthContext";
-import PublicRoutes from "./routes/PublicRoutes";
-import ProtectedRoutes from "./routes/ProtectedRoutes";
+import React from 'react';
+import { AuthProvider } from './context/AuthContext';
+import AppRoutes from './routes/AppRoutes';
+import './styles/global.css';
 
 function App() {
-  return (
-    <AuthProvider>
-      <PublicRoutes />
-      <ProtectedRoutes />
-    </AuthProvider>
-  );
+    return (
+        <AuthProvider>
+            <AppRoutes />
+        </AuthProvider>
+    );
 }
 
 export default App;
