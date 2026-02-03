@@ -1,4 +1,3 @@
-// Doctor Dashboard - Similar to Patient Dashboard but for doctors
 import React, { useContext } from 'react';
 import { AuthContext } from '../../context/AuthContext';
 import Button from '../../components/common/Button';
@@ -10,35 +9,92 @@ function DoctorDashboard() {
     return (
         <div className="dashboard-container">
             <header className="dashboard-header">
-                <h1>Doctor Dashboard</h1>
-                <Button onClick={logout} variant="secondary">Logout</Button>
+                <div className="header-content">
+                    <div className="header-left">
+                        <h1>Doctor Portal</h1>
+                        <p className="header-subtitle">Patient Care & Medical Records Management</p>
+                    </div>
+                    <Button onClick={logout} variant="secondary">Sign Out</Button>
+                </div>
             </header>
 
             <div className="dashboard-content">
-                <div className="welcome-card">
-                    <h2>Welcome, Dr. {user?.firstName || 'Doctor'}!</h2>
-                    <p>Professional ID: {user?.professionalId || 'DOC-XXXXXXXX'}</p>
+                {/* User Info Bar */}
+                <div className="user-info-bar">
+                    <div className="user-details">
+                        <div className="user-name">Dr. {user?.firstName || 'Sarah'} {user?.lastName || 'Johnson'}</div>
+                        <div className="user-id">License: {user?.licenseNumber || 'MD-2024-789456'}</div>
+                    </div>
+                    <div className="account-status">
+                        <span className="status-indicator"></span>
+                        <span className="status-text">Active Physician</span>
+                    </div>
                 </div>
 
-                <div className="dashboard-grid">
-                    <div className="dashboard-card">
-                        <h3>Active Visits</h3>
-                        <p>Manage patient visits</p>
+                {/* Stats Overview */}
+                <div className="stats-overview">
+                    <div className="stat-item">
+                        <div className="stat-number">0</div>
+                        <div className="stat-label">Today's Patients</div>
                     </div>
-
-                    <div className="dashboard-card">
-                        <h3>Consultations</h3>
-                        <p>Create and view consultations</p>
+                    <div className="stat-item">
+                        <div className="stat-number">0</div>
+                        <div className="stat-label">Pending Consents</div>
                     </div>
-
-                    <div className="dashboard-card">
-                        <h3>Emergency Access</h3>
-                        <p>Break-glass access mode</p>
+                    <div className="stat-item">
+                        <div className="stat-number">0</div>
+                        <div className="stat-label">Active Cases</div>
                     </div>
+                    <div className="stat-item">
+                        <div className="stat-number">0</div>
+                        <div className="stat-label">Consultations</div>
+                    </div>
+                </div>
 
-                    <div className="dashboard-card">
-                        <h3>My Schedule</h3>
-                        <p>View appointments</p>
+                {/* Main Navigation */}
+                <div className="nav-section">
+                    <h2 className="section-title">Clinical Services</h2>
+
+                    <div className="nav-grid">
+                        <div className="nav-card">
+                            <div className="nav-card-header">
+                                <h3>Patient Records</h3>
+                                <span className="nav-arrow">→</span>
+                            </div>
+                            <p className="nav-card-description">
+                                Access and manage patient medical records with consent verification
+                            </p>
+                        </div>
+
+                        <div className="nav-card">
+                            <div className="nav-card-header">
+                                <h3>Consultation Queue</h3>
+                                <span className="nav-arrow">→</span>
+                            </div>
+                            <p className="nav-card-description">
+                                View scheduled appointments and manage consultation workflow
+                            </p>
+                        </div>
+
+                        <div className="nav-card">
+                            <div className="nav-card-header">
+                                <h3>Consent Requests</h3>
+                                <span className="nav-arrow">→</span>
+                            </div>
+                            <p className="nav-card-description">
+                                Review and manage patient data access consent requests
+                            </p>
+                        </div>
+
+                        <div className="nav-card">
+                            <div className="nav-card-header">
+                                <h3>Clinical Notes</h3>
+                                <span className="nav-arrow">→</span>
+                            </div>
+                            <p className="nav-card-description">
+                                Create and update patient consultation notes and prescriptions
+                            </p>
+                        </div>
                     </div>
                 </div>
             </div>

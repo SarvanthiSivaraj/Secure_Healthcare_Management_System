@@ -1,4 +1,3 @@
-// Staff Dashboard (Nurse, Lab Tech, Radiologist, Pharmacist)
 import React, { useContext } from 'react';
 import { AuthContext } from '../../context/AuthContext';
 import Button from '../../components/common/Button';
@@ -10,35 +9,92 @@ function StaffDashboard() {
     return (
         <div className="dashboard-container">
             <header className="dashboard-header">
-                <h1>Staff Dashboard</h1>
-                <Button onClick={logout} variant="secondary">Logout</Button>
+                <div className="header-content">
+                    <div className="header-left">
+                        <h1>Staff Portal</h1>
+                        <p className="header-subtitle">Patient Registration & Visit Management</p>
+                    </div>
+                    <Button onClick={logout} variant="secondary">Sign Out</Button>
+                </div>
             </header>
 
             <div className="dashboard-content">
-                <div className="welcome-card">
-                    <h2>Welcome, {user?.firstName || 'Staff'}!</h2>
-                    <p>Role: {user?.staffRole || 'Staff Member'}</p>
+                {/* User Info Bar */}
+                <div className="user-info-bar">
+                    <div className="user-details">
+                        <div className="user-name">{user?.firstName || 'Staff'} {user?.lastName || 'Member'}</div>
+                        <div className="user-id">ID: {user?.staffId || 'STAFF-2024-001'}</div>
+                    </div>
+                    <div className="account-status">
+                        <span className="status-indicator"></span>
+                        <span className="status-text">On Duty</span>
+                    </div>
                 </div>
 
-                <div className="dashboard-grid">
-                    <div className="dashboard-card">
-                        <h3>Assigned Tasks</h3>
-                        <p>View your assigned work</p>
+                {/* Stats Overview */}
+                <div className="stats-overview">
+                    <div className="stat-item">
+                        <div className="stat-number">0</div>
+                        <div className="stat-label">Today's Check-ins</div>
                     </div>
-
-                    <div className="dashboard-card">
-                        <h3>Active Visits</h3>
-                        <p>Visits you're assigned to</p>
+                    <div className="stat-item">
+                        <div className="stat-number">0</div>
+                        <div className="stat-label">Pending Visits</div>
                     </div>
-
-                    <div className="dashboard-card">
-                        <h3>My Shift</h3>
-                        <p>Current shift information</p>
+                    <div className="stat-item">
+                        <div className="stat-number">0</div>
+                        <div className="stat-label">New Registrations</div>
                     </div>
+                    <div className="stat-item">
+                        <div className="stat-number">0</div>
+                        <div className="stat-label">Completed Today</div>
+                    </div>
+                </div>
 
-                    <div className="dashboard-card">
-                        <h3>Notifications</h3>
-                        <p>Task updates and alerts</p>
+                {/* Main Navigation */}
+                <div className="nav-section">
+                    <h2 className="section-title">Operations</h2>
+
+                    <div className="nav-grid">
+                        <div className="nav-card">
+                            <div className="nav-card-header">
+                                <h3>Patient Check-in</h3>
+                                <span className="nav-arrow">→</span>
+                            </div>
+                            <p className="nav-card-description">
+                                Process patient arrivals and verify appointment information
+                            </p>
+                        </div>
+
+                        <div className="nav-card">
+                            <div className="nav-card-header">
+                                <h3>Visit Management</h3>
+                                <span className="nav-arrow">→</span>
+                            </div>
+                            <p className="nav-card-description">
+                                Track and manage patient visits and consultation queue
+                            </p>
+                        </div>
+
+                        <div className="nav-card">
+                            <div className="nav-card-header">
+                                <h3>Patient Registration</h3>
+                                <span className="nav-arrow">→</span>
+                            </div>
+                            <p className="nav-card-description">
+                                Register new patients and update demographic information
+                            </p>
+                        </div>
+
+                        <div className="nav-card">
+                            <div className="nav-card-header">
+                                <h3>Appointment Scheduling</h3>
+                                <span className="nav-arrow">→</span>
+                            </div>
+                            <p className="nav-card-description">
+                                Schedule and manage patient appointments with doctors
+                            </p>
+                        </div>
                     </div>
                 </div>
             </div>
