@@ -1,12 +1,14 @@
-import React, { useContext } from 'react';
+import React, { useContext, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AuthContext } from '../../context/AuthContext';
 import Button from '../../components/common/Button';
+import EmergencyToggle from '../../components/emergency/EmergencyToggle';
 import '../patient/Dashboard.css';
 
 function DoctorDashboard() {
     const navigate = useNavigate();
     const { user, logout } = useContext(AuthContext);
+    const [emergencyMode, setEmergencyMode] = useState(false);
 
     return (
         <div className="dashboard-container">
@@ -53,12 +55,21 @@ function DoctorDashboard() {
                     </div>
                 </div>
 
+                {/* Emergency Access */}
+                <div className="nav-section">
+                    <h2 className="section-title">Emergency Access</h2>
+                    <EmergencyToggle
+                        isActive={emergencyMode}
+                        onToggle={setEmergencyMode}
+                    />
+                </div>
+
                 {/* Main Navigation */}
                 <div className="nav-section">
                     <h2 className="section-title">Clinical Services</h2>
 
                     <div className="nav-grid">
-                        <div className="nav-card">
+                        <div className="nav-card" onClick={() => navigate('/doctor/patients')}>
                             <div className="nav-card-header">
                                 <h3>Patient Records</h3>
                                 <span className="nav-arrow">→</span>
@@ -78,7 +89,7 @@ function DoctorDashboard() {
                             </p>
                         </div>
 
-                        <div className="nav-card">
+                        <div className="nav-card" onClick={() => navigate('/doctor/consent')}>
                             <div className="nav-card-header">
                                 <h3>Consent Requests</h3>
                                 <span className="nav-arrow">→</span>
@@ -88,7 +99,7 @@ function DoctorDashboard() {
                             </p>
                         </div>
 
-                        <div className="nav-card">
+                        <div className="nav-card" onClick={() => navigate('/doctor/notes')}>
                             <div className="nav-card-header">
                                 <h3>Clinical Notes</h3>
                                 <span className="nav-arrow">→</span>

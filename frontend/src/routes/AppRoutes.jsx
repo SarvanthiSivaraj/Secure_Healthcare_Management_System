@@ -10,8 +10,16 @@ import StaffDashboard from '../pages/staff/Dashboard';
 import ProtectedRoute from './ProtectedRoute';
 import Consent from '../pages/patient/Consent';
 import Visits from '../pages/patient/Visits';
+import MedicalRecords from '../pages/patient/MedicalRecords';
 import VisitQueue from '../pages/staff/VisitQueue';
 import ActiveVisits from '../pages/doctor/ActiveVisits';
+import PatientRecords from '../pages/doctor/PatientRecords';
+import ConsentRequests from '../pages/doctor/ConsentRequests';
+import ClinicalNotes from '../pages/doctor/ClinicalNotes';
+import NurseDashboard from '../pages/nurse/Dashboard';
+import LabDashboard from '../pages/lab/Dashboard';
+import RadiologistDashboard from '../pages/radiology/Dashboard';
+
 function AppRoutes() {
     return (
         <BrowserRouter>
@@ -67,10 +75,73 @@ function AppRoutes() {
                 />
 
                 <Route
+                    path="/doctor/patients"
+                    element={
+                        <ProtectedRoute allowedRoles={['DOCTOR']}>
+                            <PatientRecords />
+                        </ProtectedRoute>
+                    }
+                />
+
+                <Route
+                    path="/doctor/consent"
+                    element={
+                        <ProtectedRoute allowedRoles={['DOCTOR']}>
+                            <ConsentRequests />
+                        </ProtectedRoute>
+                    }
+                />
+
+                <Route
+                    path="/doctor/notes"
+                    element={
+                        <ProtectedRoute allowedRoles={['DOCTOR']}>
+                            <ClinicalNotes />
+                        </ProtectedRoute>
+                    }
+                />
+
+                <Route
                     path="/doctor/active-visits"
                     element={
                         <ProtectedRoute allowedRoles={['DOCTOR']}>
                             <ActiveVisits />
+                        </ProtectedRoute>
+                    }
+                />
+
+                <Route
+                    path="/patient/medical-records"
+                    element={
+                        <ProtectedRoute allowedRoles={['PATIENT']}>
+                            <MedicalRecords />
+                        </ProtectedRoute>
+                    }
+                />
+
+                <Route
+                    path="/nurse/dashboard"
+                    element={
+                        <ProtectedRoute allowedRoles={['NURSE']}>
+                            <NurseDashboard />
+                        </ProtectedRoute>
+                    }
+                />
+
+                <Route
+                    path="/lab/dashboard"
+                    element={
+                        <ProtectedRoute allowedRoles={['LAB_TECH']}>
+                            <LabDashboard />
+                        </ProtectedRoute>
+                    }
+                />
+
+                <Route
+                    path="/radiology/dashboard"
+                    element={
+                        <ProtectedRoute allowedRoles={['RADIOLOGIST']}>
+                            <RadiologistDashboard />
                         </ProtectedRoute>
                     }
                 />

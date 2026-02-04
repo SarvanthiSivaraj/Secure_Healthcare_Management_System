@@ -1,20 +1,21 @@
-import React, { useContext } from 'react';
+import React, { useContext, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AuthContext } from '../../context/AuthContext';
 import Button from '../../components/common/Button';
 import '../patient/Dashboard.css';
 
-function StaffDashboard() {
+function NurseDashboard() {
     const navigate = useNavigate();
     const { user, logout } = useContext(AuthContext);
+    const [shiftStatus] = useState('ON_DUTY'); // ON_DUTY, OFF_DUTY
 
     return (
         <div className="dashboard-container">
             <header className="dashboard-header">
                 <div className="header-content">
                     <div className="header-left">
-                        <h1>Staff Portal</h1>
-                        <p className="header-subtitle">Patient Registration & Visit Management</p>
+                        <h1>Nurse Portal</h1>
+                        <p className="header-subtitle">Patient Care & Vitals Management</p>
                     </div>
                     <Button onClick={logout} variant="secondary">Sign Out</Button>
                 </div>
@@ -24,12 +25,12 @@ function StaffDashboard() {
                 {/* User Info Bar */}
                 <div className="user-info-bar">
                     <div className="user-details">
-                        <div className="user-name">{user?.firstName || 'Staff'} {user?.lastName || 'Member'}</div>
-                        <div className="user-id">ID: {user?.staffId || 'STAFF-2024-001'}</div>
+                        <div className="user-name">{user?.firstName || 'Nurse'} {user?.lastName || 'Smith'}</div>
+                        <div className="user-id">ID: {user?.staffId || 'NURSE-2024-001'}</div>
                     </div>
                     <div className="account-status">
-                        <span className="status-indicator"></span>
-                        <span className="status-text">On Duty</span>
+                        <span className={`status-indicator ${shiftStatus === 'ON_DUTY' ? 'active' : ''}`}></span>
+                        <span className="status-text">{shiftStatus === 'ON_DUTY' ? 'On Duty' : 'Off Duty'}</span>
                     </div>
                 </div>
 
@@ -37,64 +38,64 @@ function StaffDashboard() {
                 <div className="stats-overview">
                     <div className="stat-item">
                         <div className="stat-number">0</div>
-                        <div className="stat-label">Today's Check-ins</div>
+                        <div className="stat-label">Assigned Patients</div>
                     </div>
                     <div className="stat-item">
                         <div className="stat-number">0</div>
-                        <div className="stat-label">Pending Visits</div>
+                        <div className="stat-label">Vitals Recorded</div>
                     </div>
                     <div className="stat-item">
                         <div className="stat-number">0</div>
-                        <div className="stat-label">New Registrations</div>
+                        <div className="stat-label">Care Tasks</div>
                     </div>
                     <div className="stat-item">
                         <div className="stat-number">0</div>
-                        <div className="stat-label">Completed Today</div>
+                        <div className="stat-label">Observations</div>
                     </div>
                 </div>
 
                 {/* Main Navigation */}
                 <div className="nav-section">
-                    <h2 className="section-title">Operations</h2>
+                    <h2 className="section-title">Care Services</h2>
 
                     <div className="nav-grid">
-                        <div className="nav-card" onClick={() => navigate('/staff/checkin')}>
+                        <div className="nav-card" onClick={() => navigate('/nurse/vitals')}>
                             <div className="nav-card-header">
-                                <h3>Patient Check-in</h3>
+                                <h3>📊 Record Vitals</h3>
                                 <span className="nav-arrow">→</span>
                             </div>
                             <p className="nav-card-description">
-                                Process patient arrivals and verify appointment information
+                                Record patient vital signs and physical measurements
                             </p>
                         </div>
 
-                        <div className="nav-card" onClick={() => navigate('/staff/visit-queue')}>
+                        <div className="nav-card" onClick={() => navigate('/nurse/patients')}>
                             <div className="nav-card-header">
-                                <h3>Visit Management</h3>
+                                <h3>👥 Assigned Patients</h3>
                                 <span className="nav-arrow">→</span>
                             </div>
                             <p className="nav-card-description">
-                                Track and manage patient visits and consultation queue
+                                View and manage your assigned patient list
                             </p>
                         </div>
 
-                        <div className="nav-card" onClick={() => navigate('/staff/registration')}>
+                        <div className="nav-card" onClick={() => navigate('/nurse/observations')}>
                             <div className="nav-card-header">
-                                <h3>Patient Registration</h3>
+                                <h3>📝 Care Observations</h3>
                                 <span className="nav-arrow">→</span>
                             </div>
                             <p className="nav-card-description">
-                                Register new patients and update demographic information
+                                Document patient care observations and notes
                             </p>
                         </div>
 
-                        <div className="nav-card">
+                        <div className="nav-card" onClick={() => navigate('/nurse/medications')}>
                             <div className="nav-card-header">
-                                <h3>Appointment Scheduling</h3>
+                                <h3>💊 Medication Admin</h3>
                                 <span className="nav-arrow">→</span>
                             </div>
                             <p className="nav-card-description">
-                                Schedule and manage patient appointments with doctors
+                                Track and document medication administration
                             </p>
                         </div>
                     </div>
@@ -104,4 +105,4 @@ function StaffDashboard() {
     );
 }
 
-export default StaffDashboard;
+export default NurseDashboard;

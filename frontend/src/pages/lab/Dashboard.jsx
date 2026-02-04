@@ -4,7 +4,7 @@ import { AuthContext } from '../../context/AuthContext';
 import Button from '../../components/common/Button';
 import '../patient/Dashboard.css';
 
-function StaffDashboard() {
+function LabDashboard() {
     const navigate = useNavigate();
     const { user, logout } = useContext(AuthContext);
 
@@ -13,8 +13,8 @@ function StaffDashboard() {
             <header className="dashboard-header">
                 <div className="header-content">
                     <div className="header-left">
-                        <h1>Staff Portal</h1>
-                        <p className="header-subtitle">Patient Registration & Visit Management</p>
+                        <h1>Lab Technician Portal</h1>
+                        <p className="header-subtitle">Laboratory Testing & Results Management</p>
                     </div>
                     <Button onClick={logout} variant="secondary">Sign Out</Button>
                 </div>
@@ -24,12 +24,12 @@ function StaffDashboard() {
                 {/* User Info Bar */}
                 <div className="user-info-bar">
                     <div className="user-details">
-                        <div className="user-name">{user?.firstName || 'Staff'} {user?.lastName || 'Member'}</div>
-                        <div className="user-id">ID: {user?.staffId || 'STAFF-2024-001'}</div>
+                        <div className="user-name">{user?.firstName || 'Lab Tech'} {user?.lastName || 'Johnson'}</div>
+                        <div className="user-id">ID: {user?.staffId || 'LAB-2024-001'}</div>
                     </div>
                     <div className="account-status">
-                        <span className="status-indicator"></span>
-                        <span className="status-text">On Duty</span>
+                        <span className="status-indicator active"></span>
+                        <span className="status-text">Active</span>
                     </div>
                 </div>
 
@@ -37,64 +37,64 @@ function StaffDashboard() {
                 <div className="stats-overview">
                     <div className="stat-item">
                         <div className="stat-number">0</div>
-                        <div className="stat-label">Today's Check-ins</div>
+                        <div className="stat-label">Pending Tests</div>
                     </div>
                     <div className="stat-item">
                         <div className="stat-number">0</div>
-                        <div className="stat-label">Pending Visits</div>
-                    </div>
-                    <div className="stat-item">
-                        <div className="stat-number">0</div>
-                        <div className="stat-label">New Registrations</div>
+                        <div className="stat-label">In Progress</div>
                     </div>
                     <div className="stat-item">
                         <div className="stat-number">0</div>
                         <div className="stat-label">Completed Today</div>
                     </div>
+                    <div className="stat-item">
+                        <div className="stat-number">0</div>
+                        <div className="stat-label">Total Tests</div>
+                    </div>
                 </div>
 
                 {/* Main Navigation */}
                 <div className="nav-section">
-                    <h2 className="section-title">Operations</h2>
+                    <h2 className="section-title">Laboratory Services</h2>
 
                     <div className="nav-grid">
-                        <div className="nav-card" onClick={() => navigate('/staff/checkin')}>
+                        <div className="nav-card" onClick={() => navigate('/lab/queue')}>
                             <div className="nav-card-header">
-                                <h3>Patient Check-in</h3>
+                                <h3>🔬 Test Queue</h3>
                                 <span className="nav-arrow">→</span>
                             </div>
                             <p className="nav-card-description">
-                                Process patient arrivals and verify appointment information
+                                View and manage assigned laboratory test requests
                             </p>
                         </div>
 
-                        <div className="nav-card" onClick={() => navigate('/staff/visit-queue')}>
+                        <div className="nav-card" onClick={() => navigate('/lab/upload')}>
                             <div className="nav-card-header">
-                                <h3>Visit Management</h3>
+                                <h3>📤 Upload Results</h3>
                                 <span className="nav-arrow">→</span>
                             </div>
                             <p className="nav-card-description">
-                                Track and manage patient visits and consultation queue
+                                Upload completed test results and reports
                             </p>
                         </div>
 
-                        <div className="nav-card" onClick={() => navigate('/staff/registration')}>
+                        <div className="nav-card" onClick={() => navigate('/lab/history')}>
                             <div className="nav-card-header">
-                                <h3>Patient Registration</h3>
+                                <h3>📊 Test History</h3>
                                 <span className="nav-arrow">→</span>
                             </div>
                             <p className="nav-card-description">
-                                Register new patients and update demographic information
+                                Review completed tests and historical data
                             </p>
                         </div>
 
-                        <div className="nav-card">
+                        <div className="nav-card" onClick={() => navigate('/lab/priority')}>
                             <div className="nav-card-header">
-                                <h3>Appointment Scheduling</h3>
+                                <h3>⚠️ Priority Cases</h3>
                                 <span className="nav-arrow">→</span>
                             </div>
                             <p className="nav-card-description">
-                                Schedule and manage patient appointments with doctors
+                                Urgent and stat laboratory test requests
                             </p>
                         </div>
                     </div>
@@ -104,4 +104,4 @@ function StaffDashboard() {
     );
 }
 
-export default StaffDashboard;
+export default LabDashboard;
