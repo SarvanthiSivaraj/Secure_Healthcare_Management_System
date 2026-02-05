@@ -33,10 +33,8 @@ const getActiveConsents = async (req, res) => {
             statusCode: HTTP_STATUS.OK,
         });
 
-        res.status(HTTP_STATUS.OK).json({
-            success: true,
-            data: consents,
-        });
+        // Return array directly for frontend compatibility
+        res.status(HTTP_STATUS.OK).json(consents);
     } catch (error) {
         logger.error('Get active consents failed:', error);
         res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
@@ -68,10 +66,8 @@ const getConsentHistory = async (req, res) => {
             statusCode: HTTP_STATUS.OK,
         });
 
-        res.status(HTTP_STATUS.OK).json({
-            success: true,
-            data: consents,
-        });
+        // Return array directly for frontend compatibility
+        res.status(HTTP_STATUS.OK).json(consents);
     } catch (error) {
         logger.error('Get consent history failed:', error);
         res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({

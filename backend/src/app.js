@@ -11,6 +11,7 @@ const authRoutes = require('./modules/auth/auth.routes');
 const userRoutes = require('./modules/users/user.routes');
 const consentRoutes = require('./modules/consent/consent.routes');
 const emrRoutes = require('./modules/emr/emr.routes');
+const workflowRoutes = require('./modules/workflow/workflow.routes');
 
 const app = express();
 
@@ -63,6 +64,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/consent', consentRoutes);
 app.use('/api/emr', emrRoutes);
+app.use('/api/workflow', workflowRoutes);
 
 // 404 handler
 app.use(notFoundHandler);

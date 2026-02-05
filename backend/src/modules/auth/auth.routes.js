@@ -85,6 +85,29 @@ router.post(
 );
 
 /**
+ * @route   GET /api/auth/verify
+ * @desc    Verify JWT token and return user info
+ * @access  Private
+ */
+router.get(
+    '/verify',
+    authenticate,
+    asyncHandler(async (req, res) => {
+        res.json({
+            success: true,
+            message: 'Token is valid',
+            user: {
+                id: req.user.id,
+                email: req.user.email,
+                firstName: req.user.firstName,
+                lastName: req.user.lastName,
+                role: req.user.role
+            }
+        });
+    })
+);
+
+/**
  * @route   POST /api/auth/logout
  * @desc    Logout user
  * @access  Private
