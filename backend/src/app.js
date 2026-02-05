@@ -13,6 +13,11 @@ const consentRoutes = require('./modules/consent/consent.routes');
 const emrRoutes = require('./modules/emr/emr.routes');
 const workflowRoutes = require('./modules/workflow/workflow.routes');
 
+// Phase 1: Staff Management routes
+const staffRoutes = require('./modules/staff/staff.routes');
+const doctorVerificationRoutes = require('./modules/doctors/doctor.verification.routes');
+
+
 const app = express();
 
 // Security middleware
@@ -65,6 +70,11 @@ app.use('/api/users', userRoutes);
 app.use('/api/consent', consentRoutes);
 app.use('/api/emr', emrRoutes);
 app.use('/api/workflow', workflowRoutes);
+
+// Phase 1: Staff Management routes
+app.use('/api/staff', staffRoutes);
+app.use('/api/doctors/verification', doctorVerificationRoutes);
+
 
 // 404 handler
 app.use(notFoundHandler);

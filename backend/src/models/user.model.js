@@ -45,7 +45,10 @@ const createUser = async (userData) => {
 const findUserById = async (userId) => {
     try {
         const selectQuery = `
-      SELECT u.*, r.name as role_name
+      SELECT u.*, r.name as role_name,
+             u.account_status, u.verification_status,
+             u.suspended_at, u.suspended_by, u.suspension_reason,
+             u.verified_at, u.verified_by, u.verification_notes
       FROM users u
       LEFT JOIN roles r ON u.role_id = r.id
       WHERE u.id = $1

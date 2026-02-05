@@ -135,6 +135,37 @@ const authenticate = async (req, res, next) => {
             });
         }
 
+        // Phase 1: Check account_status field (if it exists - backward compatible)
+        if (user.account_status && user.account_status !== 'active') {
+            let message = ERROR_MESSAGES.ACCESS_DENIED;
+
+            if (user.account_status === 'suspended') {
+                message = user.suspension_reason
+                    ? `Account suspended: ${user.suspension_reason}`
+                    : ERROR_MESSAGES.ACCOUNT_SUSPENDED;
+            } else if (user.account_status === 'pending_verification') {
+                message = 'Account pending verification. Please wait for admin approval.';
+            }
+
+            // Log suspension access attempt
+            await createAuditLog({
+                userId: user.id,
+                action: AUDIT_ACTIONS.ACCESS_DENIED,
+                purpose: 'Suspended account login attempt',
+                ipAddress: req.ip,
+                userAgent: req.headers['user-agent'],
+                requestMethod: req.method,
+                requestPath: req.path,
+                statusCode: HTTP_STATUS.FORBIDDEN,
+            });
+
+            return res.status(HTTP_STATUS.FORBIDDEN).json({
+                success: false,
+                message,
+            });
+        }
+
+
         // Attach user and session to request object
         req.user = {
             id: user.id,
