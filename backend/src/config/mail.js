@@ -44,6 +44,10 @@ const sendEmail = async ({ to, subject, text, html }) => {
         logger.info('Email sent successfully:', { to, subject, messageId: info.messageId });
         return info;
     } catch (error) {
+        if (process.env.NODE_ENV === 'development') {
+            logger.warn(`⚠️ Email sending failed (Dev Mode Ignored): ${error.message}`);
+            return { messageId: 'mock-id' };
+        }
         logger.error('Email sending failed:', { to, subject, error: error.message });
         throw error;
     }

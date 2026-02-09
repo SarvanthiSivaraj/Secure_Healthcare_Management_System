@@ -37,7 +37,10 @@ function Login() {
             login(user, token);
 
             // Role-based redirect
-            switch (user.role) {
+            // Note: Backend returns HOSPITAL_ADMIN, DOCTOR, PATIENT, etc.
+            const role = user.role.toUpperCase();
+
+            switch (role) {
                 case 'PATIENT':
                     navigate('/patient/dashboard');
                     break;
@@ -45,9 +48,12 @@ function Login() {
                     navigate('/doctor/dashboard');
                     break;
                 case 'ADMIN':
+                case 'HOSPITAL_ADMIN':
                     navigate('/admin/dashboard');
                     break;
                 case 'STAFF':
+                case 'NURSE':
+                case 'RECEPTIONIST':
                     navigate('/staff/dashboard');
                     break;
                 default:

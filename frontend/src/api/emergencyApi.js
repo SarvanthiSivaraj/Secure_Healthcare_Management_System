@@ -1,49 +1,29 @@
 // Emergency Access API Integration
-import axios from 'axios';
-
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
-
-const getAuthHeader = () => {
-    const token = localStorage.getItem('token');
-    return token ? { Authorization: `Bearer ${token}` } : {};
-};
+import apiClient from './client';
 
 export const emergencyApi = {
     // Activate Emergency Mode
     activate: async (justification) => {
-        const response = await axios.post(
-            `${API_BASE_URL}/emergency/activate`,
-            { justification },
-            { headers: getAuthHeader() }
-        );
+        const response = await apiClient.post('/emergency/activate', { justification });
         return response.data;
     },
 
     // Deactivate Emergency Mode
     deactivate: async () => {
-        const response = await axios.post(
-            `${API_BASE_URL}/emergency/deactivate`,
-            {},
-            { headers: getAuthHeader() }
-        );
+        const response = await apiClient.post('/emergency/deactivate', {});
         return response.data;
     },
 
     // Get Emergency Status
     getStatus: async () => {
-        const response = await axios.get(
-            `${API_BASE_URL}/emergency/status`,
-            { headers: getAuthHeader() }
-        );
+        const response = await apiClient.get('/emergency/status');
         return response.data;
     },
 
     // Get Emergency Access History
     getHistory: async () => {
-        const response = await axios.get(
-            `${API_BASE_URL}/emergency/history`,
-            { headers: getAuthHeader() }
-        );
+        const response = await apiClient.get('/emergency/history');
         return response.data;
     },
 };
+
