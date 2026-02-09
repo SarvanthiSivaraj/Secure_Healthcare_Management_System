@@ -8,6 +8,35 @@
     background: linear-gradient(135deg, #E6F2FF 0%, #F0F9FF 100%);
 }
 
+.user-id-container {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.9rem;
+    color: #64748b;
+    margin-top: 4px;
+}
+
+.toggle-id-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 4px;
+    color: #64748b;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    transition: all 0.2s ease;
+}
+
+.toggle-id-btn:hover {
+    background-color: #e2e8f0;
+    color: #334155;
+}
+
+
+
 /* ========================================
    HEADER - Gradient Medical Blue
    ======================================== */

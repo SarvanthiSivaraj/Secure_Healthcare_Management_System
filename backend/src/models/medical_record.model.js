@@ -72,13 +72,10 @@ class MedicalRecordModel {
             SELECT 
                 mr.*,
                 u.first_name || ' ' || u.last_name as created_by_name,
-                r.name as created_by_role,
-                v.visit_code,
-                v.start_time as visit_date
+                r.name as created_by_role
             FROM medical_records mr
             JOIN users u ON mr.created_by = u.id
             JOIN roles r ON u.role_id = r.id
-            LEFT JOIN visits v ON mr.visit_id = v.id
             WHERE mr.patient_id = $1
         `;
 

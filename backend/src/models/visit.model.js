@@ -1,0 +1,259 @@
+const pool = require('../config/db');
+
+class VisitModel {
+    /**
+     * Create a new visit
+     * @param {Object} visitData 
+     * @returns {Promise<Object>} Created visit
+     */
+    static async create(visitData) {
+        const {
+            patientId,
+            organizationId,
+            reason,
+            symptoms,
+            type = 'walk_in',
+            priority = 'normal'
+        } = visitData;
+
+        const query = `
+            INSERT INTO visits (
+                patient_id, organization_id, reason, symptoms, type, priority, status
+            )
+            VALUES ($1, $2, $3, $4, $5, $6, 'pending')
+            RETURNING *
+        `;
+
+        const values = [patientId, organizationId, reason, symptoms, type, priority];
+        const result = await pool.query(query, values);
+        return result.rows[0];
+    }
+
+    /**
+     * Get visit by ID
+     * @param {string} visitId 
+     * @returns {Promise<Object>}
+     */
+    static async findById(visitId) {
+        const query = `
+            SELECT v.*, 
+                   u.first_name as patient_first_name, 
+                   u.last_name as patient_last_name,
+                   u.email as patient_email,
+                   p.date_of_birth,
+                   p.gender
+            FROM visits v
+            JOIN users u ON v.patient_id = u.id
+            LEFT JOIN patient_profiles p ON u.id = p.user_id
+            WHERE v.id = $1
+        `;
+        const result = await pool.query(query, [visitId]);
+        return result.rows[0];
+    }
+
+    /**
+     * Get visits for an organization
+     * @param {string} organizationId 
+     * @param {Object} filters { status, limit, offset }
+     * @returns {Promise<Array>}
+     */
+    static async findByOrganization(organizationId, filters = {}) {
+        const { status, limit = 50, offset = 0 } = filters;
+        
+        let query = `
+            SELECT v.*, 
+                   u.first_name as patient_first_name, 
+                   u.last_name as patient_last_name,
+                   d.first_name as doctor_first_name,
+                   d.last_name as doctor_last_name
+            FROM visits v
+            JOIN users u ON v.patient_id = u.id
+            LEFT JOIN users d ON v.assigned_doctor_id = d.id
+            WHERE v.organization_id = $1
+        `;
+        
+        const values = [organizationId];
+
+        if (status) {
+            query += ` AND v.status = $${values.length + 1}`;
+            values.push(status);
+        }
+
+        query += ` ORDER BY v.created_at DESC LIMIT $${values.length + 1} OFFSET $${values.length + 2}`;
+        values.push(limit, offset);
+
+        const result = await pool.query(query, values);
+        return result.rows;
+    }
+
+    /**
+     * Get active visit for a patient (to prevent duplicates)
+     * @param {string} patientId 
+     * @returns {Promise<Object>}
+     */
+    static async findActiveByPatient(patientId) {
+        const query = `
+            SELECT * FROM visits 
+            WHERE patient_id = $1 
+            AND status IN ('pending', 'approved', 'in_progress')
+            LIMIT 1
+        `;
+        const result = await pool.query(query, [patientId]);
+        return result.rows[0];
+    }
+
+    /**
+     * Update visit status and assignments
+     * @param {string} visitId 
+     * @param {Object} updateData 
+     * @returns {Promise<Object>}
+     */
+    static async update(visitId, updateData) {
+        const { status, assignedDoctorId, assignedNurseId, otpVerified, accessLevel } = updateData;
+        
+        // Build dynamic query
+        const updates = [];
+        const values = [];
+        let paramCount = 1;
+
+        if (status) {
+            updates.push(`status = $${paramCount++}`);
+            values.push(status);
+            
+            if (status === 'completed' || status === 'cancelled') {
+                updates.push(`check_out_time = CURRENT_TIMESTAMP`);
+            }
+        }
+        
+        if (assignedDoctorId !== undefined) {
+            updates.push(`assigned_doctor_id = $${paramCount++}`);
+            values.push(assignedDoctorId);
+        }
+        
+        if (assignedNurseId !== undefined) {
+            updates.push(`assigned_nurse_id = $${paramCount++}`);
+            values.push(assignedNurseId);
+        }
+
+        if (otpVerified !== undefined) {
+            updates.push(`otp_verified = $${paramCount++}`);
+            values.push(otpVerified);
+        }
+
+        if (accessLevel) {
+            updates.push(`access_level = $${paramCount++}`);
+            values.push(accessLevel);
+        }
+
+        if (updates.length === 0) return null;
+
+        values.push(visitId);
+        const query = `
+            UPDATE visits 
+            SET ${updates.join(', ')}, updated_at = CURRENT_TIMESTAMP
+            WHERE id = $${paramCount}
+            RETURNING *
+        `;
+
+        const result = await pool.query(query, values);
+        return result.rows[0];
+    }
+
+    /**
+     * Approve visit and generate OTP
+     * @param {string} visitId 
+     * @param {string} doctorId 
+     * @param {string} nurseId 
+     * @returns {Promise<Object>} Visit with OTP
+     */
+    static async approveVisit(visitId, doctorId, nurseId) {
+        // Generate 6-digit OTP
+        const otp = Math.floor(100000 + Math.random() * 900000).toString();
+        const otpExpiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours from now
+
+        const query = `
+            UPDATE visits 
+            SET 
+                status = 'approved',
+                assigned_doctor_id = $1,
+                assigned_nurse_id = $2,
+                otp_code = $3,
+                otp_expires_at = $4,
+                updated_at = CURRENT_TIMESTAMP
+            WHERE id = $5
+            RETURNING *
+        `;
+
+        const result = await pool.query(query, [doctorId, nurseId, otp, otpExpiresAt, visitId]);
+        return result.rows[0];
+    }
+
+    /**
+     * Verify OTP and set access level
+     * @param {string} visitId 
+     * @param {string} otp 
+     * @param {string} accessLevel - 'read' or 'write'
+     * @returns {Promise<Object>} Updated visit
+     */
+    static async verifyOTP(visitId, otp, accessLevel) {
+        // Check if OTP is valid
+        const checkQuery = `
+            SELECT * FROM visits 
+            WHERE id = $1 
+            AND otp_code = $2 
+            AND otp_expires_at > CURRENT_TIMESTAMP
+            AND otp_verified = FALSE
+        `;
+        
+        const checkResult = await pool.query(checkQuery, [visitId, otp]);
+        
+        if (checkResult.rows.length === 0) {
+            throw new Error('Invalid or expired OTP');
+        }
+
+        // Update visit with verified OTP and access level
+        const updateQuery = `
+            UPDATE visits 
+            SET 
+                otp_verified = TRUE,
+                access_level = $1,
+                status = 'in_progress',
+                updated_at = CURRENT_TIMESTAMP
+            WHERE id = $2
+            RETURNING *
+        `;
+
+        const result = await pool.query(updateQuery, [accessLevel, visitId]);
+        return result.rows[0];
+    }
+
+    /**
+     * Get visit with full details including patient and doctor info
+     * @param {string} visitId 
+     * @returns {Promise<Object>}
+     */
+    static async getFullDetails(visitId) {
+        const query = `
+            SELECT 
+                v.*,
+                u.first_name as patient_first_name,
+                u.last_name as patient_last_name,
+                u.email as patient_email,
+                p.unique_health_id,
+                d.first_name as doctor_first_name,
+                d.last_name as doctor_last_name,
+                o.name as organization_name
+            FROM visits v
+            JOIN users u ON v.patient_id = u.id
+            LEFT JOIN patient_profiles p ON u.id = p.user_id
+            LEFT JOIN users d ON v.assigned_doctor_id = d.id
+            LEFT JOIN organizations o ON v.organization_id = o.id
+            WHERE v.id = $1
+        `;
+        
+        const result = await pool.query(query, [visitId]);
+        return result.rows[0];
+    }
+}
+
+module.exports = VisitModel;

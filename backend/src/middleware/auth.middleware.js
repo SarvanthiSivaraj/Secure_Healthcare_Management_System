@@ -58,9 +58,11 @@ const authenticate = async (req, res, next) => {
       LIMIT 1
     `;
 
+        logger.debug(`Checking session for user ${decoded.userId}`);
         const sessionResult = await query(sessionQuery, [decoded.userId]);
 
         if (sessionResult.rows.length === 0) {
+            logger.warn(`No active session found for user ${decoded.userId}`);
             return res.status(HTTP_STATUS.UNAUTHORIZED).json({
                 success: false,
                 message: 'Session not found or expired',
@@ -207,7 +209,38 @@ const optionalAuth = async (req, res, next) => {
     return authenticate(req, res, next);
 };
 
+/**
+ * Role authorization middleware
+ * @param {Array|String} roles - Allowed roles
+ */
+const authorize = (roles = []) => {
+    if (typeof roles === 'string') {
+        roles = [roles];
+    }
+
+    return (req, res, next) => {
+        if (!req.user) {
+            return res.status(HTTP_STATUS.UNAUTHORIZED).json({
+                success: false,
+                message: ERROR_MESSAGES.UNAUTHORIZED,
+            });
+        }
+
+        if (roles.length && !roles.includes(req.user.roleName)) {
+            logger.warn(`Access denied for user ${req.user.id} with role ${req.user.roleName}. Required: ${roles.join(', ')}`);
+            
+            return res.status(HTTP_STATUS.FORBIDDEN).json({
+                success: false,
+                message: ERROR_MESSAGES.ACCESS_DENIED,
+            });
+        }
+
+        next();
+    };
+};
+
 module.exports = {
     authenticate,
     optionalAuth,
+    authorize,
 };

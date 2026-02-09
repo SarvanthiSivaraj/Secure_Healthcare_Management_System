@@ -1,18 +1,5 @@
-import axios from 'axios';
-import { getAuthHeader } from '../utils/tokenManager';
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
-const apiClient = axios.create({
-    baseURL: API_BASE_URL,
-    headers: {
-        'Content-Type': 'application/json',
-    },
-});
-// Add auth token to requests
-apiClient.interceptors.request.use((config) => {
-    const authHeader = getAuthHeader();
-    config.headers = { ...config.headers, ...authHeader };
-    return config;
-});
+import apiClient from './client';
+
 // Auth API functions
 export const authApi = {
     // Patient registration
@@ -37,7 +24,7 @@ export const authApi = {
     },
     // Login
     login: async (email, password) => {
-        const response = await apiClient.post('/auth/login', { email, password });
+        const response = await apiClient.post('/auth/login', { emailOrPhone: email, password });
         return response.data;
     },
     // Logout
@@ -46,4 +33,5 @@ export const authApi = {
         return response.data;
     },
 };
+
 export default apiClient;

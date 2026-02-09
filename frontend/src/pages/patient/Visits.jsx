@@ -87,9 +87,16 @@ function Visits() {
                 <div className="action-section">
                     <button
                         className="btn btn-primary btn-lg"
+                        onClick={() => navigate('/patient/visits/new')}
+                        style={{ marginRight: '1rem' }}
+                    >
+                        + Join Hospital
+                    </button>
+                    <button
+                        className="btn btn-secondary btn-lg"
                         onClick={() => setShowCheckIn(!showCheckIn)}
                     >
-                        {showCheckIn ? 'Hide Check-In Form' : '+ Check In for Visit'}
+                        {showCheckIn ? 'Hide Check-In Form' : 'Check In Code'}
                     </button>
                 </div>
 

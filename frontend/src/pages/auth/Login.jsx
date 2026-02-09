@@ -31,13 +31,26 @@ function Login() {
 
         try {
             const response = await authApi.login(formData.email, formData.password);
-            const { user, token } = response;
+            console.log('DEBUG: Full Login Response:', response);
+
+            // Robust parsing: handle if response is { success: true, data: { user... } } OR { user... }
+            const payload = response.data || response;
+            const user = payload.user || payload.data?.user;
+            const accessToken = payload.accessToken || payload.token || payload.data?.accessToken;
+
+            if (!user || !accessToken) {
+                console.error('CRITICAL: User or Token missing in response', response);
+                throw new Error('Invalid server response: Missing user/token');
+            }
 
             // Save user and token
-            login(user, token);
+            login(user, accessToken);
 
             // Role-based redirect
-            switch (user.role) {
+            // Note: Backend returns HOSPITAL_ADMIN, DOCTOR, PATIENT, etc.
+            const role = user.role?.toUpperCase();
+
+            switch (role) {
                 case 'PATIENT':
                     navigate('/patient/dashboard');
                     break;
@@ -45,16 +58,34 @@ function Login() {
                     navigate('/doctor/dashboard');
                     break;
                 case 'ADMIN':
+                case 'HOSPITAL_ADMIN':
+                case 'SYSTEM_ADMIN':
                     navigate('/admin/dashboard');
                     break;
                 case 'STAFF':
+                case 'RECEPTIONIST':
+                case 'PHARMACIST':
+                case 'INSURANCE_PROVIDER':
+                case 'RESEARCHER':
+                case 'COMPLIANCE_OFFICER':
                     navigate('/staff/dashboard');
+                    break;
+                case 'NURSE':
+                    navigate('/nurse/dashboard');
+                    break;
+                case 'LAB_TECHNICIAN':
+                    navigate('/lab/dashboard');
+                    break;
+                case 'RADIOLOGIST':
+                    navigate('/radiology/dashboard');
                     break;
                 default:
                     navigate('/');
             }
         } catch (err) {
-            setError(err.response?.data?.message || 'Login failed');
+            const errorMsg = err.response?.data?.message || err.message || 'Login failed';
+            setError(errorMsg);
+            alert(`Login Failed: ${errorMsg}\nCode: ${err.code}\nStatus: ${err.response?.status}`);
         } finally {
             setLoading(false);
         }

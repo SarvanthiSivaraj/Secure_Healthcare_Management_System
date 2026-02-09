@@ -1,5 +1,5 @@
 const { createUser, findUserByEmailOrPhone, userExists, updateUserVerification, updateLastLogin, incrementFailedLoginAttempts, isAccountLocked } = require('../../models/user.model');
-const { createPatientProfile } = require('../../models/patient.model');
+const { createPatientProfile, findPatientByUserId } = require('../../models/patient.model');
 const { createOrganization } = require('../../models/organization.model');
 const { getRoleByName } = require('../../models/role.model');
 const { generateAndSendOTP, verifyOTP } = require('../../services/otp.service');
@@ -459,6 +459,15 @@ const login = async (req, res) => {
             });
         }
 
+        // Fetch additional role-specific data
+        let uniqueHealthId = null;
+        if (user.role_name === ROLES.PATIENT) {
+            const patientProfile = await findPatientByUserId(user.id);
+            if (patientProfile) {
+                uniqueHealthId = patientProfile.unique_health_id;
+            }
+        }
+
         // Generate tokens
         const tokenPayload = {
             userId: user.id,
@@ -466,6 +475,9 @@ const login = async (req, res) => {
             phone: user.phone,
             roleId: user.role_id,
             roleName: user.role_name,
+            firstName: user.first_name,
+            lastName: user.last_name,
+            uniqueHealthId,
         };
 
         const accessToken = generateAccessToken(tokenPayload);
@@ -519,6 +531,9 @@ const login = async (req, res) => {
                     email: user.email,
                     phone: user.phone,
                     role: user.role_name,
+                    firstName: user.first_name,
+                    lastName: user.last_name,
+                    uniqueHealthId,
                 },
                 accessToken,
                 refreshToken,

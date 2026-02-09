@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Button from '../../components/common/Button';
 import ConsentForm from '../../components/consent/ConsentForm';
@@ -7,40 +7,88 @@ import { consentApi } from '../../api/consentApi';
 import './Consent.css';
 function Consent() {
     const navigate = useNavigate();
+    const [viewMode, setViewMode] = useState('active'); // 'active' or 'history'
     const [showForm, setShowForm] = useState(false);
+    const [editingConsent, setEditingConsent] = useState(null);
     const [consents, setConsents] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
+
     useEffect(() => {
-        loadConsents();
-    }, []);
+        if (viewMode === 'active') {
+            loadConsents();
+        } else {
+            loadHistory();
+        }
+    }, [viewMode]);
+
     const loadConsents = async () => {
         setLoading(true);
+        setError('');
         try {
             const data = await consentApi.getActiveConsents();
-            setConsents(data);
+            setConsents(data || []);
         } catch (err) {
-            setError('Failed to load consents');
             console.error(err);
+            if (err.response && err.response.status !== 404) {
+                setError('Failed to load active consents');
+            } else {
+                setConsents([]);
+            }
         } finally {
             setLoading(false);
         }
     };
-    const handleGrantSuccess = () => {
-        setShowForm(false);
-        loadConsents();
-    };
-    const handleRevoke = async (consentId) => {
-        if (!window.confirm('Are you sure you want to revoke this consent? The doctor will immediately lose access to your data.')) {
-            return;
+
+    const loadHistory = async () => {
+        setLoading(true);
+        setError('');
+        try {
+            // Check if getConsentHistory exists before calling
+            if (typeof consentApi.getConsentHistory !== 'function') {
+                throw new Error('History API not implemented yet');
+            }
+            const data = await consentApi.getConsentHistory();
+            setConsents(data || []);
+        } catch (err) {
+            console.error(err);
+            setError('Failed to load consent history');
+            setConsents([]);
+        } finally {
+            setLoading(false);
         }
+    };
+
+    const handleGrantSuccess = useCallback(() => {
+        setShowForm(false);
+        setEditingConsent(null);
+        // Switch to active view to see new consent
+        if (viewMode !== 'active') {
+            setViewMode('active');
+        } else {
+            loadConsents();
+        }
+    }, [viewMode]);
+
+    const handleEdit = useCallback((consent) => {
+        setEditingConsent(consent);
+        setShowForm(true);
+    }, []);
+
+    const handleRevoke = useCallback(async (consentId) => {
         try {
             await consentApi.revokeConsent(consentId);
-            loadConsents();
+            // Refresh current view
+            if (viewMode === 'active') {
+                loadConsents();
+            } else {
+                loadHistory();
+            }
         } catch (err) {
             alert('Failed to revoke consent: ' + (err.response?.data?.message || err.message));
         }
-    };
+    }, [viewMode]);
+
     return (
         <div className="consent-page">
             <header className="page-header">
@@ -54,29 +102,52 @@ function Consent() {
             </header>
             <div className="consent-content">
                 {!showForm && (
-                    <div className="consent-actions-bar">
-                        <Button onClick={() => setShowForm(true)}>
+                    <div className="consent-controls">
+                        <div className="view-toggle">
+                            <button
+                                className={`toggle-btn ${viewMode === 'active' ? 'active' : ''}`}
+                                onClick={() => setViewMode('active')}
+                            >
+                                Active Consents
+                            </button>
+                            <button
+                                className={`toggle-btn ${viewMode === 'history' ? 'active' : ''}`}
+                                onClick={() => setViewMode('history')}
+                            >
+                                Past Accesses
+                            </button>
+                        </div>
+                        <Button onClick={() => { setEditingConsent(null); setShowForm(true); }}>
                             + Grant New Consent
                         </Button>
                     </div>
                 )}
+
                 {showForm && (
                     <ConsentForm
+                        initialData={editingConsent}
                         onSuccess={handleGrantSuccess}
-                        onCancel={() => setShowForm(false)}
+                        onCancel={() => { setShowForm(false); setEditingConsent(null); }}
                     />
                 )}
-                <div className="consents-section">
-                    <h2>Active Consents</h2>
 
-                    {loading && <p>Loading consents...</p>}
+                <div className="consents-section">
+                    <h2>{viewMode === 'active' ? 'Active Consents' : 'Access History'}</h2>
+
+                    {loading && <p>Loading...</p>}
 
                     {error && <div className="error-alert">{error}</div>}
 
                     {!loading && consents.length === 0 && (
                         <div className="empty-state">
-                            <p>You haven't granted any consents yet.</p>
-                            <p>Click "Grant New Consent" to allow a doctor to access your medical data.</p>
+                            {viewMode === 'active' ? (
+                                <>
+                                    <p>You haven't granted any consents yet.</p>
+                                    <p>Click "Grant New Consent" to allow a doctor to access your medical data.</p>
+                                </>
+                            ) : (
+                                <p>No past consent history found.</p>
+                            )}
                         </div>
                     )}
 
@@ -85,6 +156,7 @@ function Consent() {
                             key={consent.id}
                             consent={consent}
                             onRevoke={handleRevoke}
+                            onEdit={handleEdit}
                         />
                     ))}
                 </div>

@@ -7,23 +7,42 @@ const FileUploadService = require('../../services/file.upload.service');
 const DicomService = require('../../services/dicom.service');
 const PrescriptionValidatorService = require('../../services/prescription.validator.service');
 const DrugInteractionService = require('../../services/drug.interaction.service');
+const { checkConsent } = require('../../models/consent.model');
 
 class EmrController {
     // ==================== Medical Records ====================
 
     /**
      * Create medical record
+     * Requires WRITE consent to create new records
      */
     static async createMedicalRecord(req, res) {
         try {
-            const { patientId, visitId, type, title, description, immutableFlag } = req.body;
+            const { patientId, visitId, type, title, description } = req.body;
             const createdBy = req.user.id;
+
+            // Check if doctor has WRITE consent for this patient
+            // Creating new records requires write permission
+            const hasWriteConsent = await checkConsent(
+                patientId,
+                createdBy,
+                'medical_records',
+                'write' // WRITE consent required to create records
+            );
+
+            if (!hasWriteConsent) {
+                return res.status(403).json({
+                    success: false,
+                    message: 'Write access required to create medical records'
+                });
+            }
 
             // Validate visit linkage
             if (visitId) {
                 await MedicalRecordModel.validateVisitLinkage(visitId);
             }
 
+            // Always create records as immutable (no editing allowed)
             const record = await MedicalRecordModel.create({
                 patientId,
                 visitId,
@@ -31,7 +50,7 @@ class EmrController {
                 title,
                 description,
                 createdBy,
-                immutableFlag
+                immutableFlag: true  // All medical records are immutable
             });
 
             res.status(201).json({
@@ -85,11 +104,39 @@ class EmrController {
 
     /**
      * Get medical records for patient
+     * Requires active consent for doctors/staff, patients can view their own
      */
     static async getPatientMedicalRecords(req, res) {
         try {
             const { patientId } = req.params;
             const { type, limit, offset } = req.query;
+            const userId = req.user.id;
+            const userRole = req.user.role;
+
+            // Patients can only view their own records
+            if (userRole === 'PATIENT' && patientId !== userId) {
+                return res.status(403).json({
+                    success: false,
+                    message: 'You can only view your own medical records'
+                });
+            }
+
+            // Doctors/staff need active consent to view patient records
+            if (userRole === 'DOCTOR' || userRole === 'NURSE' || userRole === 'STAFF') {
+                const hasConsent = await checkConsent(
+                    patientId,
+                    userId,
+                    'medical_records',
+                    'read'
+                );
+
+                if (!hasConsent) {
+                    return res.status(403).json({
+                        success: false,
+                        message: 'No active consent to view this patient\'s records. Please request consent from the patient.'
+                    });
+                }
+            }
 
             const records = await MedicalRecordModel.findByPatientId(patientId, {
                 type,

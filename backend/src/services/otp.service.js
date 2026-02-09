@@ -65,6 +65,11 @@ const generateAndSendOTP = async ({ email, phone, userId, purpose }) => {
 
         // Send OTP via email (or SMS if phone)
         if (email) {
+            if (process.env.NODE_ENV === 'development') {
+                logger.info('------------------------------------------');
+                logger.info(`🔑 DEV MODE OTP: ${otp} (for ${email})`);
+                logger.info('------------------------------------------');
+            }
             await sendOTPEmail(email, otp, purpose);
             logger.info('OTP sent via email', { email, purpose });
         } else if (phone) {
