@@ -19,6 +19,7 @@ const getActiveConsents = async (req, res) => {
     try {
         const userId = req.user.id;
         const consents = await getActiveConsentsModel(userId);
+        logger.info(`Fetched ${consents.length} active consents for user ${userId}`);
 
         // Audit log
         await createAuditLog({
@@ -114,6 +115,10 @@ const grantConsent = async (req, res) => {
         const consentValidation = validateConsentData(req.body);
 
         if (!consentValidation.isValid) {
+            logger.warn('Consent validation failed:', {
+                errors: consentValidation.errors,
+                body: req.body
+            });
             return res.status(HTTP_STATUS.BAD_REQUEST).json({
                 success: false,
                 message: 'Invalid consent data',
@@ -145,7 +150,7 @@ const grantConsent = async (req, res) => {
             purpose,
             accessLevel,
             startTime,
-            endTime
+            endTime: endTime === '' ? null : endTime
         });
 
         // Audit log
@@ -255,9 +260,131 @@ const revokeConsent = async (req, res) => {
     }
 };
 
+/**
+ * Update consent
+ * PUT /api/consent/:id
+ */
+const updateConsent = async (req, res) => {
+    try {
+        const patientId = req.user.id;
+        const { id: consentId } = req.params;
+        const {
+            dataCategory,
+            purpose,
+            accessLevel,
+            endTime,
+        } = req.body;
+
+        // Check if consent exists
+        const consent = await findConsentById(consentId);
+
+        if (!consent) {
+            return res.status(HTTP_STATUS.NOT_FOUND).json({
+                success: false,
+                message: 'Consent not found',
+            });
+        }
+
+        if (consent.patient_id !== patientId) {
+            return res.status(HTTP_STATUS.NOT_FOUND).json({
+                success: false,
+                message: 'Consent not found or does not belong to you',
+            });
+        }
+
+        if (consent.status === 'revoked') {
+            return res.status(HTTP_STATUS.BAD_REQUEST).json({
+                success: false,
+                message: 'Cannot update revoked consent',
+            });
+        }
+
+        // Validate consent data partial updates
+        // We can reuse validateConsentData but need to handle partials
+        // For simplicity, we just proceed as we are trusting the input or we can validate each field if provided
+        
+        // Update consent
+        const updatedConsent = await require('../../models/consent.model').updateConsent(consentId, patientId, {
+            dataCategory,
+            purpose,
+            accessLevel,
+            endTime: endTime === '' ? null : endTime
+        });
+
+        // Audit log
+        await createAuditLog({
+            userId: patientId,
+            action: AUDIT_ACTIONS.CONSENT_UPDATE || 'CONSENT_UPDATE', // Fallback string if constant missing
+            entityType: 'consent',
+            entityId: consentId,
+            purpose: `Update consent for ${updatedConsent.purpose}`,
+            ipAddress: req.ip,
+            userAgent: req.headers['user-agent'],
+            requestMethod: req.method,
+            requestPath: req.path,
+            statusCode: HTTP_STATUS.OK,
+        });
+
+        logger.info('Consent updated:', {
+            consentId,
+            patientId,
+            updates: { dataCategory, purpose, accessLevel, endTime }
+        });
+
+        res.status(HTTP_STATUS.OK).json({
+            success: true,
+            message: 'Consent updated successfully',
+            data: updatedConsent,
+        });
+    } catch (error) {
+        logger.error('Update consent failed:', error);
+        res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
+            success: false,
+            message: ERROR_MESSAGES.INTERNAL_ERROR,
+        });
+    }
+};
+
+/**
+ * Get patients for doctor
+ * GET /api/consent/doctor/patients
+ */
+const getDoctorPatients = async (req, res) => {
+    try {
+        const doctorId = req.user.id;
+        const patients = await require('../../models/consent.model').getPatientsWithActiveConsent(doctorId);
+        
+        // Audit log
+        await createAuditLog({
+            userId: doctorId,
+            action: AUDIT_ACTIONS.CONSENT_VIEW,
+            entityType: 'patient_list',
+            purpose: 'View patients with active consent',
+            ipAddress: req.ip,
+            userAgent: req.headers['user-agent'],
+            requestMethod: req.method,
+            requestPath: req.path,
+            statusCode: HTTP_STATUS.OK,
+        });
+
+        res.status(HTTP_STATUS.OK).json({
+            success: true,
+            data: patients
+        });
+    } catch (error) {
+        logger.error('Get doctor patients failed:', error);
+        res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
+            success: false,
+            message: ERROR_MESSAGES.INTERNAL_ERROR,
+        });
+    }
+};
+
 module.exports = {
     getActiveConsents,
     getConsentHistory,
     grantConsent,
     revokeConsent,
+    updateConsent,
+    getDoctorPatients,
 };

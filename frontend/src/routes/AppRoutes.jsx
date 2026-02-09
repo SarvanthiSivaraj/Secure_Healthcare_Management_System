@@ -11,14 +11,19 @@ import ProtectedRoute from './ProtectedRoute';
 import Consent from '../pages/patient/Consent';
 import Visits from '../pages/patient/Visits';
 import MedicalRecords from '../pages/patient/MedicalRecords';
+import MedicalRecordsView from '../pages/patient/MedicalRecordsView';
 import VisitQueue from '../pages/staff/VisitQueue';
 import ActiveVisits from '../pages/doctor/ActiveVisits';
 import PatientRecords from '../pages/doctor/PatientRecords';
+import PatientMedicalRecords from '../pages/doctor/PatientMedicalRecords';
 import ConsentRequests from '../pages/doctor/ConsentRequests';
 import ClinicalNotes from '../pages/doctor/ClinicalNotes';
 import NurseDashboard from '../pages/nurse/Dashboard';
 import LabDashboard from '../pages/lab/Dashboard';
 import RadiologistDashboard from '../pages/radiology/Dashboard';
+import NewVisit from '../pages/patient/NewVisit';
+import ManageVisits from '../pages/admin/ManageVisits';
+import VerifyVisitOTP from '../pages/patient/VerifyVisitOTP';
 
 function AppRoutes() {
     return (
@@ -66,6 +71,15 @@ function AppRoutes() {
                 />
 
                 <Route
+                    path="/patient/medical-records-view"
+                    element={
+                        <ProtectedRoute allowedRoles={['PATIENT']}>
+                            <MedicalRecordsView />
+                        </ProtectedRoute>
+                    }
+                />
+
+                <Route
                     path="/staff/visit-queue"
                     element={
                         <ProtectedRoute allowedRoles={['STAFF']}>
@@ -79,6 +93,15 @@ function AppRoutes() {
                     element={
                         <ProtectedRoute allowedRoles={['DOCTOR']}>
                             <PatientRecords />
+                        </ProtectedRoute>
+                    }
+                />
+
+                <Route
+                    path="/doctor/patients/:id/records"
+                    element={
+                        <ProtectedRoute allowedRoles={['DOCTOR']}>
+                            <PatientMedicalRecords />
                         </ProtectedRoute>
                     }
                 />
@@ -149,8 +172,35 @@ function AppRoutes() {
                 <Route
                     path="/admin/dashboard"
                     element={
-                        <ProtectedRoute allowedRoles={['ADMIN']}>
+                        <ProtectedRoute allowedRoles={['ADMIN', 'HOSPITAL_ADMIN']}>
                             <AdminDashboard />
+                        </ProtectedRoute>
+                    }
+                />
+
+                <Route
+                    path="/patient/visits/new"
+                    element={
+                        <ProtectedRoute allowedRoles={['PATIENT']}>
+                            <NewVisit />
+                        </ProtectedRoute>
+                    }
+                />
+
+                <Route
+                    path="/patient/visits/verify-otp"
+                    element={
+                        <ProtectedRoute allowedRoles={['PATIENT']}>
+                            <VerifyVisitOTP />
+                        </ProtectedRoute>
+                    }
+                />
+
+                <Route
+                    path="/admin/visits"
+                    element={
+                        <ProtectedRoute allowedRoles={['ADMIN', 'HOSPITAL_ADMIN']}>
+                            <ManageVisits />
                         </ProtectedRoute>
                     }
                 />

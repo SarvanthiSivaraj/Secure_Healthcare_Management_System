@@ -154,8 +154,8 @@ const validateConsentData = (consentData) => {
         errors.push(accessLevelValidation.error);
     }
 
-    // Validate time constraints if provided
-    if (consentData.endTime) {
+    // Validate time constraints if provided and not empty
+    if (consentData.endTime && consentData.endTime !== '') {
         const endTime = new Date(consentData.endTime);
         const startTime = consentData.startTime ? new Date(consentData.startTime) : new Date();
 

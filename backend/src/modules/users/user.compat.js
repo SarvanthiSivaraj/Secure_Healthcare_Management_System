@@ -13,8 +13,8 @@ const getDoctors = async (req, res) => {
 
         const doctorsQuery = `
       SELECT u.id, u.email, u.phone, u.created_at,
-             SPLIT_PART(u.email, '@', 1) as firstName,
-             '' as lastName,
+             u.first_name as "firstName",
+             u.last_name as "lastName",
              'General Practice' as specialization,
              som.professional_license, som.organization_id, o.name as organization_name
       FROM users u

@@ -3,6 +3,7 @@
 
 -- Enable UUID extension
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 
 -- ============================================
 -- ROLES TABLE
@@ -131,6 +132,25 @@ CREATE INDEX idx_patient_profiles_user ON patient_profiles(user_id);
 CREATE INDEX idx_patient_profiles_health_id ON patient_profiles(unique_health_id);
 
 -- ============================================
+-- DOCTOR_PROFILES TABLE
+-- ============================================
+CREATE TABLE IF NOT EXISTS doctor_profiles (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    user_id UUID REFERENCES users(id) ON DELETE CASCADE UNIQUE NOT NULL,
+    specialization VARCHAR(100) NOT NULL,
+    license_number VARCHAR(100) UNIQUE NOT NULL,
+    experience_years INTEGER,
+    bio TEXT,
+    consultation_fee DECIMAL(10, 2),
+    availability JSONB, -- { "monday": ["09:00-12:00", "14:00-17:00"], ... }
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX idx_doctor_profiles_user ON doctor_profiles(user_id);
+CREATE INDEX idx_doctor_profiles_specialization ON doctor_profiles(specialization);
+
+-- ============================================
 -- OTP_VERIFICATIONS TABLE
 -- ============================================
 CREATE TABLE IF NOT EXISTS otp_verifications (
@@ -202,6 +222,27 @@ CREATE INDEX idx_sessions_expires ON sessions(expires_at);
 CREATE INDEX idx_sessions_active ON sessions(is_active);
 
 -- ============================================
+-- CONSENTS TABLE
+-- ============================================
+CREATE TABLE IF NOT EXISTS consents (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    patient_id UUID REFERENCES users(id) ON DELETE CASCADE NOT NULL,
+    recipient_user_id UUID REFERENCES users(id) ON DELETE CASCADE NOT NULL,
+    data_category VARCHAR(50) NOT NULL, -- e.g., 'all', 'medications', 'labs'
+    purpose VARCHAR(255) NOT NULL,
+    access_level VARCHAR(20) NOT NULL DEFAULT 'read' CHECK (access_level IN ('read', 'write')),
+    start_time TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+    end_time TIMESTAMPTZ,
+    status VARCHAR(20) DEFAULT 'active' CHECK (status IN ('active', 'revoked', 'expired')),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX idx_consents_patient ON consents(patient_id);
+CREATE INDEX idx_consents_recipient ON consents(recipient_user_id);
+CREATE INDEX idx_consents_status ON consents(status);
+
+-- ============================================
 -- ACCESS_POLICIES TABLE
 -- ============================================
 CREATE TABLE IF NOT EXISTS access_policies (
@@ -241,6 +282,28 @@ CREATE INDEX idx_security_events_type ON security_events(event_type);
 CREATE INDEX idx_security_events_severity ON security_events(severity);
 CREATE INDEX idx_security_events_resolved ON security_events(resolved);
 CREATE INDEX idx_security_events_timestamp ON security_events(created_at DESC);
+
+-- ============================================
+-- MEDICAL RECORDS TABLE
+-- ============================================
+CREATE TABLE IF NOT EXISTS medical_records (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    patient_id UUID REFERENCES users(id) ON DELETE CASCADE NOT NULL,
+    visit_id UUID,
+    type VARCHAR(50) NOT NULL CHECK (type IN ('consultation', 'diagnosis', 'prescription', 'lab_result', 'imaging', 'procedure', 'note', 'other')),
+    title VARCHAR(255) NOT NULL,
+    description TEXT,
+    created_by UUID REFERENCES users(id) NOT NULL,
+    immutable_flag BOOLEAN DEFAULT FALSE,
+    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX idx_medical_records_patient ON medical_records(patient_id);
+CREATE INDEX idx_medical_records_visit ON medical_records(visit_id);
+CREATE INDEX idx_medical_records_type ON medical_records(type);
+CREATE INDEX idx_medical_records_created_by ON medical_records(created_by);
+CREATE INDEX idx_medical_records_created_at ON medical_records(created_at DESC);
 
 -- ============================================
 -- TRIGGERS

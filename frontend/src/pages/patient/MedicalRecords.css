@@ -256,3 +256,38 @@
         width: 100%;
     }
 }
+/* Expand/Collapse functionality for record summaries */
+.record-summary.collapsed {
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.record-summary.expanded {
+    display: block;
+}
+
+.expand-btn {
+    background: none;
+    border: none;
+    color: #0066CC;
+    cursor: pointer;
+    font-size: 0.9rem;
+    font-weight: 600;
+    margin-top: 0.5rem;
+    padding: 0.25rem 0;
+    text-decoration: underline;
+    transition: color 0.2s;
+}
+
+.expand-btn:hover {
+    color: #0052A3;
+}
+
+.expand-btn:focus {
+    outline: 2px solid #0066CC;
+    outline-offset: 2px;
+    border-radius: 2px;
+}

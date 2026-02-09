@@ -56,4 +56,29 @@ router.put(
     asyncHandler(consentController.revokeConsent)
 );
 
+/**
+ * @route   PUT /api/consent/:id
+ * @desc    Update existing consent
+ * @access  Private (Patient only)
+ */
+router.put(
+    '/:id',
+    authenticate,
+    requireRole('patient'),
+    auditLog('consent_update', 'consent'),
+    asyncHandler(consentController.updateConsent)
+);
+
+/**
+ * @route   GET /api/consent/doctor/patients
+ * @desc    Get patients who have granted consent to the doctor
+ * @access  Private (Doctor only)
+ */
+router.get(
+    '/doctor/patients',
+    authenticate,
+    requireRole('doctor'),
+    asyncHandler(consentController.getDoctorPatients)
+);
+
 module.exports = router;

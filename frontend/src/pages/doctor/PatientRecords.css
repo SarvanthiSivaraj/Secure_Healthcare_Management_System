@@ -5,6 +5,7 @@
 .clinical-notes-page {
     min-height: 100vh;
     background: linear-gradient(135deg, #E6F2FF 0%, #F0F9FF 100%);
+    padding-bottom: 2rem;
 }
 
 .page-header {
@@ -14,6 +15,7 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
+    color: white;
 }
 
 .header-left h1 {
@@ -30,10 +32,119 @@
     font-weight: 400;
 }
 
+.header-actions {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+}
+
 .page-content {
     max-width: 1400px;
     margin: 0 auto;
     padding: 32px 40px;
+}
+
+/* Patient Cards Grid */
+.patients-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 1.5rem;
+}
+
+.patient-card {
+    background: white;
+    border-radius: 12px;
+    padding: 1.5rem;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    border: 1px solid #e0e0e0;
+    transition: all 0.2s ease;
+    display: flex;
+    flex-direction: column;
+}
+
+.patient-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+}
+
+.patient-info {
+    margin-bottom: 1rem;
+}
+
+.patient-info h3 {
+    margin: 0 0 0.5rem 0;
+    font-size: 1.25rem;
+    color: #1a202c;
+    font-weight: 600;
+}
+
+.patient-info p {
+    margin: 0.25rem 0;
+    color: #4a5568;
+    font-size: 0.9rem;
+    line-height: 1.4;
+}
+
+.consent-info {
+    margin: auto 0 1rem 0;
+    padding-top: 1rem;
+    border-top: 1px solid #edf2f7;
+}
+
+.badge {
+    display: inline-block;
+    padding: 0.25rem 0.75rem;
+    border-radius: 9999px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.badge.read {
+    background-color: #ebf8ff;
+    color: #3182ce;
+}
+
+.badge.write {
+    background-color: #f0fff4;
+    color: #38a169;
+}
+
+.expiry {
+    font-size: 0.8rem;
+    color: #718096;
+    margin-top: 0.5rem;
+    font-style: italic;
+}
+
+.actions {
+    margin-top: auto;
+}
+
+.actions button {
+    width: 100%;
+}
+
+.empty-state {
+    text-align: center;
+    padding: 4rem 2rem;
+    background: white;
+    border-radius: 12px;
+    color: #718096;
+    font-size: 1.1rem;
+    border: 2px dashed #e2e8f0;
+}
+
+.loading-state,
+.error-message {
+    text-align: center;
+    padding: 2rem;
+    font-size: 1.1rem;
+}
+
+.error-message {
+    color: #e53e3e;
 }
 
 @media (max-width: 768px) {
@@ -51,4 +162,187 @@
     .header-left h1 {
         font-size: 24px;
     }
+}
+
+/* Medical Records List Styling */
+.records-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.record-card {
+    background: white;
+    border-radius: 12px;
+    padding: 1.5rem;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    border: 1px solid #e0e0e0;
+    transition: all 0.2s ease;
+}
+
+.record-card:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.record-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+    padding-bottom: 1rem;
+    border-bottom: 2px solid #edf2f7;
+}
+
+.record-header h3 {
+    margin: 0;
+    font-size: 1.25rem;
+    color: #1a202c;
+    font-weight: 600;
+}
+
+.record-date {
+    color: #718096;
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+
+.record-body {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.record-field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.record-field strong {
+    color: #2d3748;
+    font-size: 0.9rem;
+    font-weight: 600;
+}
+
+.record-field p {
+    margin: 0;
+    color: #4a5568;
+    font-size: 0.95rem;
+    line-height: 1.6;
+    padding-left: 0.5rem;
+}
+/* Filter Select Dropdown */
+.filter-select {
+    padding: 0.5rem 1rem;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.15);
+    color: white;
+    font-size: 0.95rem;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.filter-select:hover {
+    background: rgba(255, 255, 255, 0.25);
+    border-color: rgba(255, 255, 255, 0.5);
+}
+
+.filter-select:focus {
+    outline: none;
+    background: rgba(255, 255, 255, 0.3);
+    border-color: white;
+}
+
+.filter-select option {
+    background: white;
+    color: #1a202c;
+}
+
+/* Record Type Badge */
+.record-type-badge {
+    display: inline-block;
+    padding: 0.25rem 0.75rem;
+    background: #E6F2FF;
+    color: #0066CC;
+    border-radius: 12px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+}
+
+.record-card .record-header > div {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.record-card h3 {
+    margin: 0;
+    font-size: 1.25rem;
+}
+
+/* Expand/Collapse functionality for descriptions */
+.record-field p.collapsed {
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.record-field p.expanded {
+    display: block;
+}
+
+.expand-btn {
+    background: none;
+    border: none;
+    color: #0066CC;
+    cursor: pointer;
+    font-size: 0.9rem;
+    font-weight: 600;
+    margin-top: 0.5rem;
+    padding: 0;
+    text-decoration: underline;
+    transition: color 0.2s;
+}
+
+.expand-btn:hover {
+    color: #0052A3;
+}
+
+.expand-btn:focus {
+    outline: 2px solid #0066CC;
+    outline-offset: 2px;
+    border-radius: 2px;
+}
+
+/* Info message for read-only access */
+.info-message {
+    background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+    border-left: 4px solid #2196F3;
+    border-radius: 8px;
+    padding: 1rem 1.5rem;
+    margin-bottom: 1.5rem;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.info-message p {
+    margin: 0;
+    color: #0d47a1;
+    font-size: 0.95rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.info-message strong {
+    font-weight: 600;
+}
+
+/* Disabled button styles */
+button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
 }

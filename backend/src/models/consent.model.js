@@ -52,6 +52,50 @@ const createConsent = async (consentData) => {
 };
 
 /**
+ * Update existing consent
+ * @param {String} consentId - Consent ID
+ * @param {String} patientId - Patient ID
+ * @param {Object} updateData - Data to update
+ * @returns {Promise<Object>} Updated consent
+ */
+const updateConsent = async (consentId, patientId, updateData) => {
+    try {
+        const {
+            dataCategory,
+            purpose,
+            accessLevel,
+            endTime,
+        } = updateData;
+
+        const updateQuery = `
+            UPDATE consents 
+            SET 
+                data_category = COALESCE($1, data_category),
+                purpose = COALESCE($2, purpose),
+                access_level = COALESCE($3, access_level),
+                end_time = $4,
+                updated_at = NOW()
+            WHERE id = $5 AND patient_id = $6
+            RETURNING *
+        `;
+
+        const result = await query(updateQuery, [
+            dataCategory,
+            purpose,
+            accessLevel,
+            endTime, // Can be null for unlimited
+            consentId,
+            patientId
+        ]);
+
+        return result.rows[0];
+    } catch (error) {
+        logger.error('Failed to update consent:', error);
+        throw error;
+    }
+};
+
+/**
  * Revoke consent
  * @param {String} consentId - Consent ID
  * @param {String} patientId - Patient ID (for validation)
@@ -84,16 +128,18 @@ const getActiveConsents = async (patientId) => {
         const selectQuery = `
             SELECT 
                 c.id,
-                c.recipient_user_id,
-                c.data_category,
+                c.recipient_user_id as "recipientUserId",
+                c.data_category as "dataCategory",
                 c.purpose,
-                c.access_level,
-                c.start_time,
-                c.end_time,
+                c.access_level as "accessLevel",
+                c.start_time as "startTime",
+                c.end_time as "endTime",
                 c.status,
                 c.created_at,
                 u.email as recipient_email,
-                r.name as recipient_role
+                r.name as recipient_role,
+                CONCAT(u.first_name, ' ', u.last_name) as "recipientName",
+                'General Practice' as "specialization"
             FROM consents c
             INNER JOIN users u ON c.recipient_user_id = u.id
             INNER JOIN roles r ON u.role_id = r.id
@@ -104,6 +150,7 @@ const getActiveConsents = async (patientId) => {
         `;
 
         const result = await query(selectQuery, [patientId]);
+        
         return result.rows;
     } catch (error) {
         logger.error('Failed to get active consents:', error);
@@ -121,17 +168,19 @@ const getConsentHistory = async (patientId) => {
         const selectQuery = `
             SELECT 
                 c.id,
-                c.recipient_user_id,
-                c.data_category,
+                c.recipient_user_id as "recipientUserId",
+                c.data_category as "dataCategory",
                 c.purpose,
-                c.access_level,
-                c.start_time,
-                c.end_time,
+                c.access_level as "accessLevel",
+                c.start_time as "startTime",
+                c.end_time as "endTime",
                 c.status,
                 c.created_at,
                 c.updated_at,
                 u.email as recipient_email,
-                r.name as recipient_role
+                r.name as recipient_role,
+                CONCAT(u.first_name, ' ', u.last_name) as "recipientName",
+                'General Practice' as "specialization"
             FROM consents c
             INNER JOIN users u ON c.recipient_user_id = u.id
             INNER JOIN roles r ON u.role_id = r.id
@@ -162,7 +211,7 @@ const checkConsent = async (patientId, recipientUserId, dataCategory, accessLeve
             FROM consents 
             WHERE patient_id = $1 
                 AND recipient_user_id = $2
-                AND data_category = $3
+                AND (data_category = $3 OR data_category = 'all_medical_data' OR data_category = '*')
                 AND (access_level = $4 OR access_level = 'write') -- write grants read access too
                 AND status = 'active'
                 AND (end_time IS NULL OR end_time > NOW())
@@ -191,11 +240,49 @@ const findConsentById = async (consentId) => {
     }
 };
 
+/**
+ * Get patients who have granted active consent to the doctor
+ * @param {String} doctorId - Doctor User ID
+ * @returns {Promise<Array>} List of patients
+ */
+const getPatientsWithActiveConsent = async (doctorId) => {
+    try {
+        const selectQuery = `
+            SELECT DISTINCT
+                u.id, 
+                u.first_name, 
+                u.last_name, 
+                u.email, 
+                p.unique_health_id, 
+                p.date_of_birth, 
+                p.gender,
+                c.data_category,
+                c.access_level,
+                c.end_time as consent_expires_at
+            FROM consents c
+            JOIN users u ON c.patient_id = u.id
+            LEFT JOIN patient_profiles p ON u.id = p.user_id
+            WHERE c.recipient_user_id = $1
+            AND c.status = 'active'
+            AND (c.end_time IS NULL OR c.end_time > NOW())
+            ORDER BY u.last_name, u.first_name
+        `;
+
+        const result = await query(selectQuery, [doctorId]);
+        return result.rows;
+    } catch (error) {
+        logger.error('Failed to get patients with active consent:', error);
+        throw error;
+    }
+};
+
 module.exports = {
     createConsent,
+    updateConsent,
     revokeConsent,
     getActiveConsents,
     getConsentHistory,
     checkConsent,
     findConsentById,
+    getPatientsWithActiveConsent,
 };

@@ -1,52 +1,43 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Button from '../../components/common/Button';
+import { AuthContext } from '../../context/AuthContext';
+import { emrApi } from '../../api/emrApi';
 import './MedicalRecords.css';
 
 function MedicalRecords() {
     const navigate = useNavigate();
+    const { user } = useContext(AuthContext);
     const [records, setRecords] = useState([]);
     const [loading, setLoading] = useState(true);
-    const [filter, setFilter] = useState('all'); // all, consultation, diagnosis, prescription, lab, imaging
+    const [filter, setFilter] = useState('all');
+    const [expandedRecords, setExpandedRecords] = useState(new Set());
 
     useEffect(() => {
-        fetchRecords();
-    }, []);
+        if (user && user.id) {
+            fetchRecords();
+        }
+    }, [user]);
 
     const fetchRecords = async () => {
         setLoading(true);
         try {
-            // TODO: API call to fetch medical records
-            // const data = await emrApi.getMyRecords();
-            // setRecords(data.records || []);
+            const response = await emrApi.getPatientMedicalRecords(user.id);
+            // Handle response structure: { success: true, data: { records: [] } }
+            const recordList = response.data?.records || response.data || [];
 
-            // Mock data for demonstration
-            setRecords([
-                {
-                    id: 1,
-                    type: 'CONSULTATION',
-                    date: '2026-02-01',
-                    doctor: 'Dr. Sarah Johnson',
-                    title: 'Annual Checkup',
-                    summary: 'Routine physical examination. Patient in good health.',
-                },
-                {
-                    id: 2,
-                    type: 'DIAGNOSIS',
-                    date: '2026-02-01',
-                    doctor: 'Dr. Sarah Johnson',
-                    title: 'Hypertension (I10)',
-                    summary: 'Mild hypertension detected. Lifestyle modifications recommended.',
-                },
-                {
-                    id: 3,
-                    type: 'PRESCRIPTION',
-                    date: '2026-02-01',
-                    doctor: 'Dr. Sarah Johnson',
-                    title: 'Lisinopril 10mg',
-                    summary: 'Take once daily in the morning.',
-                },
-            ]);
+            // Transform data to match UI expectations
+            const formattedRecords = recordList.map(record => ({
+                id: record.id,
+                type: record.type, // consultation, diagnosis, prescription, lab_result, imaging, etc.
+                date: record.created_at || record.visit_date,
+                doctor: record.created_by_name || 'Unknown Provider',
+                doctorRole: record.created_by_role || '',
+                title: record.title,
+                summary: record.description,
+            }));
+
+            setRecords(formattedRecords);
         } catch (error) {
             console.error('Failed to fetch records:', error);
         } finally {
@@ -56,20 +47,48 @@ function MedicalRecords() {
 
     const filterRecords = () => {
         if (filter === 'all') return records;
-        return records.filter(r => r.type.toLowerCase() === filter);
+        return records.filter(r => r.type === filter);
+    };
+
+    const toggleExpand = (recordId) => {
+        setExpandedRecords(prev => {
+            const newSet = new Set(prev);
+            if (newSet.has(recordId)) {
+                newSet.delete(recordId);
+            } else {
+                newSet.add(recordId);
+            }
+            return newSet;
+        });
     };
 
     const filteredRecords = filterRecords();
 
     const getRecordIcon = (type) => {
         switch (type) {
-            case 'CONSULTATION': return '📋';
-            case 'DIAGNOSIS': return '🔍';
-            case 'PRESCRIPTION': return '💊';
-            case 'LAB': return '🔬';
-            case 'IMAGING': return '🏥';
+            case 'consultation': return '📋';
+            case 'diagnosis': return '🔍';
+            case 'prescription': return '💊';
+            case 'lab_result': return '🔬';
+            case 'imaging': return '🏥';
+            case 'procedure': return '⚕️';
+            case 'note': return '📝';
             default: return '📄';
         }
+    };
+
+    const formatRecordType = (type) => {
+        const types = {
+            'consultation': 'Consultation',
+            'diagnosis': 'Diagnosis',
+            'prescription': 'Prescription',
+            'lab_result': 'Lab Result',
+            'imaging': 'Imaging',
+            'procedure': 'Procedure',
+            'note': 'Clinical Note',
+            'other': 'Other'
+        };
+        return types[type] || type;
     };
 
     return (
@@ -112,8 +131,8 @@ function MedicalRecords() {
                         💊 Prescriptions
                     </button>
                     <button
-                        className={`filter-tab ${filter === 'lab' ? 'active' : ''}`}
-                        onClick={() => setFilter('lab')}
+                        className={`filter-tab ${filter === 'lab_result' ? 'active' : ''}`}
+                        onClick={() => setFilter('lab_result')}
                     >
                         🔬 Lab Results
                     </button>
@@ -122,6 +141,18 @@ function MedicalRecords() {
                         onClick={() => setFilter('imaging')}
                     >
                         🏥 Imaging
+                    </button>
+                    <button
+                        className={`filter-tab ${filter === 'procedure' ? 'active' : ''}`}
+                        onClick={() => setFilter('procedure')}
+                    >
+                        ⚕️ Procedures
+                    </button>
+                    <button
+                        className={`filter-tab ${filter === 'note' ? 'active' : ''}`}
+                        onClick={() => setFilter('note')}
+                    >
+                        📝 Notes
                     </button>
                 </div>
 
@@ -134,35 +165,46 @@ function MedicalRecords() {
                         </div>
                     ) : filteredRecords.length === 0 ? (
                         <div className="empty-state">
-                            <p>No {filter !== 'all' ? filter : ''} records found</p>
+                            <p>No {filter !== 'all' ? formatRecordType(filter).toLowerCase() : ''} records found</p>
                             <p className="empty-hint">Your medical records will appear here</p>
                         </div>
                     ) : (
-                        filteredRecords.map((record) => (
-                            <div key={record.id} className="record-card">
-                                <div className="record-icon">
-                                    {getRecordIcon(record.type)}
-                                </div>
-                                <div className="record-content">
-                                    <div className="record-header">
-                                        <div>
-                                            <h3 className="record-title">{record.title}</h3>
-                                            <p className="record-meta">
-                                                {record.doctor} • {new Date(record.date).toLocaleDateString()}
-                                            </p>
+                        filteredRecords.map((record) => {
+                            const isExpanded = expandedRecords.has(record.id);
+                            const shouldShowToggle = record.summary && record.summary.length > 150;
+
+                            return (
+                                <div key={record.id} className="record-card">
+                                    <div className="record-icon">
+                                        {getRecordIcon(record.type)}
+                                    </div>
+                                    <div className="record-content">
+                                        <div className="record-header">
+                                            <div>
+                                                <h3 className="record-title">{record.title}</h3>
+                                                <p className="record-meta">
+                                                    {record.doctor} {record.doctorRole && `(${record.doctorRole})`} • {new Date(record.date).toLocaleDateString()}
+                                                </p>
+                                            </div>
+                                            <span className="record-type-badge">
+                                                {formatRecordType(record.type)}
+                                            </span>
                                         </div>
-                                        <span className="record-type-badge">
-                                            {record.type}
-                                        </span>
-                                    </div>
-                                    <p className="record-summary">{record.summary}</p>
-                                    <div className="record-actions">
-                                        <button className="action-btn">View Details</button>
-                                        <button className="action-btn">Download</button>
+                                        <p className={`record-summary ${isExpanded ? 'expanded' : 'collapsed'}`}>
+                                            {record.summary}
+                                        </p>
+                                        {shouldShowToggle && (
+                                            <button
+                                                className="expand-btn"
+                                                onClick={() => toggleExpand(record.id)}
+                                            >
+                                                {isExpanded ? 'Show Less' : 'Show More'}
+                                            </button>
+                                        )}
                                     </div>
                                 </div>
-                            </div>
-                        ))
+                            );
+                        })
                     )}
                 </div>
 

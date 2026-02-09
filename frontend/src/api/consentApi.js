@@ -1,4 +1,4 @@
-import apiClient from './authApi';
+import apiClient from './client';
 export const consentApi = {
     // Get all active consents for current patient
     getActiveConsents: async () => {
@@ -15,6 +15,11 @@ export const consentApi = {
         const response = await apiClient.post('/consent/grant', consentData);
         return response.data;
     },
+    // Link to update consent
+    updateConsent: async (consentId, consentData) => {
+        const response = await apiClient.put(`/consent/${consentId}`, consentData);
+        return response.data;
+    },
     // Revoke consent
     revokeConsent: async (consentId) => {
         const response = await apiClient.put(`/consent/revoke/${consentId}`);
@@ -23,6 +28,7 @@ export const consentApi = {
     // Get available doctors for consent
     getAvailableDoctors: async () => {
         const response = await apiClient.get('/users/doctors');
-        return response.data;
+        // Handle { success: true, data: [...] } structure or direct array
+        return response.data.data || response.data;
     },
 };
