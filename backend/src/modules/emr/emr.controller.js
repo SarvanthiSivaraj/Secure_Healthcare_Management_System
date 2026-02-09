@@ -26,7 +26,7 @@ class EmrController {
             const hasWriteConsent = await checkConsent(
                 patientId,
                 createdBy,
-                'medical_records',
+                'all', // Use 'all' to match consent data_category
                 'write' // WRITE consent required to create records
             );
 
@@ -126,7 +126,7 @@ class EmrController {
                 const hasConsent = await checkConsent(
                     patientId,
                     userId,
-                    'medical_records',
+                    'all', // Use 'all' to match consent data_category
                     'read'
                 );
 

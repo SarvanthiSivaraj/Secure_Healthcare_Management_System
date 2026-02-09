@@ -207,18 +207,31 @@ const getConsentHistory = async (patientId) => {
 const checkConsent = async (patientId, recipientUserId, dataCategory, accessLevel = 'read') => {
     try {
         const checkQuery = `
-            SELECT 1 
+            SELECT access_level 
             FROM consents 
             WHERE patient_id = $1 
                 AND recipient_user_id = $2
-                AND (data_category = $3 OR data_category = 'all_medical_data' OR data_category = '*')
-                AND (access_level = $4 OR access_level = 'write') -- write grants read access too
+                AND (data_category = $3 OR data_category = 'all' OR data_category = 'all_medical_data' OR data_category = '*')
                 AND status = 'active'
                 AND (end_time IS NULL OR end_time > NOW())
         `;
 
-        const result = await query(checkQuery, [patientId, recipientUserId, dataCategory, accessLevel]);
-        return result.rows.length > 0;
+        const result = await query(checkQuery, [patientId, recipientUserId, dataCategory]);
+        
+        if (result.rows.length === 0) {
+            return false;
+        }
+
+        // Check if access level is sufficient
+        const consentAccessLevel = result.rows[0].access_level;
+        
+        // If requesting write access, consent must have write access
+        if (accessLevel === 'write') {
+            return consentAccessLevel === 'write';
+        }
+        
+        // If requesting read access, either read or write is acceptable
+        return consentAccessLevel === 'read' || consentAccessLevel === 'write';
     } catch (error) {
         logger.error('Failed to check consent:', error);
         throw error;
