@@ -154,7 +154,7 @@ function AppRoutes() {
                 <Route
                     path="/lab/dashboard"
                     element={
-                        <ProtectedRoute allowedRoles={['LAB_TECH']}>
+                        <ProtectedRoute allowedRoles={['LAB_TECH', 'LAB_TECHNICIAN']}>
                             <LabDashboard />
                         </ProtectedRoute>
                     }
@@ -172,7 +172,7 @@ function AppRoutes() {
                 <Route
                     path="/admin/dashboard"
                     element={
-                        <ProtectedRoute allowedRoles={['ADMIN', 'HOSPITAL_ADMIN']}>
+                        <ProtectedRoute allowedRoles={['ADMIN', 'HOSPITAL_ADMIN', 'SYSTEM_ADMIN']}>
                             <AdminDashboard />
                         </ProtectedRoute>
                     }
@@ -199,7 +199,7 @@ function AppRoutes() {
                 <Route
                     path="/admin/visits"
                     element={
-                        <ProtectedRoute allowedRoles={['ADMIN', 'HOSPITAL_ADMIN']}>
+                        <ProtectedRoute allowedRoles={['ADMIN', 'HOSPITAL_ADMIN', 'SYSTEM_ADMIN']}>
                             <ManageVisits />
                         </ProtectedRoute>
                     }
@@ -208,7 +208,15 @@ function AppRoutes() {
                 <Route
                     path="/staff/dashboard"
                     element={
-                        <ProtectedRoute allowedRoles={['STAFF']}>
+                        <ProtectedRoute allowedRoles={[
+                            'STAFF',
+                            'NURSE',
+                            'RECEPTIONIST',
+                            'PHARMACIST',
+                            'INSURANCE_PROVIDER',
+                            'RESEARCHER',
+                            'COMPLIANCE_OFFICER'
+                        ]}>
                             <StaffDashboard />
                         </ProtectedRoute>
                     }
