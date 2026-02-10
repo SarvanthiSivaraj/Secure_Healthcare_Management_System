@@ -196,3 +196,68 @@ Secure_Healthcare_Management_System/
 **Schedulers:** Background jobs for consent expiry, emergency access expiry, and backups  
 
 ---
+
+## Installation & Setup
+
+### Prerequisites
+- Node.js (v16+)
+- PostgreSQL (v12+)
+
+### 1. Database Setup
+1. Create a PostgreSQL database (default name: `healthcare_db`).
+2. Navigate to the `backend` directory:
+   ```bash
+   cd backend
+   ```
+3. Configure environment variables (create `.env` based on `.env.example`).
+4. Run migrations and seed data:
+   ```bash
+   npm install
+   npm run db:migrate  # Creates tables
+   npm run db:seed     # Creates initial roles and admin user
+   ```
+
+### 2. Backend Setup
+1. Start the server in development mode:
+   ```bash
+   npm run dev
+   ```
+   Server runs on `http://localhost:5000` (default).
+
+### 3. Frontend Setup
+1. Navigate to the `frontend` directory:
+   ```bash
+   cd ../frontend
+   ```
+2. Install dependencies:
+   ```bash
+   npm install
+   ```
+3. Start the React app:
+   ```bash
+   npm start
+   ```
+   App runs on `http://localhost:3000`.
+
+---
+
+## Testing
+
+### Backend Tests
+Navigate to `backend/` and run:
+- **Unit/Integration Tests:** `npm test`
+- **Manual Verification:** 
+  Run standalone scripts in `backend/` to verify logic:
+  ```bash
+  node test_admin_login.js
+  ```
+
+### Manual Testing with Postman
+1. **Login:** `POST /api/auth/login`
+2. **Use Token:** Add the returned `accessToken` to the `Authorization` header (`Bearer <token>`) for subsequent requests.
+
+---
+
+## Contact
+**Project Team:**  
+[Add Team Members Here]

@@ -50,13 +50,35 @@ const seed = async () => {
         const patientPassword = await bcrypt.hash('Patient@123', 10);
 
         // Seed Admin
-        await pool.query(
+        const adminUserRes = await pool.query(
             `INSERT INTO users (email, password_hash, first_name, last_name, role_id, is_verified, status)
              VALUES ($1, $2, $3, $4, $5, $6, $7)
-             ON CONFLICT (email) DO NOTHING`,
+             ON CONFLICT (email) DO UPDATE SET status = 'active'
+             RETURNING id`,
             ['admin@healthcare.com', hashedPassword, 'System', 'Admin', adminRoleId, true, 'active']
         );
+        const adminUserId = adminUserRes.rows[0].id;
         logger.info('✅ Default Admin user seeded (admin@healthcare.com / Admin@123)');
+
+        // Seed Organization
+        const orgRes = await pool.query(
+            `INSERT INTO organizations (name, type, license_number, status, email, phone, address)
+             VALUES ($1, $2, $3, $4, $5, $6, $7)
+             ON CONFLICT (license_number) DO UPDATE SET status = 'active'
+             RETURNING id`,
+            ['General Hospital', 'hospital', 'ORG-001', 'active', 'info@generalhospital.com', '555-0123', '123 Health St']
+        );
+        const orgId = orgRes.rows[0].id;
+        logger.info('✅ Organization seeded (General Hospital)');
+
+        // Link Admin to Organization (for testing optional Org ID logic)
+        await pool.query(
+            `INSERT INTO staff_org_mapping (user_id, organization_id, role_id, status)
+             VALUES ($1, $2, $3, $4)
+             ON CONFLICT (user_id, organization_id) DO NOTHING`,
+            [adminUserId, orgId, adminRoleId, 'active']
+        );
+        logger.info('✅ Admin linked to General Hospital');
 
         // Seed Doctors
         const doctors = [
@@ -75,7 +97,7 @@ const seed = async () => {
                  RETURNING id`,
                 [doc.email, doctorPassword, doc.firstName, doc.lastName, doctorRole, true, 'active']
             );
-            
+
             const userId = userRes.rows[0].id;
 
             await pool.query(
@@ -87,6 +109,28 @@ const seed = async () => {
         }
         logger.info('✅ Doctor users seeded (Password: Doctor@123)');
 
+        // Seed Nurses
+        const nurseRole = (await pool.query("SELECT id FROM roles WHERE name = 'nurse'")).rows[0].id;
+        const nursePassword = await bcrypt.hash('Nurse@123', 10);
+
+        const nurses = [
+            { email: 'nurse.joy@healthcare.com', firstName: 'Joy', lastName: 'Nurse' },
+            { email: 'nurse.jackie@healthcare.com', firstName: 'Jackie', lastName: 'Peyton' },
+            { email: 'carla.espinosa@healthcare.com', firstName: 'Carla', lastName: 'Espinosa' }
+        ];
+
+        for (const nurse of nurses) {
+            await pool.query(
+                `INSERT INTO users (email, password_hash, first_name, last_name, role_id, is_verified, status)
+                 VALUES ($1, $2, $3, $4, $5, $6, $7)
+                 ON CONFLICT (email) DO UPDATE SET 
+                    first_name = EXCLUDED.first_name,
+                    last_name = EXCLUDED.last_name`,
+                [nurse.email, nursePassword, nurse.firstName, nurse.lastName, nurseRole, true, 'active']
+            );
+        }
+        logger.info('✅ Nurse users seeded (Password: Nurse@123)');
+
         // Seed Patient
         const patientUser = await pool.query(
             `INSERT INTO users (email, password_hash, first_name, last_name, role_id, is_verified, status)
@@ -95,14 +139,14 @@ const seed = async () => {
              RETURNING id`,
             ['patient@example.com', patientPassword, 'John', 'Doe', patientRole, true, 'active']
         );
-        
+
         const patientId = patientUser.rows[0].id;
-        
+
         await pool.query(
-            `INSERT INTO patient_profiles (user_id, date_of_birth, gender, address)
-             VALUES ($1, $2, $3, $4)
+            `INSERT INTO patient_profiles (user_id, unique_health_id, date_of_birth, gender, address)
+             VALUES ($1, $2, $3, $4, $5)
              ON CONFLICT (user_id) DO NOTHING`,
-            [patientId, '1990-01-01', 'Male', '123 Main St']
+            [patientId, 'UHID-TEST-001', '1990-01-01', 'male', '123 Main St']
         );
         logger.info('✅ Patient user seeded (patient@example.com / Patient@123)');
 

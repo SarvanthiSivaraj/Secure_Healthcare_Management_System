@@ -3,6 +3,8 @@ const DiagnosisModel = require('../../models/diagnosis.model');
 const PrescriptionModel = require('../../models/prescription.model');
 const LabResultModel = require('../../models/lab_result.model');
 const ImagingReportModel = require('../../models/imaging_report.model');
+const LabOrderModel = require('../../models/lab_order.model');
+const ImagingOrderModel = require('../../models/imaging_order.model');
 const FileUploadService = require('../../services/file.upload.service');
 const DicomService = require('../../services/dicom.service');
 const PrescriptionValidatorService = require('../../services/prescription.validator.service');
@@ -319,6 +321,27 @@ class EmrController {
     }
 
     /**
+     * Get prescriptions for a visit
+     */
+    static async getPrescriptions(req, res) {
+        try {
+            const { visitId } = req.params;
+            const prescriptions = await PrescriptionModel.findByVisitId(visitId);
+
+            res.json({
+                success: true,
+                data: prescriptions
+            });
+        } catch (error) {
+            console.error('Get prescriptions error:', error);
+            res.status(500).json({
+                success: false,
+                message: 'Failed to retrieve prescriptions'
+            });
+        }
+    }
+
+    /**
      * Check drug interactions
      */
     static async checkDrugInteractions(req, res) {
@@ -462,6 +485,60 @@ class EmrController {
         }
     }
 
+    /**
+     * Create lab order
+     */
+    static async createLabOrder(req, res) {
+        try {
+            const { visitId, testName, testCode, testCategory, priority, clinicalIndication, notes } = req.body;
+            const orderedBy = req.user.id;
+
+            const order = await LabOrderModel.createOrder({
+                visitId,
+                orderedBy,
+                testName,
+                testCode,
+                testCategory,
+                priority,
+                clinicalIndication,
+                notes
+            });
+
+            res.status(201).json({
+                success: true,
+                message: 'Lab order created successfully',
+                data: order
+            });
+        } catch (error) {
+            console.error('Create lab order error:', error);
+            res.status(500).json({
+                success: false,
+                message: error.message || 'Failed to create lab order'
+            });
+        }
+    }
+
+    /**
+     * Get lab orders for a visit
+     */
+    static async getLabOrders(req, res) {
+        try {
+            const { visitId } = req.params;
+            const orders = await LabOrderModel.getVisitOrders(visitId);
+
+            res.json({
+                success: true,
+                data: orders
+            });
+        } catch (error) {
+            console.error('Get lab orders error:', error);
+            res.status(500).json({
+                success: false,
+                message: 'Failed to retrieve lab orders'
+            });
+        }
+    }
+
     // ==================== Imaging Reports ====================
 
     /**
@@ -549,6 +626,60 @@ class EmrController {
             res.status(500).json({
                 success: false,
                 message: error.message || 'Failed to upload imaging report'
+            });
+        }
+    }
+
+    /**
+     * Create imaging order
+     */
+    static async createImagingOrder(req, res) {
+        try {
+            const { visitId, imagingType, bodyPart, priority, clinicalIndication, contrastUsed, notes } = req.body;
+            const orderedBy = req.user.id;
+
+            const order = await ImagingOrderModel.createOrder({
+                visitId,
+                orderedBy,
+                imagingType,
+                bodyPart,
+                priority,
+                clinicalIndication,
+                contrastUsed,
+                notes
+            });
+
+            res.status(201).json({
+                success: true,
+                message: 'Imaging order created successfully',
+                data: order
+            });
+        } catch (error) {
+            console.error('Create imaging order error:', error);
+            res.status(500).json({
+                success: false,
+                message: error.message || 'Failed to create imaging order'
+            });
+        }
+    }
+
+    /**
+     * Get imaging orders for a visit
+     */
+    static async getImagingOrders(req, res) {
+        try {
+            const { visitId } = req.params;
+            const orders = await ImagingOrderModel.getVisitOrders(visitId);
+
+            res.json({
+                success: true,
+                data: orders
+            });
+        } catch (error) {
+            console.error('Get imaging orders error:', error);
+            res.status(500).json({
+                success: false,
+                message: 'Failed to retrieve imaging orders'
             });
         }
     }

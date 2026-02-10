@@ -7,16 +7,22 @@ export const userApi = {
         const response = await apiClient.get('/users', { params });
         return response.data;
     },
-    
+
     // Get doctors
     getDoctors: async () => {
-        const response = await apiClient.get('/users', { params: { role: 'DOCTOR' } });
+        const response = await apiClient.get('/users/doctors');
         return response.data;
     },
 
     // Get nurses
     getNurses: async () => {
-        const response = await apiClient.get('/users', { params: { role: 'NURSE' } });
+        const response = await apiClient.get('/users/nurses');
+        return response.data;
+    },
+
+    // Onboard staff
+    onboardStaff: async (data) => {
+        const response = await apiClient.post('/users/staff/onboard', data);
         return response.data;
     }
 };

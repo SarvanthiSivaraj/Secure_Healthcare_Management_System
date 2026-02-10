@@ -26,13 +26,13 @@ const startServer = async () => {
             logger.info(`💚 Health Check: http://localhost:${PORT}/health`);
 
             // Initialize background jobs
-            initializeSessionJobs();
-            logger.info('✅ Session management jobs initialized');
+            // initializeSessionJobs();
+            // logger.info('✅ Session management jobs initialized');
 
             // Initialize consent scheduler
-            const { startConsentScheduler } = require('./services/consent.scheduler');
-            startConsentScheduler();
-            logger.info('✅ Consent scheduler initialized');
+            // const { startConsentScheduler } = require('./services/consent.scheduler');
+            // startConsentScheduler();
+            // logger.info('✅ Consent scheduler initialized');
         });
 
         // Graceful shutdown
@@ -69,8 +69,15 @@ const startServer = async () => {
 
     } catch (error) {
         logger.error('Failed to start server:', error);
+        console.error('>>> FATAL ERROR:', error);
         process.exit(1);
     }
 };
 
-startServer();
+// Start the server
+console.log('>>> Calling startServer()...');
+startServer().catch(error => {
+    console.error('>>> startServer() failed:', error);
+    logger.error('Startup failed:', error);
+    process.exit(1);
+});

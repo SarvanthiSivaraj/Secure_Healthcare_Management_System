@@ -97,6 +97,15 @@ function StaffDashboard() {
                                 Schedule and manage patient appointments with doctors
                             </p>
                         </div>
+                        <div className="nav-card" onClick={() => navigate('/staff/workflow')}>
+                            <div className="nav-card-header">
+                                <h3>Clinical Workflow</h3>
+                                <span className="nav-arrow">→</span>
+                            </div>
+                            <p className="nav-card-description">
+                                Manage beds, tasks, and visit workflows
+                            </p>
+                        </div>
                     </div>
                 </div>
             </div>

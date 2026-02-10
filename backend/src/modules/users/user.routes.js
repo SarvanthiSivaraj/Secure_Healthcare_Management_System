@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const userCompat = require('./user.compat');
+const userController = require('./user.controller');
 const { authenticate } = require('../../middleware/auth.middleware');
 const { requireAdmin, requireSystemAdmin } = require('../../middleware/rbac.middleware');
 const { auditLog } = require('../../middleware/audit.middleware');
@@ -14,7 +14,7 @@ const { asyncHandler } = require('../../middleware/error.middleware');
 router.get(
     '/profile',
     authenticate,
-    asyncHandler(userCompat.getUserProfile)
+    asyncHandler(userController.getUserProfile)
 );
 
 /**
@@ -25,7 +25,18 @@ router.get(
 router.get(
     '/doctors',
     authenticate,
-    asyncHandler(userCompat.getDoctors)
+    asyncHandler(userController.getDoctors)
+);
+
+/**
+ * @route   GET /api/users/nurses
+ * @desc    Get all active nurses
+ * @access  Private
+ */
+router.get(
+    '/nurses',
+    authenticate,
+    asyncHandler(userController.getNurses)
 );
 
 /**
@@ -38,7 +49,7 @@ router.post(
     authenticate,
     requireAdmin,
     auditLog('staff_onboard', 'user'),
-    asyncHandler(userCompat.onboardStaff)
+    asyncHandler(userController.onboardStaff)
 );
 
 /**
@@ -51,7 +62,7 @@ router.put(
     authenticate,
     requireAdmin,
     auditLog('staff_deactivate', 'user'),
-    asyncHandler(userCompat.deactivateStaff)
+    asyncHandler(userController.deactivateStaff)
 );
 
 /**
@@ -64,7 +75,7 @@ router.put(
     authenticate,
     requireAdmin,
     auditLog('license_verify', 'staff_mapping'),
-    asyncHandler(userCompat.verifyLicense)
+    asyncHandler(userController.verifyLicense)
 );
 
 /**
@@ -76,7 +87,7 @@ router.get(
     '/',
     authenticate,
     requireSystemAdmin,
-    asyncHandler(userCompat.getUsers)
+    asyncHandler(userController.getUsers)
 );
 
 module.exports = router;

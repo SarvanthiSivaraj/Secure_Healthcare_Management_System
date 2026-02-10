@@ -32,6 +32,11 @@ export const authApi = {
         const response = await apiClient.post('/auth/logout');
         return response.data;
     },
+    // Verify Token
+    verify: async () => {
+        const response = await apiClient.get('/auth/verify');
+        return response.data;
+    },
 };
 
 export default apiClient;

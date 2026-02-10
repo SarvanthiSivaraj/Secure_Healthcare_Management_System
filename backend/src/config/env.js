@@ -65,7 +65,9 @@ const config = {
 
     // CORS
     cors: {
-        origin: process.env.CORS_ORIGIN || 'http://localhost:3000',
+        origin: process.env.CORS_ORIGIN
+            ? process.env.CORS_ORIGIN.split(',').map(origin => origin.trim())
+            : 'http://localhost:3000',
     },
 
     // File Upload

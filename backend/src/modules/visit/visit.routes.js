@@ -8,8 +8,8 @@ router.post('/request', authenticate, authorize(['patient']), VisitController.re
 router.post('/:id/verify-otp', authenticate, authorize(['patient']), VisitController.verifyVisitOTP);
 
 // Staff/Admin routes
-router.get('/hospital', authenticate, authorize(['hospital_admin', 'doctor', 'nurse', 'receptionist']), VisitController.getHospitalVisits);
-router.post('/:id/approve', authenticate, authorize(['hospital_admin']), VisitController.approveVisit);
-router.patch('/:id/assign', authenticate, authorize(['hospital_admin', 'doctor', 'nurse', 'receptionist']), VisitController.updateVisit);
+router.get('/hospital', authenticate, authorize(['hospital_admin', 'system_admin', 'doctor', 'nurse', 'receptionist']), VisitController.getHospitalVisits);
+router.post('/:id/approve', authenticate, authorize(['hospital_admin', 'system_admin']), VisitController.approveVisit);
+router.patch('/:id/assign', authenticate, authorize(['hospital_admin', 'system_admin', 'doctor', 'nurse', 'receptionist']), VisitController.updateVisit);
 
 module.exports = router;

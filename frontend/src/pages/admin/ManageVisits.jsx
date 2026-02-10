@@ -1,10 +1,13 @@
-
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { visitApi } from '../../api/visitApi'; // Ensure correct import path
 import { userApi } from '../../api/userApi'; // Ensure correct import path
+import Button from '../../components/common/Button';
+import '../patient/Dashboard.css'; // Import the shared dashboard theme
 import './ManageVisits.css';
 
 const ManageVisits = () => {
+    const navigate = useNavigate();
     const [visits, setVisits] = useState([]);
     const [doctors, setDoctors] = useState([]);
     const [nurses, setNurses] = useState([]);
@@ -33,8 +36,9 @@ const ManageVisits = () => {
             setNurses(nursesData.data || []);
 
         } catch (err) {
-            setError('Failed to load data');
-            console.error(err);
+            console.error('Fetch error:', err);
+            const msg = err.response?.data?.message || err.message || 'Failed to load data';
+            setError(`Error: ${msg}`);
         } finally {
             setLoading(false);
         }
@@ -84,79 +88,89 @@ const ManageVisits = () => {
     if (error) return <div className="error">{error}</div>;
 
     return (
-        <div className="manage-visits-container">
-            <h2>Manage Pending Visits</h2>
-
-            {successMessage && <div className="success-message">{successMessage}</div>}
-
-            {visits.length === 0 ? (
-                <p className="no-visits">No pending visit requests.</p>
-            ) : (
-                <div className="visits-table-container">
-                    <table className="visits-table">
-                        <thead>
-                            <tr>
-                                <th>Patient</th>
-                                <th>Reason</th>
-                                <th>Symptoms</th>
-                                <th>Time</th>
-                                <th>Assign Doctor</th>
-                                <th>Assign Nurse</th>
-                                <th>Action</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {visits.map(visit => (
-                                <tr key={visit.id}>
-                                    <td>
-                                        <div className="patient-name">{visit.patient_first_name} {visit.patient_last_name}</div>
-                                        <div className="patient-email">{visit.patient_email}</div>
-                                    </td>
-                                    <td>{visit.reason}</td>
-                                    <td>{visit.symptoms || '-'}</td>
-                                    <td>{new Date(visit.created_at).toLocaleString()}</td>
-                                    <td>
-                                        <select
-                                            value={assignments[visit.id]?.doctorId || ''}
-                                            onChange={(e) => handleAssignmentChange(visit.id, 'doctorId', e.target.value)}
-                                            className="staff-select"
-                                        >
-                                            <option value="">Select Doctor</option>
-                                            {doctors.map(doc => (
-                                                <option key={doc.id} value={doc.id}>
-                                                    Dr. {doc.first_name} {doc.last_name}
-                                                </option>
-                                            ))}
-                                        </select>
-                                    </td>
-                                    <td>
-                                        <select
-                                            value={assignments[visit.id]?.nurseId || ''}
-                                            onChange={(e) => handleAssignmentChange(visit.id, 'nurseId', e.target.value)}
-                                            className="staff-select"
-                                        >
-                                            <option value="">Select Nurse</option>
-                                            {nurses.map(nurse => (
-                                                <option key={nurse.id} value={nurse.id}>
-                                                    {nurse.first_name} {nurse.last_name}
-                                                </option>
-                                            ))}
-                                        </select>
-                                    </td>
-                                    <td>
-                                        <button
-                                            className="assign-btn"
-                                            onClick={() => handleAssign(visit.id)}
-                                        >
-                                            Approve & Get OTP
-                                        </button>
-                                    </td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
+        <div className="dashboard-container">
+            <header className="dashboard-header">
+                <div className="header-content">
+                    <div className="header-left">
+                        <h1>Visit Management</h1>
+                        <p className="header-subtitle">Manage patient visits and staff assignments</p>
+                    </div>
+                    <Button onClick={() => navigate('/admin/dashboard')} variant="secondary">Back to Dashboard</Button>
                 </div>
-            )}
+            </header>
+
+            <div className="dashboard-content">
+                {successMessage && <div className="success-message">{successMessage}</div>}
+
+                <div className="visits-table-container">
+                    {visits.length === 0 ? (
+                        <p className="no-visits">No pending visit requests.</p>
+                    ) : (
+                        <table className="visits-table">
+                            <thead>
+                                <tr>
+                                    <th>Patient</th>
+                                    <th>Reason</th>
+                                    <th>Symptoms</th>
+                                    <th>Time</th>
+                                    <th>Assign Doctor</th>
+                                    <th>Assign Nurse</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {visits.map(visit => (
+                                    <tr key={visit.id}>
+                                        <td>
+                                            <div className="patient-name">{visit.patient_first_name} {visit.patient_last_name}</div>
+                                            <div className="patient-email">{visit.patient_email}</div>
+                                        </td>
+                                        <td>{visit.reason}</td>
+                                        <td>{visit.symptoms || '-'}</td>
+                                        <td>{new Date(visit.created_at).toLocaleString()}</td>
+                                        <td>
+                                            <select
+                                                value={assignments[visit.id]?.doctorId || ''}
+                                                onChange={(e) => handleAssignmentChange(visit.id, 'doctorId', e.target.value)}
+                                                className="staff-select"
+                                            >
+                                                <option value="">Select Doctor</option>
+                                                {doctors.map(doc => (
+                                                    <option key={doc.id} value={doc.id}>
+                                                        Dr. {doc.first_name} {doc.last_name}
+                                                    </option>
+                                                ))}
+                                            </select>
+                                        </td>
+                                        <td>
+                                            <select
+                                                value={assignments[visit.id]?.nurseId || ''}
+                                                onChange={(e) => handleAssignmentChange(visit.id, 'nurseId', e.target.value)}
+                                                className="staff-select"
+                                            >
+                                                <option value="">Select Nurse</option>
+                                                {nurses.map(nurse => (
+                                                    <option key={nurse.id} value={nurse.id}>
+                                                        {nurse.first_name} {nurse.last_name}
+                                                    </option>
+                                                ))}
+                                            </select>
+                                        </td>
+                                        <td>
+                                            <button
+                                                className="assign-btn"
+                                                onClick={() => handleAssign(visit.id)}
+                                            >
+                                                Approve & Get OTP
+                                            </button>
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    )}
+                </div>
+            </div>
         </div>
     );
 };

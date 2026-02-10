@@ -1,19 +1,13 @@
-.manage-visits-container {
-    padding: 2rem;
-    background-color: #f8fafc;
-    min-height: 100vh;
-}
-
-.manage-visits-container h2 {
-    color: #2d3748;
-    margin-bottom: 2rem;
-}
+/* Remove container styles as they are now handled by Dashboard.css */
+/* .manage-visits-container { ... } */
 
 .visits-table-container {
     background: white;
-    border-radius: 8px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    border-radius: 12px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
     overflow-x: auto;
+    border: 1px solid #e2e8f0;
+    padding: 1rem;
 }
 
 .visits-table {

@@ -87,6 +87,29 @@ class PrescriptionModel {
     }
 
     /**
+     * Get all prescriptions for a visit
+     * @param {string} visitId - Visit ID
+     * @returns {Promise<Array>} Prescriptions
+     */
+    static async findByVisitId(visitId) {
+        const query = `
+            SELECT 
+                p.*,
+                u.first_name || ' ' || u.last_name as prescribed_by_name,
+                r.name as prescribed_by_role
+            FROM prescriptions p
+            JOIN medical_records mr ON p.record_id = mr.id
+            JOIN users u ON p.prescribed_by = u.id
+            JOIN roles r ON u.role_id = r.id
+            WHERE mr.visit_id = $1
+            ORDER BY p.prescribed_at DESC
+        `;
+
+        const result = await pool.query(query, [visitId]);
+        return result.rows;
+    }
+
+    /**
      * Get all prescriptions for a patient
      * @param {string} patientId - Patient user ID
      * @param {Object} options - Query options
