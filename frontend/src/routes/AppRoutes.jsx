@@ -27,6 +27,9 @@ import VerifyVisitOTP from '../pages/patient/VerifyVisitOTP';
 import AcceptInvitation from '../pages/auth/AcceptInvitation';
 import StaffManagement from '../pages/admin/StaffManagement';
 import WorkflowDashboard from '../pages/staff/WorkflowDashboard';
+import UserManagement from '../pages/admin/UserManagement';
+import AuditLogs from '../pages/admin/AuditLogs';
+import DoctorRegistration from '../pages/admin/DoctorRegistration';
 
 function AppRoutes() {
     return (
@@ -214,6 +217,33 @@ function AppRoutes() {
                     element={
                         <ProtectedRoute allowedRoles={['ADMIN', 'HOSPITAL_ADMIN', 'SYSTEM_ADMIN']}>
                             <StaffManagement />
+                        </ProtectedRoute>
+                    }
+                />
+
+                <Route
+                    path="/admin/users"
+                    element={
+                        <ProtectedRoute allowedRoles={['ADMIN', 'HOSPITAL_ADMIN', 'SYSTEM_ADMIN']}>
+                            <UserManagement />
+                        </ProtectedRoute>
+                    }
+                />
+
+                <Route
+                    path="/admin/audit-logs"
+                    element={
+                        <ProtectedRoute allowedRoles={['ADMIN', 'HOSPITAL_ADMIN', 'SYSTEM_ADMIN']}>
+                            <AuditLogs />
+                        </ProtectedRoute>
+                    }
+                />
+
+                <Route
+                    path="/admin/doctor-registration"
+                    element={
+                        <ProtectedRoute allowedRoles={['ADMIN', 'HOSPITAL_ADMIN', 'SYSTEM_ADMIN']}>
+                            <DoctorRegistration />
                         </ProtectedRoute>
                     }
                 />

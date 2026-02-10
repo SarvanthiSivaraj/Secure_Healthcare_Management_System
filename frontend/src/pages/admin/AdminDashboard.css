@@ -1,0 +1,55 @@
+/* Inherit base styles from Patient Dashboard but override specific elements */
+@import '../patient/Dashboard.css';
+
+/* Fix for Stat Cards Text Color */
+.stat-item .stat-number {
+    color: #FFFFFF !important;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+.stat-item .stat-label {
+    color: rgba(255, 255, 255, 0.95) !important;
+    font-weight: 500;
+}
+
+/* Ensure Nav Cards look correct */
+.nav-card {
+    background: white;
+    border: 1px solid #e2e8f0;
+    transition: all 0.3s ease;
+}
+
+.nav-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 10px 20px rgba(0, 102, 204, 0.1);
+    border-color: #0066cc;
+}
+
+.nav-card-header h3 {
+    color: #2d3748;
+}
+
+.nav-card:hover .nav-card-header h3 {
+    color: #0066cc;
+}
+
+/* User Info Bar specific tweaks for Admin */
+.user-info-bar {
+    background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+    border: 1px solid #e2e8f0;
+}
+
+.status-text {
+    color: #059669;
+    /* Green for active/full access */
+}
+
+.account-status {
+    background: #ecfdf5;
+    border-color: #10b981;
+}
+
+.status-indicator {
+    background: #10b981;
+    box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.2);
+}

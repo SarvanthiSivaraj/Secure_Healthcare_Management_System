@@ -2,7 +2,7 @@ import React, { useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AuthContext } from '../../context/AuthContext';
 import Button from '../../components/common/Button';
-import '../patient/Dashboard.css';
+import './AdminDashboard.css';
 
 function AdminDashboard() {
     const { user, logout } = useContext(AuthContext);
@@ -58,13 +58,33 @@ function AdminDashboard() {
                     <h2 className="section-title">Administration</h2>
 
                     <div className="nav-grid">
-                        <div className="nav-card" onClick={() => navigate('/admin/staff')}>
+                        <div className="nav-card" onClick={() => navigate('/admin/users')}>
                             <div className="nav-card-header">
-                                <h3>Staff Management</h3>
+                                <h3>User Management</h3>
                                 <span className="nav-arrow">→</span>
                             </div>
                             <p className="nav-card-description">
-                                Invite staff members and manage staff invitations across the organization
+                                Manage user accounts, roles, and access permissions across the system
+                            </p>
+                        </div>
+
+                        <div className="nav-card" onClick={() => navigate('/admin/doctor-registration')}>
+                            <div className="nav-card-header">
+                                <h3>Doctor Registration</h3>
+                                <span className="nav-arrow">→</span>
+                            </div>
+                            <p className="nav-card-description">
+                                Register and verify healthcare providers and medical staff
+                            </p>
+                        </div>
+
+                        <div className="nav-card" onClick={() => navigate('/admin/audit-logs')}>
+                            <div className="nav-card-header">
+                                <h3>System Audit Logs</h3>
+                                <span className="nav-arrow">→</span>
+                            </div>
+                            <p className="nav-card-description">
+                                Review comprehensive system activity and security audit trails
                             </p>
                         </div>
 
@@ -78,13 +98,13 @@ function AdminDashboard() {
                             </p>
                         </div>
 
-                        <div className="nav-card" onClick={() => navigate('/staff/workflow')}>
+                        <div className="nav-card" onClick={() => navigate('/admin/staff')}>
                             <div className="nav-card-header">
-                                <h3>Clinical Workflow</h3>
+                                <h3>Staff Management</h3>
                                 <span className="nav-arrow">→</span>
                             </div>
                             <p className="nav-card-description">
-                                <strong>New:</strong> Manage bed allocation and active tasks
+                                Invite staff members and manage staff invitations across the organization
                             </p>
                         </div>
 

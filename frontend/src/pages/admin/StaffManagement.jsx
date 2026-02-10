@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { staffApi } from '../../api/staffApi';
 import Button from '../../components/common/Button';
 import Input from '../../components/common/Input';
@@ -19,23 +19,19 @@ function StaffManagement() {
         organizationId: '',
     });
 
-    useEffect(() => {
-        loadData();
-    }, []);
-
-    const loadData = async () => {
+    const loadData = useCallback(async () => {
         setLoading(true);
         try {
             const [invitationsRes, statsRes] = await Promise.all([
                 staffApi.getInvitations(),
-                staffApi.getInvitationStats(),
+                staffApi.getInvitationStats()
             ]);
 
             if (invitationsRes.success) {
                 setInvitations(invitationsRes.data || []);
             }
 
-            if (statsRes.success) {
+            if (statsRes && statsRes.success) {
                 setStats(statsRes.data);
             }
         } catch (err) {
@@ -43,7 +39,11 @@ function StaffManagement() {
         } finally {
             setLoading(false);
         }
-    };
+    }, []);
+
+    useEffect(() => {
+        loadData();
+    }, [loadData]);
 
     const handleChange = (e) => {
         setFormData({ ...formData, [e.target.name]: e.target.value });

@@ -16,6 +16,7 @@ const workflowRoutes = require('./modules/workflow/workflow.routes');
 // Phase 1: Staff Management routes
 const staffRoutes = require('./modules/staff/staff.routes');
 const doctorVerificationRoutes = require('./modules/doctors/doctor.verification.routes');
+const auditRoutes = require('./modules/audit/audit.routes');
 
 
 const app = express();
@@ -75,6 +76,7 @@ app.use('/api/workflow', workflowRoutes);
 app.use('/api/staff', staffRoutes);
 app.use('/api/doctors/verification', doctorVerificationRoutes);
 app.use('/api/visits', require('./modules/visit/visit.routes'));
+app.use('/api/audit', auditRoutes);
 
 
 // 404 handler
