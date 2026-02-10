@@ -5,6 +5,7 @@ const { authenticate, authorize } = require('../../middleware/auth.middleware');
 
 // Patient routes
 router.post('/request', authenticate, authorize(['patient']), VisitController.requestVisit);
+router.get('/my-visits', authenticate, authorize(['patient']), VisitController.getMyVisits);
 router.post('/:id/verify-otp', authenticate, authorize(['patient']), VisitController.verifyVisitOTP);
 
 // Staff/Admin routes

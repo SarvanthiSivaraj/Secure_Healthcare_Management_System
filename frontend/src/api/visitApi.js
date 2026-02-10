@@ -8,6 +8,30 @@ export const visitApi = {
         return response.data;
     },
 
+    // Patient: Get my visits
+    getMyVisits: async () => {
+        const response = await apiClient.get('/visits/my-visits');
+        const visits = response.data.visits || response.data || [];
+
+        // Transform snake_case backend data to camelCase for frontend
+        return visits.map(visit => ({
+            ...visit,
+            doctorName: visit.doctor_first_name && visit.doctor_last_name
+                ? `${visit.doctor_first_name} ${visit.doctor_last_name}`
+                : 'Unassigned',
+            nurseName: visit.nurse_first_name && visit.nurse_last_name
+                ? `${visit.nurse_first_name} ${visit.nurse_last_name}`
+                : null,
+            patientName: visit.patient_first_name && visit.patient_last_name
+                ? `${visit.patient_first_name} ${visit.patient_last_name}`
+                : null,
+            scheduledTime: visit.scheduled_time,
+            visitCode: visit.visit_code,
+            visitType: visit.reason || visit.visit_type,
+            organizationName: visit.organization_name
+        }));
+    },
+
     // Admin/Staff: Get hospital visits
     getHospitalVisits: async (status = null) => {
         const params = status ? { status } : {};
@@ -22,10 +46,11 @@ export const visitApi = {
     },
 
     // Admin: Approve visit and assign doctor/nurse (generates OTP)
-    approveVisit: async (visitId, doctorId, nurseId = null) => {
+    approveVisit: async (visitId, doctorId, nurseId = null, scheduledTime = null) => {
         const response = await apiClient.post(`/visits/${visitId}/approve`, {
             doctorId,
-            nurseId
+            nurseId,
+            scheduledTime
         });
         return response.data;
     },
@@ -37,6 +62,23 @@ export const visitApi = {
             accessLevel
         });
         return response.data;
+    },
+
+    // Patient: Check in with code (Smart wrapper)
+    checkIn: async (otp) => {
+        // 1. Get my visits (returns transformed data with camelCase)
+        const visits = await visitApi.getMyVisits();
+
+        // 2. Find the visit that is in 'approved' state
+        const readyVisit = visits.find(v => v.status === 'approved');
+
+        if (!readyVisit) {
+            throw new Error('No approved visit found to check in to. Please request a visit or wait for approval.');
+        }
+
+        // 3. Verify OTP for that visit
+        // Defaulting accessLevel to 'read' for simple check-in
+        return await visitApi.verifyVisitOTP(readyVisit.id, otp, 'read');
     }
 };
 

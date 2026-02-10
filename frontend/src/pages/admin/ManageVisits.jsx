@@ -61,12 +61,24 @@ const ManageVisits = () => {
             return;
         }
 
+        if (!assignment?.scheduledDate || !assignment?.scheduledTime) {
+            alert('Please select date and time for the visit');
+            return;
+        }
+
         try {
+            // Create scheduled time string
+            const scheduledTime = `${assignment.scheduledDate}T${assignment.scheduledTime}:00`;
+            console.log('Approving visit with:', { visitId, scheduledTime, doctorId: assignment.doctorId, nurseId: assignment.nurseId });
+
+            // Approve visit with scheduled time in one call
             const result = await visitApi.approveVisit(
                 visitId,
                 assignment.doctorId,
-                assignment.nurseId || null
+                assignment.nurseId || null,
+                scheduledTime
             );
+            console.log('Approve result:', result);
 
             // Display OTP prominently
             const otpCode = result.data.otp;
@@ -79,8 +91,10 @@ const ManageVisits = () => {
 
             setTimeout(() => setSuccessMessage(null), 10000);
         } catch (err) {
-            alert('Failed to approve visit: ' + (err.response?.data?.message || err.message));
-            console.error(err);
+            const errorMsg = err.response?.data?.message || err.message || 'Unknown error';
+            console.error('Full error:', err);
+            console.error('Error response:', err.response);
+            alert('Failed to approve visit: ' + errorMsg);
         }
     };
 
@@ -112,6 +126,7 @@ const ManageVisits = () => {
                                     <th>Patient</th>
                                     <th>Reason</th>
                                     <th>Symptoms</th>
+                                    <th>Date</th>
                                     <th>Time</th>
                                     <th>Assign Doctor</th>
                                     <th>Assign Nurse</th>
@@ -127,7 +142,23 @@ const ManageVisits = () => {
                                         </td>
                                         <td>{visit.reason}</td>
                                         <td>{visit.symptoms || '-'}</td>
-                                        <td>{new Date(visit.created_at).toLocaleString()}</td>
+                                        <td>
+                                            <input
+                                                type="date"
+                                                value={assignments[visit.id]?.scheduledDate || ''}
+                                                onChange={(e) => handleAssignmentChange(visit.id, 'scheduledDate', e.target.value)}
+                                                className="date-input"
+                                                min={new Date().toISOString().split('T')[0]}
+                                            />
+                                        </td>
+                                        <td>
+                                            <input
+                                                type="time"
+                                                value={assignments[visit.id]?.scheduledTime || ''}
+                                                onChange={(e) => handleAssignmentChange(visit.id, 'scheduledTime', e.target.value)}
+                                                className="time-input"
+                                            />
+                                        </td>
                                         <td>
                                             <select
                                                 value={assignments[visit.id]?.doctorId || ''}
@@ -137,7 +168,7 @@ const ManageVisits = () => {
                                                 <option value="">Select Doctor</option>
                                                 {doctors.map(doc => (
                                                     <option key={doc.id} value={doc.id}>
-                                                        Dr. {doc.first_name} {doc.last_name}
+                                                        Dr. {doc.firstName} {doc.lastName}
                                                     </option>
                                                 ))}
                                             </select>
@@ -151,7 +182,7 @@ const ManageVisits = () => {
                                                 <option value="">Select Nurse</option>
                                                 {nurses.map(nurse => (
                                                     <option key={nurse.id} value={nurse.id}>
-                                                        {nurse.first_name} {nurse.last_name}
+                                                        {nurse.firstName} {nurse.lastName}
                                                     </option>
                                                 ))}
                                             </select>

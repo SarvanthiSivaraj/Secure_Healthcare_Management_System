@@ -47,11 +47,15 @@ function VisitCard({ visit, onAction, showActions = true, userRole = 'patient' }
             <div className="visit-details">
                 <div className="visit-detail-row">
                     <span className="detail-label">Date</span>
-                    <span className="detail-value">{formatDate(visit.scheduledTime)}</span>
+                    <span className="detail-value">
+                        {visit.scheduledTime ? formatDate(visit.scheduledTime) : 'Not Scheduled Yet'}
+                    </span>
                 </div>
                 <div className="visit-detail-row">
                     <span className="detail-label">Time</span>
-                    <span className="detail-value">{formatTime(visit.scheduledTime)}</span>
+                    <span className="detail-value">
+                        {visit.scheduledTime ? formatTime(visit.scheduledTime) : 'Not Scheduled Yet'}
+                    </span>
                 </div>
                 {visit.visitCode && userRole === 'patient' && (
                     <div className="visit-detail-row">

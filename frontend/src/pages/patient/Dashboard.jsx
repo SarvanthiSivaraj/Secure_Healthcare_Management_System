@@ -1,6 +1,9 @@
-import React, { useContext, useState } from 'react';
+import React, { useContext, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AuthContext } from '../../context/AuthContext';
+import { consentApi } from '../../api/consentApi';
+import { visitApi } from '../../api/visitApi';
+import { emrApi } from '../../api/emrApi';
 import Button from '../../components/common/Button';
 import './Dashboard.css';
 
@@ -9,6 +12,37 @@ function PatientDashboard() {
     const navigate = useNavigate();
     const { user, logout } = useContext(AuthContext);
     const [showHealthId, setShowHealthId] = useState(false);
+    const [stats, setStats] = useState({
+        activeConsents: 0,
+        medicalRecords: 0,
+        scheduledVisits: 0,
+        accessLogs: 0
+    });
+
+    useEffect(() => {
+        const fetchStats = async () => {
+            if (!user?.id) return;
+
+            try {
+                const [consentsRes, recordsRes, visitsRes] = await Promise.allSettled([
+                    consentApi.getActiveConsents(),
+                    emrApi.getPatientMedicalRecords(user.id),
+                    visitApi.getMyVisits()
+                ]);
+
+                setStats({
+                    activeConsents: consentsRes.status === 'fulfilled' ? (consentsRes.value?.length || 0) : 0,
+                    medicalRecords: recordsRes.status === 'fulfilled' ? (recordsRes.value?.data?.records?.length || recordsRes.value?.data?.length || 0) : 0,
+                    scheduledVisits: visitsRes.status === 'fulfilled' ? (visitsRes.value?.filter(v => v.status === 'approved' || v.status === 'pending').length || 0) : 0,
+                    accessLogs: 0 // TODO: Implement access logs API
+                });
+            } catch (error) {
+                console.error('Failed to fetch dashboard stats:', error);
+            }
+        };
+
+        fetchStats();
+    }, [user?.id]);
 
     return (
         <div className="dashboard-container">
@@ -63,19 +97,19 @@ function PatientDashboard() {
                 {/* Stats Overview */}
                 <div className="stats-overview">
                     <div className="stat-item">
-                        <div className="stat-number">0</div>
+                        <div className="stat-number">{stats.activeConsents}</div>
                         <div className="stat-label">Active Consents</div>
                     </div>
                     <div className="stat-item">
-                        <div className="stat-number">0</div>
+                        <div className="stat-number">{stats.medicalRecords}</div>
                         <div className="stat-label">Medical Records</div>
                     </div>
                     <div className="stat-item">
-                        <div className="stat-number">0</div>
+                        <div className="stat-number">{stats.scheduledVisits}</div>
                         <div className="stat-label">Scheduled Visits</div>
                     </div>
                     <div className="stat-item">
-                        <div className="stat-number">0</div>
+                        <div className="stat-number">{stats.accessLogs}</div>
                         <div className="stat-label">Access Logs</div>
                     </div>
                 </div>

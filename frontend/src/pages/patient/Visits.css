@@ -59,6 +59,14 @@
     min-width: 200px;
 }
 
+.action-buttons {
+    display: flex;
+    gap: 16px;
+    margin-top: 16px;
+    flex-wrap: wrap;
+    /* for mobile responsiveness */
+}
+
 /* ========================================
    CHECK-IN SECTION
    ======================================== */

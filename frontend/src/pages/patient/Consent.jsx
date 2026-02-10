@@ -4,7 +4,9 @@ import Button from '../../components/common/Button';
 import ConsentForm from '../../components/consent/ConsentForm';
 import ConsentCard from '../../components/consent/ConsentCard';
 import { consentApi } from '../../api/consentApi';
+import '../patient/Dashboard.css'; // Shared dashboard theme
 import './Consent.css';
+
 function Consent() {
     const navigate = useNavigate();
     const [viewMode, setViewMode] = useState('active'); // 'active' or 'history'
@@ -90,17 +92,20 @@ function Consent() {
     }, [viewMode]);
 
     return (
-        <div className="consent-page">
-            <header className="page-header">
-                <div>
-                    <h1>Consent Management</h1>
-                    <p className="page-subtitle">Control who can access your medical data</p>
+        <div className="dashboard-container">
+            <header className="dashboard-header">
+                <div className="header-content">
+                    <div className="header-left">
+                        <h1>Consent Management</h1>
+                        <p className="header-subtitle">Control who can access your medical data</p>
+                    </div>
+                    <Button onClick={() => navigate('/patient/dashboard')} variant="secondary">
+                        Back to Dashboard
+                    </Button>
                 </div>
-                <Button onClick={() => navigate('/patient/dashboard')} variant="secondary">
-                    Back to Dashboard
-                </Button>
             </header>
-            <div className="consent-content">
+
+            <div className="dashboard-content">
                 {!showForm && (
                     <div className="consent-controls">
                         <div className="view-toggle">
