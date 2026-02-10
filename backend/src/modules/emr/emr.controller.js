@@ -28,7 +28,7 @@ class EmrController {
             const hasWriteConsent = await checkConsent(
                 patientId,
                 createdBy,
-                'medical_records',
+                'all', // Use 'all' to match consent data_category
                 'write' // WRITE consent required to create records
             );
 
@@ -128,7 +128,7 @@ class EmrController {
                 const hasConsent = await checkConsent(
                     patientId,
                     userId,
-                    'medical_records',
+                    'all', // Use 'all' to match consent data_category
                     'read'
                 );
 
@@ -147,6 +147,26 @@ class EmrController {
             });
 
             const count = await MedicalRecordModel.countByPatient(patientId, type);
+
+            // Create audit log for record access
+            const auditService = require('../../services/audit.service');
+            await auditService.createAuditLog({
+                userId,
+                action: 'view_patient_records',
+                entityType: 'medical_record',
+                entityId: patientId,
+                purpose: `View medical records for patient`,
+                ipAddress: req.ip,
+                userAgent: req.headers['user-agent'],
+                requestMethod: req.method,
+                requestPath: req.path,
+                statusCode: 200,
+                metadata: {
+                    patientId: patientId,
+                    recordCount: count,
+                    recordType: type || 'all'
+                }
+            });
 
             res.json({
                 success: true,

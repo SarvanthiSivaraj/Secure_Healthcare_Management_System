@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const auditController = require('./audit.controller');
+const AuditController = require('./audit.controller');
 const { authenticate, authorize } = require('../../middleware/auth.middleware');
 
 /**
@@ -12,7 +12,7 @@ router.get(
     '/logs',
     authenticate,
     authorize('ADMIN', 'SYSTEM_ADMIN'),
-    auditController.getAllAuditLogs
+    AuditController.getAllAuditLogs
 );
 
 /**
@@ -24,7 +24,19 @@ router.get(
     '/users/:userId/logs',
     authenticate,
     authorize('ADMIN', 'SYSTEM_ADMIN'),
-    auditController.getUserAuditLogs
+    AuditController.getUserAuditLogs
+);
+
+/**
+ * @route   GET /api/audit/my-trail
+ * @desc    Get audit trail for the logged-in patient
+ * @access  Private (Patient only)
+ */
+router.get(
+    '/my-trail',
+    authenticate,
+    authorize('PATIENT'),
+    AuditController.getPatientAuditTrail
 );
 
 module.exports = router;

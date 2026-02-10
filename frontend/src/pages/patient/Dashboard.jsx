@@ -149,13 +149,13 @@ function PatientDashboard() {
                             </p>
                         </div>
 
-                        <div className="nav-card">
+                        <div className="nav-card" onClick={() => navigate('/patient/audit-trail')}>
                             <div className="nav-card-header">
-                                <h3>Audit Trail</h3>
+                                <h3>🔍 Audit Trail</h3>
                                 <span className="nav-arrow">→</span>
                             </div>
                             <p className="nav-card-description">
-                                Review detailed logs of all data access and system activities
+                                See who accessed your medical records and when
                             </p>
                         </div>
                     </div>

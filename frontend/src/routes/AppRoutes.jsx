@@ -30,6 +30,7 @@ import WorkflowDashboard from '../pages/staff/WorkflowDashboard';
 import UserManagement from '../pages/admin/UserManagement';
 import AuditLogs from '../pages/admin/AuditLogs';
 import DoctorRegistration from '../pages/admin/DoctorRegistration';
+import AuditTrail from '../pages/patient/AuditTrail';
 
 function AppRoutes() {
     return (
@@ -199,6 +200,15 @@ function AppRoutes() {
                     element={
                         <ProtectedRoute allowedRoles={['PATIENT']}>
                             <VerifyVisitOTP />
+                        </ProtectedRoute>
+                    }
+                />
+
+                <Route
+                    path="/patient/audit-trail"
+                    element={
+                        <ProtectedRoute allowedRoles={['PATIENT']}>
+                            <AuditTrail />
                         </ProtectedRoute>
                     }
                 />

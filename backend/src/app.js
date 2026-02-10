@@ -12,11 +12,12 @@ const userRoutes = require('./modules/users/user.routes');
 const consentRoutes = require('./modules/consent/consent.routes');
 const emrRoutes = require('./modules/emr/emr.routes');
 const workflowRoutes = require('./modules/workflow/workflow.routes');
+const auditRoutes = require('./modules/audit/audit.routes');
 
 // Phase 1: Staff Management routes
 const staffRoutes = require('./modules/staff/staff.routes');
 const doctorVerificationRoutes = require('./modules/doctors/doctor.verification.routes');
-const auditRoutes = require('./modules/audit/audit.routes');
+
 
 
 const app = express();
@@ -64,19 +65,23 @@ app.use('/api', apiLimiter);
 app.use(`${API_PREFIX}/auth`, authRoutes);
 app.use(`${API_PREFIX}/users`, userRoutes);
 app.use(`${API_PREFIX}/consent`, consentRoutes);
+app.use(`${API_PREFIX}/emr`, emrRoutes);
+app.use(`${API_PREFIX}/visits`, require('./modules/visit/visit.routes'));
+app.use(`${API_PREFIX}/audit`, auditRoutes);
 
 // Mount routes (Legacy /api support for Frontend)
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/consent', consentRoutes);
 app.use('/api/emr', emrRoutes);
+app.use('/api/audit', auditRoutes);
 app.use('/api/workflow', workflowRoutes);
 
 // Phase 1: Staff Management routes
 app.use('/api/staff', staffRoutes);
 app.use('/api/doctors/verification', doctorVerificationRoutes);
 app.use('/api/visits', require('./modules/visit/visit.routes'));
-app.use('/api/audit', auditRoutes);
+
 
 
 // 404 handler
