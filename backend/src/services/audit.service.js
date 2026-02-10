@@ -334,10 +334,94 @@ const verifyAuditLogIntegrity = async () => {
     }
 };
 
+/**
+ * Get audit logs for patient record access
+ * @param {String} patientId - Patient User ID
+ * @param {Object} options - Query options
+ * @returns {Promise<Object>} Audit logs with user details and pagination
+ */
+const getPatientRecordAccessLogs = async (patientId, options = {}) => {
+    try {
+        const { limit = 50, offset = 0, action, startDate, endDate } = options;
+
+        let conditions = [`(a.user_id = $1 OR a.entity_id = $1 OR (a.metadata->>'patientId')::uuid = $1)`];
+        let params = [patientId];
+        let paramIndex = 2;
+
+        const relevantActions = ['view_medical_record', 'create_medical_record', 'update_medical_record', 'view_patient_records', 'consent_grant', 'consent_revoke', 'consent_expired', 'create_diagnosis', 'create_prescription', 'upload_lab_result', 'upload_imaging_report', 'user_login', 'consent_view'];
+
+        logger.info('=== AUDIT TRAIL DEBUG ===');
+        logger.info(`Patient ID: ${patientId}`);
+        logger.info(`Relevant actions: ${JSON.stringify(relevantActions)}`);
+
+        if (action) {
+            conditions.push(`a.action = $${paramIndex}`);
+            params.push(action);
+            paramIndex++;
+        } else {
+            conditions.push(`a.action = ANY($${paramIndex})`);
+            params.push(relevantActions);
+            paramIndex++;
+        }
+
+        if (startDate) {
+            conditions.push(`a.timestamp >= $${paramIndex}`);
+            params.push(startDate);
+            paramIndex++;
+        }
+
+        if (endDate) {
+            conditions.push(`a.timestamp <= $${paramIndex}`);
+            params.push(endDate);
+            paramIndex++;
+        }
+
+        const whereClause = `WHERE ${conditions.join(' AND ')}`;
+        logger.info(`Where clause: ${whereClause}`);
+        logger.info(`Params: ${JSON.stringify(params)}`);
+
+        const countQuery = `SELECT COUNT(*) as total FROM audit_logs a ${whereClause}`;
+        const countResult = await query(countQuery, params);
+        const total = parseInt(countResult.rows[0].total);
+        logger.info(`Total matching logs: ${total}`);
+
+        const selectQuery = `
+            SELECT 
+                a.id, a.user_id as "userId", a.action, a.entity_type as "entityType",
+                a.entity_id as "entityId", a.purpose, a.ip_address as "ipAddress",
+                a.timestamp, a.metadata,
+                u.first_name as "userFirstName", u.last_name as "userLastName",
+                u.email as "userEmail", r.name as "userRole"
+            FROM audit_logs a
+            LEFT JOIN users u ON a.user_id = u.id
+            LEFT JOIN roles r ON u.role_id = r.id
+            ${whereClause}
+            ORDER BY a.timestamp DESC
+            LIMIT $${paramIndex} OFFSET $${paramIndex + 1}
+        `;
+
+        params.push(limit, offset);
+        const result = await query(selectQuery, params);
+        logger.info(`Returned ${result.rows.length} logs`);
+        if (result.rows.length > 0) {
+            logger.info(`First log: ${JSON.stringify(result.rows[0])}`);
+        }
+
+        return {
+            logs: result.rows,
+            pagination: { total, limit, offset, pages: Math.ceil(total / limit) }
+        };
+    } catch (error) {
+        logger.error('Failed to get patient record access logs:', error);
+        throw error;
+    }
+};
+
 module.exports = {
     createAuditLog,
     getUserAuditLogs,
     getEntityAuditLogs,
     getAllAuditLogs,
     verifyAuditLogIntegrity,
+    getPatientRecordAccessLogs,
 };
