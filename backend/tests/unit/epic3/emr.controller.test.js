@@ -22,7 +22,7 @@ jest.mock('../../../src/services/audit.service');
 
 const pool = require('../../../src/config/db');
 const MedicalRecordModel = require('../../../src/models/medical_record.model');
-const FileUploadService = require('../../../src/services/file-upload.service');
+const FileUploadService = require('../../../src/services/file.upload.service');
 const { createAuditLog } = require('../../../src/services/audit.service');
 
 // Import controller functions

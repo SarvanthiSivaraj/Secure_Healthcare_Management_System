@@ -26,7 +26,7 @@ jest.mock('../../../src/services/audit.service');
 jest.mock('../../../src/models/care_team.model');
 
 const pool = require('../../../src/config/db');
-const VisitLifecycleService = require('../../../src/services/visit-lifecycle.service');
+const VisitLifecycleService = require('../../../src/services/visit.lifecycle.service');
 const CareTeamModel = require('../../../src/models/care_team.model');
 const { createAuditLog } = require('../../../src/services/audit.service');
 
