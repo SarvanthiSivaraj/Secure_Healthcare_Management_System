@@ -24,6 +24,7 @@ import RadiologistDashboard from '../pages/radiology/Dashboard';
 import NewVisit from '../pages/patient/NewVisit';
 import ManageVisits from '../pages/admin/ManageVisits';
 import VerifyVisitOTP from '../pages/patient/VerifyVisitOTP';
+import AuditTrail from '../pages/patient/AuditTrail';
 
 function AppRoutes() {
     return (
@@ -192,6 +193,15 @@ function AppRoutes() {
                     element={
                         <ProtectedRoute allowedRoles={['PATIENT']}>
                             <VerifyVisitOTP />
+                        </ProtectedRoute>
+                    }
+                />
+
+                <Route
+                    path="/patient/audit-trail"
+                    element={
+                        <ProtectedRoute allowedRoles={['PATIENT']}>
+                            <AuditTrail />
                         </ProtectedRoute>
                     }
                 />

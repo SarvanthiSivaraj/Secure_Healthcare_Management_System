@@ -146,6 +146,26 @@ class EmrController {
 
             const count = await MedicalRecordModel.countByPatient(patientId, type);
 
+            // Create audit log for record access
+            const auditService = require('../../services/audit.service');
+            await auditService.createAuditLog({
+                userId,
+                action: 'view_patient_records',
+                entityType: 'medical_record',
+                entityId: patientId,
+                purpose: `View medical records for patient`,
+                ipAddress: req.ip,
+                userAgent: req.headers['user-agent'],
+                requestMethod: req.method,
+                requestPath: req.path,
+                statusCode: 200,
+                metadata: {
+                    patientId: patientId,
+                    recordCount: count,
+                    recordType: type || 'all'
+                }
+            });
+
             res.json({
                 success: true,
                 data: {

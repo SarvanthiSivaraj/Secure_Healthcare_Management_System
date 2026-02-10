@@ -165,6 +165,12 @@ const grantConsent = async (req, res) => {
             requestMethod: req.method,
             requestPath: req.path,
             statusCode: HTTP_STATUS.CREATED,
+            metadata: {
+                patientId: patientId,
+                recipientUserId: recipientUserId,
+                dataCategory: dataCategory,
+                accessLevel: accessLevel
+            }
         });
 
         logger.info('Consent granted:', {
@@ -238,6 +244,10 @@ const revokeConsent = async (req, res) => {
             requestMethod: req.method,
             requestPath: req.path,
             statusCode: HTTP_STATUS.OK,
+            metadata: {
+                patientId: patientId,
+                recipientUserId: consent.recipient_user_id
+            }
         });
 
         logger.info('Consent revoked:', {
