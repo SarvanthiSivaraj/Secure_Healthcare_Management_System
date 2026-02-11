@@ -11,7 +11,7 @@ const { authenticate, authorize } = require('../../middleware/auth.middleware');
 router.get(
     '/logs',
     authenticate,
-    authorize('ADMIN', 'SYSTEM_ADMIN'),
+    authorize(['hospital_admin', 'system_admin']),
     AuditController.getAllAuditLogs
 );
 
@@ -23,7 +23,7 @@ router.get(
 router.get(
     '/users/:userId/logs',
     authenticate,
-    authorize('ADMIN', 'SYSTEM_ADMIN'),
+    authorize(['hospital_admin', 'system_admin']),
     AuditController.getUserAuditLogs
 );
 
@@ -35,7 +35,7 @@ router.get(
 router.get(
     '/my-trail',
     authenticate,
-    authorize('PATIENT'),
+    authorize(['PATIENT', 'patient']),
     AuditController.getPatientAuditTrail
 );
 

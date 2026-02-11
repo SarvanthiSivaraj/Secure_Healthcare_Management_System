@@ -70,9 +70,12 @@ class AuditController {
             const patientId = req.user.id;
             const userRole = req.user.role || req.user.roleName; // Handle both cases
 
+
+
             // Only patients can access their own audit trail
             // Assuming role check is done in middleware, but double check here
             if (userRole?.toLowerCase() !== 'patient') {
+                logger.warn(`DEBUG: Access denied. Role '${userRole}' is not 'patient'`);
                 return res.status(403).json({
                     success: false,
                     message: 'Only patients can access audit trails'

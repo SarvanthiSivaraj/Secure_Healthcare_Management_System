@@ -22,17 +22,7 @@ const getActiveConsents = async (req, res) => {
         logger.info(`Fetched ${consents.length} active consents for user ${userId}`);
 
         // Audit log
-        await createAuditLog({
-            userId,
-            action: AUDIT_ACTIONS.CONSENT_VIEW,
-            entityType: 'consent',
-            purpose: 'View active consents',
-            ipAddress: req.ip,
-            userAgent: req.headers['user-agent'],
-            requestMethod: req.method,
-            requestPath: req.path,
-            statusCode: HTTP_STATUS.OK,
-        });
+        // Audit log removed to reduce clutter on dashboard load
 
         // Return array directly for frontend compatibility
         res.status(HTTP_STATUS.OK).json(consents);
@@ -55,17 +45,7 @@ const getConsentHistory = async (req, res) => {
         const consents = await getConsentHistoryModel(userId);
 
         // Audit log
-        await createAuditLog({
-            userId,
-            action: AUDIT_ACTIONS.CONSENT_VIEW,
-            entityType: 'consent',
-            purpose: 'View consent history',
-            ipAddress: req.ip,
-            userAgent: req.headers['user-agent'],
-            requestMethod: req.method,
-            requestPath: req.path,
-            statusCode: HTTP_STATUS.OK,
-        });
+        // Audit log removed to reduce clutter on dashboard load
 
         // Return array directly for frontend compatibility
         res.status(HTTP_STATUS.OK).json(consents);
@@ -312,7 +292,7 @@ const updateConsent = async (req, res) => {
         // Validate consent data partial updates
         // We can reuse validateConsentData but need to handle partials
         // For simplicity, we just proceed as we are trusting the input or we can validate each field if provided
-        
+
         // Update consent
         const updatedConsent = await require('../../models/consent.model').updateConsent(consentId, patientId, {
             dataCategory,
@@ -363,7 +343,7 @@ const getDoctorPatients = async (req, res) => {
     try {
         const doctorId = req.user.id;
         const patients = await require('../../models/consent.model').getPatientsWithActiveConsent(doctorId);
-        
+
         // Audit log
         await createAuditLog({
             userId: doctorId,

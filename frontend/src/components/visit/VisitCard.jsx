@@ -35,7 +35,9 @@ function VisitCard({ visit, onAction, showActions = true, userRole = 'patient' }
             <div className="visit-card-header">
                 <div className="visit-info">
                     <h3 className="visit-doctor">
-                        {userRole === 'patient' ? `Dr. ${visit.doctorName}` : visit.patientName}
+                        {userRole === 'patient'
+                            ? (visit.doctorName && visit.doctorName !== 'Unassigned' ? `Dr. ${visit.doctorName}` : 'Pending Assignment')
+                            : visit.patientName}
                     </h3>
                     <p className="visit-specialization">{visit.specialization || 'General Consultation'}</p>
                 </div>
