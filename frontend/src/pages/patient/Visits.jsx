@@ -46,22 +46,19 @@ function Visits() {
     };
 
     const filterVisits = () => {
-        if (filter === 'upcoming') {
-            // Backend statuses: pending, approved, in_progress
-            return visits.filter(v =>
-                v.status === 'pending' ||
-                v.status === 'approved' ||
-                v.status === 'in_progress'
-            );
-        } else if (filter === 'past') {
-            // Backend statuses: completed, cancelled
-            return visits.filter(v =>
-                v.status === 'completed' ||
-                v.status === 'cancelled'
-            );
-        }
-        return visits;
-    };
+    if (filter === 'upcoming') {
+        return visits.filter(v =>
+            ['pending', 'approved', 'checked_in', 'in_progress']
+                .includes(v.status?.toLowerCase())
+        );
+    } else if (filter === 'past') {
+        return visits.filter(v =>
+            ['completed', 'cancelled']
+                .includes(v.status?.toLowerCase())
+        );
+    }
+    return visits;
+};
 
     const filteredVisits = filterVisits();
 

@@ -36,6 +36,12 @@ export function AuthProvider({ children }) {
     }, []);
 
     const login = (userData, token) => {
+        // Normalize: ensure 'role' exists (backend might send 'role' or 'roleName')
+        if (userData.roleName && !userData.role) {
+            userData.role = userData.roleName;
+        }
+        console.log('🔐 Login called with user:', userData);
+        console.log('🔐 User role:', userData.role);
         setUser(userData);
         setToken(token);
     };

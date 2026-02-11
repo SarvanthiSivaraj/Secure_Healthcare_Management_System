@@ -22,7 +22,7 @@ import NurseDashboard from '../pages/nurse/Dashboard';
 import LabDashboard from '../pages/lab/Dashboard';
 import RadiologistDashboard from '../pages/radiology/Dashboard';
 import NewVisit from '../pages/patient/NewVisit';
-import ManageVisits from '../pages/admin/ManageVisits';
+import VisitManagement from '../pages/admin/VisitManagement';
 import VerifyVisitOTP from '../pages/patient/VerifyVisitOTP';
 import AcceptInvitation from '../pages/auth/AcceptInvitation';
 import StaffManagement from '../pages/admin/StaffManagement';
@@ -217,7 +217,7 @@ function AppRoutes() {
                     path="/admin/visits"
                     element={
                         <ProtectedRoute allowedRoles={['ADMIN', 'HOSPITAL_ADMIN', 'SYSTEM_ADMIN']}>
-                            <ManageVisits />
+                            <VisitManagement />
                         </ProtectedRoute>
                     }
                 />

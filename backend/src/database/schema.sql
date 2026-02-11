@@ -52,10 +52,10 @@ CREATE TABLE IF NOT EXISTS users (
 );
 
 -- Index for faster lookups
-CREATE INDEX idx_users_email ON users(email);
-CREATE INDEX idx_users_phone ON users(phone);
-CREATE INDEX idx_users_role ON users(role_id);
-CREATE INDEX idx_users_status ON users(status);
+CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
+CREATE INDEX IF NOT EXISTS idx_users_phone ON users(phone);
+CREATE INDEX IF NOT EXISTS idx_users_role ON users(role_id);
+CREATE INDEX IF NOT EXISTS idx_users_status ON users(status);
 
 -- ============================================
 -- ORGANIZATIONS TABLE
@@ -79,9 +79,9 @@ CREATE TABLE IF NOT EXISTS organizations (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE INDEX idx_organizations_type ON organizations(type);
-CREATE INDEX idx_organizations_status ON organizations(status);
-CREATE INDEX idx_organizations_license ON organizations(license_number);
+CREATE INDEX IF NOT EXISTS idx_organizations_type ON organizations(type);
+CREATE INDEX IF NOT EXISTS idx_organizations_status ON organizations(status);
+CREATE INDEX IF NOT EXISTS idx_organizations_license ON organizations(license_number);
 
 -- ============================================
 -- STAFF_ORG_MAPPING TABLE
@@ -101,9 +101,9 @@ CREATE TABLE IF NOT EXISTS staff_org_mapping (
     UNIQUE(user_id, organization_id)
 );
 
-CREATE INDEX idx_staff_org_user ON staff_org_mapping(user_id);
-CREATE INDEX idx_staff_org_organization ON staff_org_mapping(organization_id);
-CREATE INDEX idx_staff_org_status ON staff_org_mapping(status);
+CREATE INDEX IF NOT EXISTS idx_staff_org_user ON staff_org_mapping(user_id);
+CREATE INDEX IF NOT EXISTS idx_staff_org_organization ON staff_org_mapping(organization_id);
+CREATE INDEX IF NOT EXISTS idx_staff_org_status ON staff_org_mapping(status);
 
 -- ============================================
 -- PATIENT_PROFILES TABLE
@@ -128,8 +128,8 @@ CREATE TABLE IF NOT EXISTS patient_profiles (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE INDEX idx_patient_profiles_user ON patient_profiles(user_id);
-CREATE INDEX idx_patient_profiles_health_id ON patient_profiles(unique_health_id);
+CREATE INDEX IF NOT EXISTS idx_patient_profiles_user ON patient_profiles(user_id);
+CREATE INDEX IF NOT EXISTS idx_patient_profiles_health_id ON patient_profiles(unique_health_id);
 
 -- ============================================
 -- DOCTOR_PROFILES TABLE
@@ -147,8 +147,8 @@ CREATE TABLE IF NOT EXISTS doctor_profiles (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE INDEX idx_doctor_profiles_user ON doctor_profiles(user_id);
-CREATE INDEX idx_doctor_profiles_specialization ON doctor_profiles(specialization);
+CREATE INDEX IF NOT EXISTS idx_doctor_profiles_user ON doctor_profiles(user_id);
+CREATE INDEX IF NOT EXISTS idx_doctor_profiles_specialization ON doctor_profiles(specialization);
 
 -- ============================================
 -- OTP_VERIFICATIONS TABLE
@@ -167,10 +167,10 @@ CREATE TABLE IF NOT EXISTS otp_verifications (
     CONSTRAINT email_or_phone_otp CHECK (email IS NOT NULL OR phone IS NOT NULL)
 );
 
-CREATE INDEX idx_otp_user ON otp_verifications(user_id);
-CREATE INDEX idx_otp_email ON otp_verifications(email);
-CREATE INDEX idx_otp_phone ON otp_verifications(phone);
-CREATE INDEX idx_otp_expires ON otp_verifications(expires_at);
+CREATE INDEX IF NOT EXISTS idx_otp_user ON otp_verifications(user_id);
+CREATE INDEX IF NOT EXISTS idx_otp_email ON otp_verifications(email);
+CREATE INDEX IF NOT EXISTS idx_otp_phone ON otp_verifications(phone);
+CREATE INDEX IF NOT EXISTS idx_otp_expires ON otp_verifications(expires_at);
 
 -- ============================================
 -- AUDIT_LOGS TABLE
@@ -194,10 +194,10 @@ CREATE TABLE IF NOT EXISTS audit_logs (
 );
 
 -- Indexes for audit log queries
-CREATE INDEX idx_audit_user ON audit_logs(user_id);
-CREATE INDEX idx_audit_action ON audit_logs(action);
-CREATE INDEX idx_audit_entity ON audit_logs(entity_type, entity_id);
-CREATE INDEX idx_audit_timestamp ON audit_logs(timestamp DESC);
+CREATE INDEX IF NOT EXISTS idx_audit_user ON audit_logs(user_id);
+CREATE INDEX IF NOT EXISTS idx_audit_action ON audit_logs(action);
+CREATE INDEX IF NOT EXISTS idx_audit_entity ON audit_logs(entity_type, entity_id);
+CREATE INDEX IF NOT EXISTS idx_audit_timestamp ON audit_logs(timestamp DESC);
 
 -- ============================================
 -- SESSIONS TABLE (for token management)
@@ -216,10 +216,10 @@ CREATE TABLE IF NOT EXISTS sessions (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE INDEX idx_sessions_user ON sessions(user_id);
-CREATE INDEX idx_sessions_token ON sessions(token_hash);
-CREATE INDEX idx_sessions_expires ON sessions(expires_at);
-CREATE INDEX idx_sessions_active ON sessions(is_active);
+CREATE INDEX IF NOT EXISTS idx_sessions_user ON sessions(user_id);
+CREATE INDEX IF NOT EXISTS idx_sessions_token ON sessions(token_hash);
+CREATE INDEX IF NOT EXISTS idx_sessions_expires ON sessions(expires_at);
+CREATE INDEX IF NOT EXISTS idx_sessions_active ON sessions(is_active);
 
 -- ============================================
 -- CONSENTS TABLE
@@ -238,9 +238,9 @@ CREATE TABLE IF NOT EXISTS consents (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE INDEX idx_consents_patient ON consents(patient_id);
-CREATE INDEX idx_consents_recipient ON consents(recipient_user_id);
-CREATE INDEX idx_consents_status ON consents(status);
+CREATE INDEX IF NOT EXISTS idx_consents_patient ON consents(patient_id);
+CREATE INDEX IF NOT EXISTS idx_consents_recipient ON consents(recipient_user_id);
+CREATE INDEX IF NOT EXISTS idx_consents_status ON consents(status);
 
 -- ============================================
 -- ACCESS_POLICIES TABLE
@@ -257,8 +257,8 @@ CREATE TABLE IF NOT EXISTS access_policies (
     UNIQUE(role_id, resource, action)
 );
 
-CREATE INDEX idx_access_policies_role ON access_policies(role_id);
-CREATE INDEX idx_access_policies_resource ON access_policies(resource);
+CREATE INDEX IF NOT EXISTS idx_access_policies_role ON access_policies(role_id);
+CREATE INDEX IF NOT EXISTS idx_access_policies_resource ON access_policies(resource);
 
 -- ============================================
 -- SECURITY_EVENTS TABLE
@@ -277,11 +277,11 @@ CREATE TABLE IF NOT EXISTS security_events (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE INDEX idx_security_events_user ON security_events(user_id);
-CREATE INDEX idx_security_events_type ON security_events(event_type);
-CREATE INDEX idx_security_events_severity ON security_events(severity);
-CREATE INDEX idx_security_events_resolved ON security_events(resolved);
-CREATE INDEX idx_security_events_timestamp ON security_events(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_security_events_user ON security_events(user_id);
+CREATE INDEX IF NOT EXISTS idx_security_events_type ON security_events(event_type);
+CREATE INDEX IF NOT EXISTS idx_security_events_severity ON security_events(severity);
+CREATE INDEX IF NOT EXISTS idx_security_events_resolved ON security_events(resolved);
+CREATE INDEX IF NOT EXISTS idx_security_events_timestamp ON security_events(created_at DESC);
 
 -- ============================================
 -- MEDICAL RECORDS TABLE
@@ -299,11 +299,11 @@ CREATE TABLE IF NOT EXISTS medical_records (
     updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE INDEX idx_medical_records_patient ON medical_records(patient_id);
-CREATE INDEX idx_medical_records_visit ON medical_records(visit_id);
-CREATE INDEX idx_medical_records_type ON medical_records(type);
-CREATE INDEX idx_medical_records_created_by ON medical_records(created_by);
-CREATE INDEX idx_medical_records_created_at ON medical_records(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_medical_records_patient ON medical_records(patient_id);
+CREATE INDEX IF NOT EXISTS idx_medical_records_visit ON medical_records(visit_id);
+CREATE INDEX IF NOT EXISTS idx_medical_records_type ON medical_records(type);
+CREATE INDEX IF NOT EXISTS idx_medical_records_created_by ON medical_records(created_by);
+CREATE INDEX IF NOT EXISTS idx_medical_records_created_at ON medical_records(created_at DESC);
 
 -- ============================================
 -- TRIGGERS
@@ -318,12 +318,15 @@ BEGIN
 END;
 $$ language 'plpgsql';
 
+DROP TRIGGER IF EXISTS update_users_updated_at ON users;
 CREATE TRIGGER update_users_updated_at BEFORE UPDATE ON users
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
+DROP TRIGGER IF EXISTS update_organizations_updated_at ON organizations;
 CREATE TRIGGER update_organizations_updated_at BEFORE UPDATE ON organizations
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
+DROP TRIGGER IF EXISTS update_patient_profiles_updated_at ON patient_profiles;
 CREATE TRIGGER update_patient_profiles_updated_at BEFORE UPDATE ON patient_profiles
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 

@@ -9,7 +9,13 @@ function ProtectedRoute({ children, allowedRoles }) {
     if (!user) {
         return <Navigate to="/login" replace />;
     }
-    if (allowedRoles && !allowedRoles.includes(user.role?.toUpperCase())) {
+
+    // Handle both 'role' and 'roleName' (normalize to uppercase)
+    const userRole = (user.role || user.roleName)?.toUpperCase();
+    console.log('🔐 ProtectedRoute check:', { userRole, allowedRoles, user });
+
+    if (allowedRoles && !allowedRoles.includes(userRole)) {
+        console.error('❌ Access denied:', { userRole, allowedRoles });
         return <Navigate to="/unauthorized" replace />;
     }
     return children;

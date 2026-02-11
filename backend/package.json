@@ -8,6 +8,7 @@
     "dev": "nodemon src/server.js",
     "db:migrate": "node src/database/migrate.js",
     "db:seed": "node src/database/seed.js",
+    "db:setup:all": "node src/database/setup_full_db.js",
     "test": "jest --coverage",
     "test:integration": "jest --testPathPattern=tests/integration"
   },
