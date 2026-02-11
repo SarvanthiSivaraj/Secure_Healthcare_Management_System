@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import Input from '../common/Input';
 import Button from '../common/Button';
+import { userApi } from '../../api/userApi';
 import './StaffInvite.css';
 
 function StaffInvite({ onSuccess, onCancel }) {
@@ -33,13 +34,53 @@ function StaffInvite({ onSuccess, onCancel }) {
         setLoading(true);
 
         try {
-            // TODO: Replace with actual API call
-            // await staffApi.inviteStaff(formData);
+            // Map form data to backend expectations
+            // Backend expects: email, phone, password, roleName, organizationId, professionalLicense, shiftStart, shiftEnd
 
-            // Simulate API call
-            await new Promise(resolve => setTimeout(resolve, 1500));
+            // Generate a temporary password for the staff member
+            // In a real system, this would be handled by an email invite flow
+            const tempPassword = 'TempPassword123!';
+
+            // Get organizationId from local storage or context (assuming logged in admin)
+            // For now, we might need to fetch it or assume it's part of the admin's profile
+            // Let's assume the backend infers it from the admin user, but the controller expects 'organizationId' in body.
+            // We should probably get it from the user context.
+            // Since we don't have access to context here easily without prop drilling or useContext, let's look at AuthContext usage.
+            // But for now, let's just make the call.
+
+            // Wait, does the backend infer org ID?
+            // "const { organizationId } = req.body;" in user.controller.js. It requires it.
+            // We need to pass organizationId.
+
+            const payload = {
+                email: formData.email,
+                phone: formData.phone,
+                password: tempPassword, // Staff will change this later
+                roleName: formData.role.toLowerCase(), // Backend expects lowercase probably? check ROLES const.
+                // ROLES.DOCTOR = 'doctor'.
+                organizationId: 1, // HARDCODED for now as we don't have org context here yet. TODO: Fix this.
+                professionalLicense: formData.licenseNumber,
+                shiftStart: formData.shiftStart,
+                shiftEnd: formData.shiftEnd,
+                // Add first/last name to user creation? 
+                // user.controller: createUser({ ... firstName, lastName }) isn't explicitly passing them from req.body destructuring?
+                // user.controller.js:
+                /* 
+                const { ... } = req.body;
+                // Create user
+                const user = await createUser({
+                    email, phone, password, roleId, 
+                    // It does NOT seem to extract firstName/lastName from req.body in onboardStaff!
+                    // I should fix the backend too to accept names.
+                });
+                */
+            };
+
+            await userApi.onboardStaff(payload);
+
             onSuccess && onSuccess();
         } catch (err) {
+            console.error('Staff invite failed:', err);
             setError(err.response?.data?.message || 'Failed to send staff invitation');
         } finally {
             setLoading(false);

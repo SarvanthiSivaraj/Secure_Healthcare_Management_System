@@ -1,10 +1,12 @@
 import React, { useContext } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { AuthContext } from '../../context/AuthContext';
 import Button from '../../components/common/Button';
-import '../patient/Dashboard.css';
+import './AdminDashboard.css';
 
 function AdminDashboard() {
     const { user, logout } = useContext(AuthContext);
+    const navigate = useNavigate();
 
     return (
         <div className="dashboard-container">
@@ -34,15 +36,15 @@ function AdminDashboard() {
                 {/* Stats Overview */}
                 <div className="stats-overview">
                     <div className="stat-item">
-                        <div className="stat-number">0</div>
+                        <div className="stat-number">3</div>
                         <div className="stat-label">Total Users</div>
                     </div>
                     <div className="stat-item">
-                        <div className="stat-number">0</div>
+                        <div className="stat-number">1</div>
                         <div className="stat-label">Active Doctors</div>
                     </div>
                     <div className="stat-item">
-                        <div className="stat-number">0</div>
+                        <div className="stat-number">1</div>
                         <div className="stat-label">Registered Patients</div>
                     </div>
                     <div className="stat-item">
@@ -56,7 +58,7 @@ function AdminDashboard() {
                     <h2 className="section-title">Administration</h2>
 
                     <div className="nav-grid">
-                        <div className="nav-card">
+                        <div className="nav-card" onClick={() => navigate('/admin/users')}>
                             <div className="nav-card-header">
                                 <h3>User Management</h3>
                                 <span className="nav-arrow">→</span>
@@ -66,7 +68,7 @@ function AdminDashboard() {
                             </p>
                         </div>
 
-                        <div className="nav-card">
+                        <div className="nav-card" onClick={() => navigate('/admin/doctor-registration')}>
                             <div className="nav-card-header">
                                 <h3>Doctor Registration</h3>
                                 <span className="nav-arrow">→</span>
@@ -76,7 +78,7 @@ function AdminDashboard() {
                             </p>
                         </div>
 
-                        <div className="nav-card">
+                        <div className="nav-card" onClick={() => navigate('/admin/audit-logs')}>
                             <div className="nav-card-header">
                                 <h3>System Audit Logs</h3>
                                 <span className="nav-arrow">→</span>
@@ -86,7 +88,27 @@ function AdminDashboard() {
                             </p>
                         </div>
 
-                        <div className="nav-card">
+                        <div className="nav-card" onClick={() => navigate('/admin/visits')}>
+                            <div className="nav-card-header">
+                                <h3>Visit Management</h3>
+                                <span className="nav-arrow">→</span>
+                            </div>
+                            <p className="nav-card-description">
+                                Oversight of patient visits and hospital flow
+                            </p>
+                        </div>
+
+                        <div className="nav-card" onClick={() => navigate('/admin/staff')}>
+                            <div className="nav-card-header">
+                                <h3>Staff Management</h3>
+                                <span className="nav-arrow">→</span>
+                            </div>
+                            <p className="nav-card-description">
+                                Invite staff members and manage staff invitations across the organization
+                            </p>
+                        </div>
+
+                        <div className="nav-card" onClick={() => alert('Feature coming soon')}>
                             <div className="nav-card-header">
                                 <h3>System Settings</h3>
                                 <span className="nav-arrow">→</span>

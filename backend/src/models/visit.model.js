@@ -59,7 +59,7 @@ class VisitModel {
      */
     static async findByOrganization(organizationId, filters = {}) {
         const { status, limit = 50, offset = 0 } = filters;
-        
+
         let query = `
             SELECT v.*, 
                    u.first_name as patient_first_name, 
@@ -71,7 +71,7 @@ class VisitModel {
             LEFT JOIN users d ON v.assigned_doctor_id = d.id
             WHERE v.organization_id = $1
         `;
-        
+
         const values = [organizationId];
 
         if (status) {
@@ -109,8 +109,8 @@ class VisitModel {
      * @returns {Promise<Object>}
      */
     static async update(visitId, updateData) {
-        const { status, assignedDoctorId, assignedNurseId, otpVerified, accessLevel } = updateData;
-        
+        const { status, assignedDoctorId, assignedNurseId, otpVerified, accessLevel, scheduledTime } = updateData;
+
         // Build dynamic query
         const updates = [];
         const values = [];
@@ -119,17 +119,17 @@ class VisitModel {
         if (status) {
             updates.push(`status = $${paramCount++}`);
             values.push(status);
-            
+
             if (status === 'completed' || status === 'cancelled') {
                 updates.push(`check_out_time = CURRENT_TIMESTAMP`);
             }
         }
-        
+
         if (assignedDoctorId !== undefined) {
             updates.push(`assigned_doctor_id = $${paramCount++}`);
             values.push(assignedDoctorId);
         }
-        
+
         if (assignedNurseId !== undefined) {
             updates.push(`assigned_nurse_id = $${paramCount++}`);
             values.push(assignedNurseId);
@@ -143,6 +143,11 @@ class VisitModel {
         if (accessLevel) {
             updates.push(`access_level = $${paramCount++}`);
             values.push(accessLevel);
+        }
+
+        if (scheduledTime !== undefined) {
+            updates.push(`scheduled_time = $${paramCount++}`);
+            values.push(scheduledTime);
         }
 
         if (updates.length === 0) return null;
@@ -204,9 +209,9 @@ class VisitModel {
             AND otp_expires_at > CURRENT_TIMESTAMP
             AND otp_verified = FALSE
         `;
-        
+
         const checkResult = await pool.query(checkQuery, [visitId, otp]);
-        
+
         if (checkResult.rows.length === 0) {
             throw new Error('Invalid or expired OTP');
         }
@@ -250,7 +255,7 @@ class VisitModel {
             LEFT JOIN organizations o ON v.organization_id = o.id
             WHERE v.id = $1
         `;
-        
+
         const result = await pool.query(query, [visitId]);
         return result.rows[0];
     }

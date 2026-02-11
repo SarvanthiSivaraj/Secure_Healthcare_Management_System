@@ -44,7 +44,7 @@ const NewVisit = () => {
     return (
         <div className="new-visit-container">
             <div className="new-visit-card">
-                <h2>Join a Hospital</h2>
+                <h2>Request a New Visit</h2>
                 <p>Enter the 6-digit hospital code to request a visit.</p>
 
                 {error && <div className="alert alert-error">{error}</div>}

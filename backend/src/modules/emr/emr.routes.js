@@ -73,6 +73,13 @@ router.post('/prescriptions/check-interactions', authenticate, EmrController.che
  */
 router.patch('/prescriptions/:prescriptionId/status', authenticate, EmrController.updatePrescriptionStatus);
 
+/**
+ * @route   GET /api/emr/visits/:visitId/prescriptions
+ * @desc    Get prescriptions for a visit
+ * @access  Private
+ */
+router.get('/visits/:visitId/prescriptions', authenticate, EmrController.getPrescriptions);
+
 // ==================== Lab Results ====================
 
 /**
@@ -102,5 +109,35 @@ router.post(
     handleUploadError,
     EmrController.uploadImagingReport
 );
+
+// ==================== Orders (Lab & Imaging) ====================
+
+/**
+ * @route   POST /api/emr/lab-orders
+ * @desc    Create a new lab order
+ * @access  Private (Doctor)
+ */
+router.post('/lab-orders', authenticate, EmrController.createLabOrder);
+
+/**
+ * @route   GET /api/emr/visits/:visitId/lab-orders
+ * @desc    Get lab orders for a visit
+ * @access  Private
+ */
+router.get('/visits/:visitId/lab-orders', authenticate, EmrController.getLabOrders);
+
+/**
+ * @route   POST /api/emr/imaging-orders
+ * @desc    Create a new imaging order
+ * @access  Private (Doctor)
+ */
+router.post('/imaging-orders', authenticate, EmrController.createImagingOrder);
+
+/**
+ * @route   GET /api/emr/visits/:visitId/imaging-orders
+ * @desc    Get imaging orders for a visit
+ * @access  Private
+ */
+router.get('/visits/:visitId/imaging-orders', authenticate, EmrController.getImagingOrders);
 
 module.exports = router;

@@ -13,7 +13,7 @@ class StaffController {
      * POST /api/staff/invite
      */
     static inviteStaff = asyncHandler(async (req, res) => {
-        const { email, role, invitationMessage } = req.body;
+        const { email, role, invitationMessage, organizationId } = req.body;
 
         if (!email || !role) {
             return res.status(400).json({
@@ -22,21 +22,57 @@ class StaffController {
             });
         }
 
+        // Handle Organization ID
+        let targetOrgId = organizationId;
+        const db = require('../../config/db'); // Import db for query
+
+        if (!targetOrgId) {
+            // If not provided, try to get from requester's staff mapping
+            const requesterOrg = await db.query(
+                'SELECT organization_id FROM staff_org_mapping WHERE user_id = $1 AND status = \'active\'',
+                [req.user.id]
+            );
+
+            if (requesterOrg.rows.length > 0) {
+                targetOrgId = requesterOrg.rows[0].organization_id;
+            } else {
+                // If requester has no org (e.g. System Admin) and didn't provide one
+                // For System Admin, we might allow creating invitations without org?
+                // But staff usually needs an org. Let's make it required if not inferred.
+                return res.status(400).json({
+                    success: false,
+                    message: 'Organization ID is required (could not be inferred from your account)'
+                });
+            }
+        }
+
         const inviterName = `${req.user.firstName} ${req.user.lastName}`;
 
-        const invitation = await StaffInvitationService.inviteStaff({
-            email,
-            role,
-            invitedBy: req.user.id,
-            invitationMessage,
-            inviterName
-        });
+        try {
+            const invitation = await StaffInvitationService.inviteStaff({
+                email,
+                role,
+                organizationId: targetOrgId,
+                invitedBy: req.user.id,
+                invitationMessage,
+                inviterName
+            });
 
-        res.status(201).json({
-            success: true,
-            message: 'Invitation sent successfully',
-            data: invitation
-        });
+            res.status(201).json({
+                success: true,
+                message: 'Invitation sent successfully',
+                data: invitation
+            });
+        } catch (error) {
+            if (error.message.includes('already has a pending invitation') ||
+                error.message.includes('A user with this email already exists')) {
+                return res.status(409).json({
+                    success: false,
+                    message: error.message
+                });
+            }
+            throw error;
+        }
     });
 
     /**

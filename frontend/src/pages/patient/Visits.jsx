@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { visitApi } from '../../api/visitApi';
 import VisitCard from '../../components/visit/VisitCard';
 import CheckInForm from '../../components/visit/CheckInForm';
+import '../patient/Dashboard.css'; // Shared dashboard theme
 import './Visits.css';
 
 function Visits() {
@@ -22,7 +23,7 @@ function Visits() {
         setLoading(true);
         try {
             const data = await visitApi.getMyVisits();
-            setVisits(data.visits || []);
+            setVisits(data || []);  // getMyVisits returns array directly
         } catch (error) {
             console.error('Failed to fetch visits:', error);
         } finally {
@@ -45,16 +46,19 @@ function Visits() {
     };
 
     const filterVisits = () => {
-        const now = new Date();
         if (filter === 'upcoming') {
+            // Backend statuses: pending, approved, in_progress
             return visits.filter(v =>
-                new Date(v.scheduledTime) >= now ||
-                v.status === 'SCHEDULED' ||
-                v.status === 'CHECKED_IN' ||
-                v.status === 'ACTIVE'
+                v.status === 'pending' ||
+                v.status === 'approved' ||
+                v.status === 'in_progress'
             );
         } else if (filter === 'past') {
-            return visits.filter(v => v.status === 'COMPLETED');
+            // Backend statuses: completed, cancelled
+            return visits.filter(v =>
+                v.status === 'completed' ||
+                v.status === 'cancelled'
+            );
         }
         return visits;
     };
@@ -62,42 +66,48 @@ function Visits() {
     const filteredVisits = filterVisits();
 
     return (
-        <div className="visits-page">
-            <header className="page-header">
-                <div className="header-left">
-                    <h1>My Visits</h1>
-                    <p className="page-subtitle">Manage your appointments and check-ins</p>
+        <div className="dashboard-container">
+            <header className="dashboard-header">
+                <div className="header-content">
+                    <div className="header-left">
+                        <h1>My Visits</h1>
+                        <p className="header-subtitle">Manage your appointments and check-ins</p>
+                    </div>
+                    <button
+                        className="btn btn-secondary"
+                        onClick={() => navigate('/patient/dashboard')}
+                    >
+                        Back to Dashboard
+                    </button>
                 </div>
-                <button
-                    className="btn btn-secondary"
-                    onClick={() => navigate('/patient/dashboard')}
-                >
-                    Back to Dashboard
-                </button>
             </header>
 
-            <div className="visits-content">
+            <div className="dashboard-content">
                 {successMessage && (
                     <div className="success-alert">
                         {successMessage}
                     </div>
                 )}
 
-                {/* Check In Button */}
+                {/* Check In Section */}
                 <div className="action-section">
-                    <button
-                        className="btn btn-primary btn-lg"
-                        onClick={() => navigate('/patient/visits/new')}
-                        style={{ marginRight: '1rem' }}
-                    >
-                        + Join Hospital
-                    </button>
-                    <button
-                        className="btn btn-secondary btn-lg"
-                        onClick={() => setShowCheckIn(!showCheckIn)}
-                    >
-                        {showCheckIn ? 'Hide Check-In Form' : 'Check In Code'}
-                    </button>
+                    <div className="checkin-info">
+                        <p>Have a scheduled visit? Enter the code provided by your doctor or nurse to check in.</p>
+                    </div>
+                    <div className="action-buttons">
+                        <button
+                            className="btn btn-primary btn-lg"
+                            onClick={() => navigate('/patient/visits/new')}
+                        >
+                            + Request New Visit
+                        </button>
+                        <button
+                            className="btn btn-secondary btn-lg"
+                            onClick={() => setShowCheckIn(!showCheckIn)}
+                        >
+                            {showCheckIn ? 'Hide Check-In Form' : 'Check In with Code'}
+                        </button>
+                    </div>
                 </div>
 
                 {showCheckIn && (

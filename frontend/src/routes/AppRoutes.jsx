@@ -24,6 +24,13 @@ import RadiologistDashboard from '../pages/radiology/Dashboard';
 import NewVisit from '../pages/patient/NewVisit';
 import ManageVisits from '../pages/admin/ManageVisits';
 import VerifyVisitOTP from '../pages/patient/VerifyVisitOTP';
+import AcceptInvitation from '../pages/auth/AcceptInvitation';
+import StaffManagement from '../pages/admin/StaffManagement';
+import WorkflowDashboard from '../pages/staff/WorkflowDashboard';
+import UserManagement from '../pages/admin/UserManagement';
+import AuditLogs from '../pages/admin/AuditLogs';
+import DoctorRegistration from '../pages/admin/DoctorRegistration';
+import AuditTrail from '../pages/patient/AuditTrail';
 
 function AppRoutes() {
     return (
@@ -33,6 +40,7 @@ function AppRoutes() {
                 <Route path="/login" element={<Login />} />
                 <Route path="/dev-login" element={<DevLogin />} />
                 <Route path="/register/patient" element={<RegisterPatient />} />
+                <Route path="/staff/invitation/:token" element={<AcceptInvitation />} />
 
                 {/* Protected Routes */}
                 <Route
@@ -197,10 +205,55 @@ function AppRoutes() {
                 />
 
                 <Route
+                    path="/patient/audit-trail"
+                    element={
+                        <ProtectedRoute allowedRoles={['PATIENT']}>
+                            <AuditTrail />
+                        </ProtectedRoute>
+                    }
+                />
+
+                <Route
                     path="/admin/visits"
                     element={
                         <ProtectedRoute allowedRoles={['ADMIN', 'HOSPITAL_ADMIN', 'SYSTEM_ADMIN']}>
                             <ManageVisits />
+                        </ProtectedRoute>
+                    }
+                />
+
+                <Route
+                    path="/admin/staff"
+                    element={
+                        <ProtectedRoute allowedRoles={['ADMIN', 'HOSPITAL_ADMIN', 'SYSTEM_ADMIN']}>
+                            <StaffManagement />
+                        </ProtectedRoute>
+                    }
+                />
+
+                <Route
+                    path="/admin/users"
+                    element={
+                        <ProtectedRoute allowedRoles={['ADMIN', 'HOSPITAL_ADMIN', 'SYSTEM_ADMIN']}>
+                            <UserManagement />
+                        </ProtectedRoute>
+                    }
+                />
+
+                <Route
+                    path="/admin/audit-logs"
+                    element={
+                        <ProtectedRoute allowedRoles={['ADMIN', 'HOSPITAL_ADMIN', 'SYSTEM_ADMIN']}>
+                            <AuditLogs />
+                        </ProtectedRoute>
+                    }
+                />
+
+                <Route
+                    path="/admin/doctor-registration"
+                    element={
+                        <ProtectedRoute allowedRoles={['ADMIN', 'HOSPITAL_ADMIN', 'SYSTEM_ADMIN']}>
+                            <DoctorRegistration />
                         </ProtectedRoute>
                     }
                 />
@@ -215,9 +268,24 @@ function AppRoutes() {
                             'PHARMACIST',
                             'INSURANCE_PROVIDER',
                             'RESEARCHER',
-                            'COMPLIANCE_OFFICER'
+                            'COMPLIANCE_OFFICER',
+                            'ADMIN',
+                            'HOSPITAL_ADMIN',
+                            'SYSTEM_ADMIN'
                         ]}>
                             <StaffDashboard />
+                        </ProtectedRoute>
+                    }
+                />
+
+
+                <Route
+                    path="/staff/workflow"
+                    element={
+                        <ProtectedRoute allowedRoles={[
+                            'STAFF', 'NURSE', 'DOCTOR', 'ADMIN', 'HOSPITAL_ADMIN', 'SYSTEM_ADMIN'
+                        ]}>
+                            <WorkflowDashboard />
                         </ProtectedRoute>
                     }
                 />

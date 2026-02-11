@@ -175,6 +175,8 @@ const authenticate = async (req, res, next) => {
             phone: user.phone,
             roleId: user.role_id,
             roleName: user.role_name,
+            firstName: user.first_name,
+            lastName: user.last_name,
             isVerified: user.is_verified,
             status: user.status,
         };
@@ -228,7 +230,7 @@ const authorize = (roles = []) => {
 
         if (roles.length && !roles.includes(req.user.roleName)) {
             logger.warn(`Access denied for user ${req.user.id} with role ${req.user.roleName}. Required: ${roles.join(', ')}`);
-            
+
             return res.status(HTTP_STATUS.FORBIDDEN).json({
                 success: false,
                 message: ERROR_MESSAGES.ACCESS_DENIED,

@@ -9,7 +9,7 @@ class StaffInvitation {
     /**
      * Create a new staff invitation
      */
-    static async create({ email, role, invitedBy, invitationMessage = null, expiresInDays = 7 }) {
+    static async create({ email, role, organizationId, invitedBy, invitationMessage = null, expiresInDays = 7 }) {
         // Generate unique invitation token
         const token = crypto.randomBytes(32).toString('hex');
 
@@ -19,12 +19,12 @@ class StaffInvitation {
 
         const query = `
             INSERT INTO staff_invitations (
-                email, role, token, invited_by, invitation_message, expires_at, status
-            ) VALUES ($1, $2, $3, $4, $5, $6, 'pending')
+                email, role, organization_id, token, invited_by, invitation_message, expires_at, status
+            ) VALUES ($1, $2, $3, $4, $5, $6, $7, 'pending')
             RETURNING *;
         `;
 
-        const values = [email, role, token, invitedBy, invitationMessage, expiresAt];
+        const values = [email, role, organizationId, token, invitedBy, invitationMessage, expiresAt];
         const result = await db.query(query, values);
         return result.rows[0];
     }

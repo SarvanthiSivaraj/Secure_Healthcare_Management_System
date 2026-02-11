@@ -6,13 +6,14 @@ const logger = require('../utils/logger');
  * Catches all errors and returns consistent error responses
  */
 const errorHandler = (err, req, res, next) => {
-    // Log error
-    logger.error('Error occurred:', {
-        error: err.message,
+    // Log the error
+    logger.error('Unhandled Error:', {
+        message: err.message,
         stack: err.stack,
         path: req.path,
         method: req.method,
-        userId: req.user ? req.user.id : null,
+        body: req.body,
+        user: req.user ? req.user.id : 'unauthenticated'
     });
 
     // Database errors

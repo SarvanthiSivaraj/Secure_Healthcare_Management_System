@@ -1,5 +1,6 @@
 import React, { createContext, useState, useEffect, useContext } from 'react';
 import { getToken, setToken, removeToken } from '../utils/tokenManager';
+import { authApi } from '../api/authApi';
 
 export const AuthContext = createContext();
 
@@ -9,18 +10,29 @@ export function AuthProvider({ children }) {
 
     // Check for existing token on mount
     useEffect(() => {
-        const token = getToken();
-        if (token) {
-            // TODO: Validate token with backend
-            // For now, decode JWT payload (in production, validate with backend)
-            try {
-                const payload = JSON.parse(atob(token.split('.')[1]));
-                setUser(payload);
-            } catch (error) {
-                removeToken();
+        const initAuth = async () => {
+            const token = getToken();
+            if (token) {
+                try {
+                    // Verify token with backend
+                    const response = await authApi.verify();
+                    if (response.success && response.user) {
+                        console.log('DEBUG: AuthContext verified user:', response.user);
+                        setUser(response.user);
+                    } else {
+                        throw new Error('Verification failed');
+                    }
+                } catch (error) {
+                    // If verification fails, clear token (except maybe for network errors?)
+                    // For now, assume auth failure
+                    console.error('Token verification failed:', error);
+                    removeToken();
+                    setUser(null);
+                }
             }
-        }
-        setLoading(false);
+            setLoading(false);
+        };
+        initAuth();
     }, []);
 
     const login = (userData, token) => {

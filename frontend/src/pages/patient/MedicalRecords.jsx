@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import Button from '../../components/common/Button';
 import { AuthContext } from '../../context/AuthContext';
 import { emrApi } from '../../api/emrApi';
+import '../patient/Dashboard.css'; // Shared dashboard theme
 import './MedicalRecords.css';
 
 function MedicalRecords() {
@@ -13,13 +14,7 @@ function MedicalRecords() {
     const [filter, setFilter] = useState('all');
     const [expandedRecords, setExpandedRecords] = useState(new Set());
 
-    useEffect(() => {
-        if (user && user.id) {
-            fetchRecords();
-        }
-    }, [user]);
-
-    const fetchRecords = async () => {
+    const fetchRecords = React.useCallback(async () => {
         setLoading(true);
         try {
             const response = await emrApi.getPatientMedicalRecords(user.id);
@@ -43,7 +38,13 @@ function MedicalRecords() {
         } finally {
             setLoading(false);
         }
-    };
+    }, [user.id]);
+
+    useEffect(() => {
+        if (user && user.id) {
+            fetchRecords();
+        }
+    }, [user, fetchRecords]);
 
     const filterRecords = () => {
         if (filter === 'all') return records;
@@ -92,18 +93,20 @@ function MedicalRecords() {
     };
 
     return (
-        <div className="medical-records-page">
-            <header className="page-header">
-                <div className="header-left">
-                    <h1>My Medical Records</h1>
-                    <p className="page-subtitle">Complete history of your healthcare data</p>
+        <div className="dashboard-container">
+            <header className="dashboard-header">
+                <div className="header-content">
+                    <div className="header-left">
+                        <h1>My Medical Records</h1>
+                        <p className="header-subtitle">Complete history of your healthcare data</p>
+                    </div>
+                    <Button onClick={() => navigate('/patient/dashboard')} variant="secondary">
+                        Back to Dashboard
+                    </Button>
                 </div>
-                <Button onClick={() => navigate('/patient/dashboard')} variant="secondary">
-                    Back to Dashboard
-                </Button>
             </header>
 
-            <div className="records-content">
+            <div className="dashboard-content">
                 {/* Filter Tabs */}
                 <div className="filter-tabs">
                     <button
@@ -165,8 +168,11 @@ function MedicalRecords() {
                         </div>
                     ) : filteredRecords.length === 0 ? (
                         <div className="empty-state">
-                            <p>No {filter !== 'all' ? formatRecordType(filter).toLowerCase() : ''} records found</p>
-                            <p className="empty-hint">Your medical records will appear here</p>
+                            <p>No {filter !== 'all' ? formatRecordType(filter).toLowerCase() : ''} records found.</p>
+                            <p className="empty-hint">
+                                Medical records appear here after you have a consultation or procedure.
+                                <br />They are added by your healthcare provider.
+                            </p>
                         </div>
                     ) : (
                         filteredRecords.map((record) => {

@@ -8,6 +8,7 @@ const { createAuditLog } = require('../../services/audit.service');
 const { HTTP_STATUS, SUCCESS_MESSAGES, ERROR_MESSAGES, AUDIT_ACTIONS, OTP_PURPOSE, STAFF_STATUS } = require('../../utils/constants');
 const { isValidEmail, validatePassword, validateRequiredFields } = require('../../utils/validators');
 const logger = require('../../utils/logger');
+const { query } = require('../../config/db');
 
 /**
  * Onboard staff member
@@ -24,6 +25,8 @@ const onboardStaff = async (req, res) => {
             professionalLicense,
             shiftStart,
             shiftEnd,
+            firstName,
+            lastName,
         } = req.body;
 
         // Validate required fields
@@ -31,7 +34,7 @@ const onboardStaff = async (req, res) => {
             'email',
             'password',
             'roleName',
-            'organizationId',
+            // 'organizationId', // Optional - defaulting logic handled below
         ]);
 
         if (!validation.isValid) {
@@ -69,8 +72,30 @@ const onboardStaff = async (req, res) => {
             });
         }
 
+        // Handle Organization ID
+        let targetOrgId = organizationId;
+
+        if (!targetOrgId) {
+            // If not provided, try to get from requester's staff mapping (for Hospital Admins)
+            // We need to query staff_org_mapping for the current user
+            const requesterOrg = await query(
+                'SELECT organization_id FROM staff_org_mapping WHERE user_id = $1 AND status = \'active\'',
+                [req.user.id]
+            );
+
+            if (requesterOrg.rows.length > 0) {
+                targetOrgId = requesterOrg.rows[0].organization_id;
+            } else {
+                // If requester has no org (e.g. System Admin) and didn't provide one
+                return res.status(HTTP_STATUS.BAD_REQUEST).json({
+                    success: false,
+                    message: 'Organization ID is required for this action',
+                });
+            }
+        }
+
         // Verify organization exists
-        const organization = await findOrganizationById(organizationId);
+        const organization = await findOrganizationById(targetOrgId);
         if (!organization) {
             return res.status(HTTP_STATUS.NOT_FOUND).json({
                 success: false,
@@ -93,12 +118,14 @@ const onboardStaff = async (req, res) => {
             phone: phone || null,
             password,
             roleId: role.id,
+            firstName: firstName || null,
+            lastName: lastName || null,
         });
 
         // Create staff-organization mapping
         const staffMapping = await createStaffMapping({
             userId: user.id,
-            organizationId,
+            organizationId: targetOrgId,
             roleId: role.id,
             professionalLicense: professionalLicense || null,
             licenseVerified: false,
@@ -125,12 +152,12 @@ const onboardStaff = async (req, res) => {
             requestMethod: req.method,
             requestPath: req.path,
             statusCode: HTTP_STATUS.CREATED,
-            metadata: { organizationId, roleName },
+            metadata: { organizationId: targetOrgId, roleName },
         });
 
         logger.info('Staff member onboarded successfully:', {
             userId: user.id,
-            organizationId,
+            organizationId: targetOrgId,
             role: roleName,
         });
 
@@ -141,7 +168,7 @@ const onboardStaff = async (req, res) => {
                 userId: user.id,
                 email: user.email,
                 role: roleName,
-                organizationId,
+                organizationId: targetOrgId,
                 staffMappingId: staffMapping.id,
             },
         });
@@ -322,10 +349,93 @@ const getUsers = async (req, res) => {
     }
 };
 
+/**
+ * Get all doctors (for consent management)
+ * GET /api/users/doctors
+ */
+const getDoctors = async (req, res) => {
+    try {
+        const { limit, offset } = req.query;
+
+        const doctorsQuery = `
+      SELECT u.id, u.email, u.phone, u.created_at,
+             u.first_name as "firstName",
+             u.last_name as "lastName",
+             'General Practice' as specialization,
+             som.professional_license, som.organization_id, o.name as organization_name
+      FROM users u
+      INNER JOIN roles r ON u.role_id = r.id
+      LEFT JOIN staff_org_mapping som ON u.id = som.user_id AND som.status = 'active'
+      LEFT JOIN organizations o ON som.organization_id = o.id
+      WHERE r.name = 'doctor' AND u.status = 'active' AND u.is_verified = true
+      ORDER BY u.created_at DESC
+      LIMIT $1 OFFSET $2
+    `;
+
+        const result = await query(doctorsQuery, [
+            parseInt(limit) || 50,
+            parseInt(offset) || 0,
+        ]);
+
+        res.status(HTTP_STATUS.OK).json({
+            success: true,
+            data: result.rows,
+        });
+    } catch (error) {
+        logger.error('Get doctors failed:', error);
+        res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
+            success: false,
+            message: ERROR_MESSAGES.INTERNAL_ERROR,
+        });
+    }
+};
+
+/**
+ * Get all nurses (for visit management)
+ * GET /api/users/nurses
+ */
+const getNurses = async (req, res) => {
+    try {
+        const { limit, offset } = req.query;
+
+        const nursesQuery = `
+      SELECT u.id, u.email, u.phone, u.created_at,
+             u.first_name as "firstName",
+             u.last_name as "lastName",
+             som.professional_license, som.organization_id, o.name as organization_name
+      FROM users u
+      INNER JOIN roles r ON u.role_id = r.id
+      LEFT JOIN staff_org_mapping som ON u.id = som.user_id AND som.status = 'active'
+      LEFT JOIN organizations o ON som.organization_id = o.id
+      WHERE r.name = 'nurse' AND u.status = 'active' AND u.is_verified = true
+      ORDER BY u.created_at DESC
+      LIMIT $1 OFFSET $2
+    `;
+
+        const result = await query(nursesQuery, [
+            parseInt(limit) || 50,
+            parseInt(offset) || 0,
+        ]);
+
+        res.status(HTTP_STATUS.OK).json({
+            success: true,
+            data: result.rows,
+        });
+    } catch (error) {
+        logger.error('Get nurses failed:', error);
+        res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
+            success: false,
+            message: ERROR_MESSAGES.INTERNAL_ERROR,
+        });
+    }
+};
+
 module.exports = {
     onboardStaff,
     deactivateStaff,
     verifyLicense,
     getUserProfile,
     getUsers,
+    getDoctors,
+    getNurses,
 };

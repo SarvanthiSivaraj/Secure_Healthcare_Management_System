@@ -12,14 +12,18 @@ const transporter = nodemailer.createTransport({
     },
 });
 
-// Verify transporter configuration
-transporter.verify((error, success) => {
-    if (error) {
-        logger.error('Email transporter configuration error:', error);
-    } else {
-        logger.info('Email server is ready to send messages');
-    }
-});
+// Verify transporter configuration (disabled in development)
+if (process.env.NODE_ENV === 'production') {
+    transporter.verify((error, success) => {
+        if (error) {
+            logger.error('Email transporter configuration error:', error);
+        } else {
+            logger.info('Email server is ready to send messages');
+        }
+    });
+} else {
+    logger.info('Email verification skipped in development mode');
+}
 
 /**
  * Send email

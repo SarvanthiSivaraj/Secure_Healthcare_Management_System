@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const StaffController = require('./staff.controller');
 const { authenticate } = require('../../middleware/auth.middleware');
-const { requireRole } = require('../../middleware/rbac.middleware');
+const { requireAdmin } = require('../../middleware/rbac.middleware');
 
 /**
  * Staff Management Routes
@@ -16,35 +16,35 @@ const { requireRole } = require('../../middleware/rbac.middleware');
 router.post(
     '/invite',
     authenticate,
-    requireRole(['admin']),
+    requireAdmin,
     StaffController.inviteStaff
 );
 
 router.get(
     '/invitations',
     authenticate,
-    requireRole(['admin']),
+    requireAdmin,
     StaffController.getInvitations
 );
 
 router.post(
     '/invitations/:id/resend',
     authenticate,
-    requireRole(['admin']),
+    requireAdmin,
     StaffController.resendInvitation
 );
 
 router.delete(
     '/invitations/:id',
     authenticate,
-    requireRole(['admin']),
+    requireAdmin,
     StaffController.cancelInvitation
 );
 
 router.get(
     '/invitations/stats',
     authenticate,
-    requireRole(['admin']),
+    requireAdmin,
     StaffController.getInvitationStats
 );
 
@@ -69,42 +69,42 @@ router.post(
 router.post(
     '/accounts/:userId/suspend',
     authenticate,
-    requireRole(['admin']),
+    requireAdmin,
     StaffController.suspendAccount
 );
 
 router.post(
     '/accounts/:userId/activate',
     authenticate,
-    requireRole(['admin']),
+    requireAdmin,
     StaffController.activateAccount
 );
 
 router.get(
     '/accounts/suspended',
     authenticate,
-    requireRole(['admin']),
+    requireAdmin,
     StaffController.getSuspendedAccounts
 );
 
 router.get(
     '/accounts/:userId/status',
     authenticate,
-    requireRole(['admin']),
+    requireAdmin,
     StaffController.getAccountStatus
 );
 
 router.get(
     '/accounts/stats',
     authenticate,
-    requireRole(['admin']),
+    requireAdmin,
     StaffController.getAccountStats
 );
 
 router.get(
     '/accounts/:userId/history',
     authenticate,
-    requireRole(['admin']),
+    requireAdmin,
     StaffController.getAccountHistory
 );
 
@@ -115,7 +115,7 @@ router.get(
 router.get(
     '/actions/recent',
     authenticate,
-    requireRole(['admin']),
+    requireAdmin,
     StaffController.getRecentActions
 );
 

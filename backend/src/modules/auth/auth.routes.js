@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const authCompat = require('./auth.compat');
+const authController = require('./auth.controller');
 const { authenticate } = require('../../middleware/auth.middleware');
 const { auditActions } = require('../../middleware/audit.middleware');
 const { loginLimiter, otpLimiter, registrationLimiter } = require('../../middleware/rateLimit.middleware');
@@ -14,7 +14,7 @@ const { asyncHandler } = require('../../middleware/error.middleware');
 router.post(
     '/register/patient',
     registrationLimiter,
-    asyncHandler(authCompat.registerPatient)
+    asyncHandler(authController.registerPatient)
 );
 
 /**
@@ -25,7 +25,7 @@ router.post(
 router.post(
     '/register/doctor',
     registrationLimiter,
-    asyncHandler(authCompat.registerDoctor)
+    asyncHandler(authController.registerDoctor)
 );
 
 /**
@@ -36,7 +36,7 @@ router.post(
 router.post(
     '/register/organization',
     registrationLimiter,
-    asyncHandler(authCompat.registerOrganization)
+    asyncHandler(authController.registerOrganization)
 );
 
 /**
@@ -47,7 +47,7 @@ router.post(
 router.post(
     '/verify-otp',
     otpLimiter,
-    asyncHandler(authCompat.verifyOTPController)
+    asyncHandler(authController.verifyOTPController)
 );
 
 /**
@@ -58,7 +58,7 @@ router.post(
 router.post(
     '/otp/verify',
     otpLimiter,
-    asyncHandler(authCompat.verifyOTPController)
+    asyncHandler(authController.verifyOTPController)
 );
 
 /**
@@ -69,7 +69,7 @@ router.post(
 router.post(
     '/resend-otp',
     otpLimiter,
-    asyncHandler(authCompat.resendOTP)
+    asyncHandler(authController.resendOTP)
 );
 
 /**
@@ -81,7 +81,23 @@ router.post(
     '/login',
     loginLimiter,
     auditActions.login,
-    asyncHandler(authCompat.loginCompat)
+    asyncHandler(async (req, res) => {
+        // Intercept the response to ensure frontend compatibility tokens are there
+        const originalJson = res.json.bind(res);
+        res.json = function (data) {
+            // Transform response for frontend compatibility
+            if (data.success && data.data && data.data.accessToken) {
+                const transformed = {
+                    ...data,
+                    token: data.data.accessToken, // Add 'token' field for frontend
+                };
+                return originalJson(transformed);
+            }
+            return originalJson(data);
+        };
+
+        return authController.login(req, res);
+    })
 );
 
 /**
@@ -116,7 +132,7 @@ router.post(
     '/logout',
     authenticate,
     auditActions.logout,
-    asyncHandler(authCompat.logout)
+    asyncHandler(authController.logout)
 );
 
 module.exports = router;

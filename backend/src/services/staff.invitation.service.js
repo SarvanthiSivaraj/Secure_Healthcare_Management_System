@@ -14,20 +14,20 @@ class StaffInvitationService {
     static async sendInvitationEmail(invitation, inviterName) {
         try {
             // Configure email transporter (using environment variables)
-            const transporter = nodemailer.createTransporter({
-                host: process.env.SMTP_HOST || 'smtp.gmail.com',
-                port: process.env.SMTP_PORT || 587,
-                secure: false,
+            const transporter = nodemailer.createTransport({
+                host: process.env.EMAIL_HOST || 'smtp.gmail.com',
+                port: process.env.EMAIL_PORT || 587,
+                secure: process.env.EMAIL_SECURE === 'true',
                 auth: {
-                    user: process.env.SMTP_USER,
-                    pass: process.env.SMTP_PASS
+                    user: process.env.EMAIL_USER,
+                    pass: process.env.EMAIL_PASSWORD
                 }
             });
 
-            const invitationUrl = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/accept-invitation/${invitation.token}`;
+            const invitationUrl = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/staff/invitation/${invitation.token}`;
 
             const mailOptions = {
-                from: process.env.SMTP_FROM || 'noreply@healthcare.com',
+                from: process.env.EMAIL_FROM || 'noreply@healthcare.com',
                 to: invitation.email,
                 subject: 'You\'re Invited to Join Our Healthcare Team',
                 html: `
@@ -59,9 +59,61 @@ class StaffInvitationService {
     }
 
     /**
+     * Send welcome email with login details
+     */
+    static async sendWelcomeEmail(user, role) {
+        try {
+            // Configure email transporter (using environment variables)
+            const transporter = nodemailer.createTransport({
+                host: process.env.EMAIL_HOST || 'smtp.gmail.com',
+                port: process.env.EMAIL_PORT || 587,
+                secure: process.env.EMAIL_SECURE === 'true',
+                auth: {
+                    user: process.env.EMAIL_USER,
+                    pass: process.env.EMAIL_PASSWORD
+                }
+            });
+
+            const loginUrl = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/login`;
+
+            const mailOptions = {
+                from: process.env.EMAIL_FROM || 'noreply@healthcare.com',
+                to: user.email,
+                subject: 'Welcome to Secure Healthcare - Account Activated',
+                html: `
+                    <h2>Account Activated Successfully!</h2>
+                    <p>Hello ${user.first_name},</p>
+                    <p>Your account has been successfully created and activated.</p>
+                    
+                    <div style="background-color: #f5f5f5; padding: 15px; border-radius: 5px; margin: 20px 0;">
+                        <p><strong>Username/Email:</strong> ${user.email}</p>
+                        <p><strong>Role:</strong> ${role}</p>
+                        <p><em>(You have already set your password during registration)</em></p>
+                    </div>
+
+                    <p>You can now log in to the system:</p>
+                    <p style="margin: 30px 0;">
+                        <a href="${loginUrl}" style="background-color: #007bff; color: white; padding: 14px 28px; text-decoration: none; border-radius: 4px; display: inline-block;">
+                            Login to Dashboard
+                        </a>
+                    </p>
+                    
+                    <p>If you have any issues, please contact the administrator.</p>
+                `
+            };
+
+            await transporter.sendMail(mailOptions);
+            logger.info(`Welcome email sent to ${user.email}`);
+        } catch (error) {
+            logger.error('Error sending welcome email:', error);
+            // Don't throw - non-critical
+        }
+    }
+
+    /**
      * Invite a new staff member
      */
-    static async inviteStaff({ email, role, invitedBy, invitationMessage = null, inviterName }) {
+    static async inviteStaff({ email, role, organizationId, invitedBy, invitationMessage = null, inviterName }) {
         try {
             // Check if email already has a pending invitation
             const hasPending = await StaffInvitation.hasPendingInvitation(email);
@@ -80,6 +132,7 @@ class StaffInvitationService {
             const invitation = await StaffInvitation.create({
                 email,
                 role,
+                organizationId,
                 invitedBy,
                 invitationMessage,
                 expiresInDays: 7
@@ -133,34 +186,55 @@ class StaffInvitationService {
 
             // Create user account
             const db = require('../config/db');
+
+            // Get role ID
+            const roleRes = await db.query('SELECT id FROM roles WHERE name = $1', [invitation.role.toLowerCase()]);
+            if (roleRes.rows.length === 0) {
+                throw new Error(`Invalid role: ${invitation.role}`);
+            }
+            const roleId = roleRes.rows[0].id;
+
             const userQuery = `
-                INSERT INTO users (email, password, first_name, last_name, role, account_status, verification_status)
-                VALUES ($1, $2, $3, $4, $5, 'active', 'unverified')
+                INSERT INTO users (email, password_hash, first_name, last_name, role_id, is_verified, status)
+                VALUES ($1, $2, $3, $4, $5, true, 'active')
                 RETURNING *;
             `;
 
             const userValues = [
                 invitation.email,
-                userData.password, // Should be hashed by controller
+                userData.password, // hashed password
                 userData.firstName,
                 userData.lastName,
-                invitation.role
+                roleId
             ];
 
             const userResult = await db.query(userQuery, userValues);
             const newUser = userResult.rows[0];
 
+            // Create Staff Organization Mapping
+            if (invitation.organization_id) {
+                await db.query(
+                    `INSERT INTO staff_org_mapping (user_id, organization_id, role_id, status)
+                     VALUES ($1, $2, $3, 'active')`,
+                    [newUser.id, invitation.organization_id, roleId]
+                );
+            }
+
             // Mark invitation as accepted
             await StaffInvitation.accept(token, newUser.id);
 
             // Log the action
+            // ... (rest of logging logic)
             await AccountAction.log({
                 userId: newUser.id,
-                actionType: 'invite',
-                actionBy: invitation.invited_by,
+                actionType: 'invite_accept',
+                actionBy: newUser.id,
                 notes: 'Invitation accepted and account created',
                 metadata: { invitationId: invitation.id }
             });
+
+            // Send Welcome Email
+            await this.sendWelcomeEmail(newUser, invitation.role);
 
             logger.info(`Invitation accepted by ${newUser.email}`);
             return newUser;

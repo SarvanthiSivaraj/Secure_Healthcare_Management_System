@@ -3,7 +3,7 @@ const { createPatientProfile, findPatientByUserId } = require('../../models/pati
 const { createOrganization } = require('../../models/organization.model');
 const { getRoleByName } = require('../../models/role.model');
 const { generateAndSendOTP, verifyOTP } = require('../../services/otp.service');
-const { comparePassword } = require('../../services/encryption.service');
+const { comparePassword, hashGovtId } = require('../../services/encryption.service');
 const { generateAccessToken, generateRefreshToken } = require('../../config/jwt');
 const { hashToken } = require('../../services/encryption.service');
 const { createAuditLog } = require('../../services/audit.service');
@@ -71,6 +71,20 @@ const registerPatient = async (req, res) => {
                 success: false,
                 message: ERROR_MESSAGES.USER_ALREADY_EXISTS,
             });
+        }
+
+        // Check if government ID already exists
+        if (govtId) {
+            const govtIdHash = hashGovtId(govtId);
+            const govtIdCheckQuery = 'SELECT id FROM patient_profiles WHERE govt_id_hash = $1';
+            const govtIdResult = await query(govtIdCheckQuery, [govtIdHash]);
+
+            if (govtIdResult.rows.length > 0) {
+                return res.status(HTTP_STATUS.CONFLICT).json({
+                    success: false,
+                    message: 'Patient with this Government ID already exists',
+                });
+            }
         }
 
         // Get patient role
@@ -332,6 +346,11 @@ const registerOrganization = async (req, res) => {
  */
 const verifyOTPController = async (req, res) => {
     try {
+        // If purpose is not provided, default to 'registration'
+        if (!req.body.purpose) {
+            req.body.purpose = OTP_PURPOSE.REGISTRATION;
+        }
+
         const { email, phone, otp, purpose } = req.body;
 
         // Validate required fields
@@ -397,6 +416,11 @@ const verifyOTPController = async (req, res) => {
  */
 const login = async (req, res) => {
     try {
+        // If frontend sends 'email', convert to 'emailOrPhone'
+        if (req.body.email && !req.body.emailOrPhone) {
+            req.body.emailOrPhone = req.body.email;
+        }
+
         const { emailOrPhone, password } = req.body;
 
         // Validate required fields
@@ -623,11 +647,116 @@ const resendOTP = async (req, res) => {
     }
 };
 
+/**
+ * Register Doctor
+ * POST /api/auth/register/doctor
+ */
+const registerDoctor = async (req, res) => {
+    try {
+        const { email, phone, password, firstName, lastName } = req.body;
+
+        // Validate required fields
+        const validation = validateRequiredFields(req.body, ['email', 'password']);
+        if (!validation.isValid) {
+            return res.status(HTTP_STATUS.BAD_REQUEST).json({
+                success: false,
+                message: ERROR_MESSAGES.REQUIRED_FIELDS_MISSING,
+                missing: validation.missing,
+            });
+        }
+
+        // Validate email
+        if (!isValidEmail(email)) {
+            return res.status(HTTP_STATUS.BAD_REQUEST).json({
+                success: false,
+                message: ERROR_MESSAGES.INVALID_EMAIL,
+            });
+        }
+
+        // Validate password
+        const passwordValidation = validatePassword(password);
+        if (!passwordValidation.isValid) {
+            return res.status(HTTP_STATUS.BAD_REQUEST).json({
+                success: false,
+                message: ERROR_MESSAGES.WEAK_PASSWORD,
+                errors: passwordValidation.errors,
+            });
+        }
+
+        // Check if user already exists
+        const exists = await userExists(email, phone);
+        if (exists) {
+            return res.status(HTTP_STATUS.CONFLICT).json({
+                success: false,
+                message: ERROR_MESSAGES.USER_ALREADY_EXISTS,
+            });
+        }
+
+        // Get doctor role
+        const doctorRole = await getRoleByName(ROLES.DOCTOR);
+        if (!doctorRole) {
+            throw new Error('Doctor role not found in database');
+        }
+
+        // Create user
+        const user = await createUser({
+            email,
+            phone: phone || null,
+            password,
+            roleId: doctorRole.id,
+            firstName,
+            lastName,
+        });
+
+        // Generate and send OTP
+        await generateAndSendOTP({
+            email,
+            userId: user.id,
+            purpose: OTP_PURPOSE.REGISTRATION,
+        });
+
+        // Audit log
+        await createAuditLog({
+            userId: user.id,
+            action: AUDIT_ACTIONS.USER_REGISTER,
+            entityType: 'user',
+            entityId: user.id,
+            purpose: 'Doctor registration',
+            ipAddress: req.ip,
+            userAgent: req.headers['user-agent'],
+            requestMethod: req.method,
+            requestPath: req.path,
+            statusCode: HTTP_STATUS.CREATED,
+        });
+
+        logger.info('Doctor registered successfully:', { userId: user.id, email });
+
+        res.status(HTTP_STATUS.CREATED).json({
+            success: true,
+            message: SUCCESS_MESSAGES.USER_REGISTERED + '. Please verify your OTP.',
+            data: {
+                userId: user.id,
+                email: user.email,
+                phone: user.phone,
+            },
+        });
+    } catch (error) {
+        logger.error('Doctor registration failed:', error);
+        res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
+            success: false,
+            message: ERROR_MESSAGES.INTERNAL_ERROR,
+            error: process.env.NODE_ENV === 'development' ? error.message : undefined,
+        });
+    }
+};
+
 module.exports = {
     registerPatient,
     registerOrganization,
+    registerDoctor,
     verifyOTPController,
     login,
     logout,
     resendOTP,
 };
+
