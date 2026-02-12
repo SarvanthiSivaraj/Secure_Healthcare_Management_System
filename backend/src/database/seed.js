@@ -62,11 +62,12 @@ const seed = async () => {
 
         // Seed Organization
         const orgRes = await pool.query(
-            `INSERT INTO organizations (name, type, license_number, status, email, phone, address)
-             VALUES ($1, $2, $3, $4, $5, $6, $7)
-             ON CONFLICT (license_number) DO UPDATE SET status = 'active'
+            `INSERT INTO organizations (name, type, license_number, status, email, phone, address, hospital_code, verified)
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+             ON CONFLICT (hospital_code) DO UPDATE 
+             SET name = EXCLUDED.name, status = EXCLUDED.status, verified = EXCLUDED.verified
              RETURNING id`,
-            ['General Hospital', 'hospital', 'ORG-001', 'active', 'info@generalhospital.com', '555-0123', '123 Health St']
+            ['General Hospital', 'hospital', 'ORG-001', 'active', 'info@generalhospital.com', '555-0123', '123 Health St', '100001', true]
         );
         const orgId = orgRes.rows[0].id;
         logger.info('✅ Organization seeded (General Hospital)');
@@ -106,6 +107,14 @@ const seed = async () => {
                  ON CONFLICT (user_id) DO NOTHING`,
                 [userId, doc.specialization, 'LIC-' + Math.floor(Math.random() * 10000), 5]
             );
+
+            // Link doctor to organization
+            await pool.query(
+                `INSERT INTO staff_org_mapping (user_id, organization_id, role_id, status, professional_license, license_verified)
+                 VALUES ($1, $2, $3, $4, $5, $6)
+                 ON CONFLICT (user_id, organization_id) DO UPDATE SET status = 'active'`,
+                [userId, orgId, doctorRole, 'active', 'LIC-DOC-' + Math.floor(Math.random() * 1000), true]
+            );
         }
         logger.info('✅ Doctor users seeded (Password: Doctor@123)');
 
@@ -120,13 +129,24 @@ const seed = async () => {
         ];
 
         for (const nurse of nurses) {
-            await pool.query(
+            const userRes = await pool.query(
                 `INSERT INTO users (email, password_hash, first_name, last_name, role_id, is_verified, status)
                  VALUES ($1, $2, $3, $4, $5, $6, $7)
                  ON CONFLICT (email) DO UPDATE SET 
                     first_name = EXCLUDED.first_name,
-                    last_name = EXCLUDED.last_name`,
+                    last_name = EXCLUDED.last_name
+                 RETURNING id`,
                 [nurse.email, nursePassword, nurse.firstName, nurse.lastName, nurseRole, true, 'active']
+            );
+
+            const userId = userRes.rows[0].id;
+
+            // Link nurse to organization
+            await pool.query(
+                `INSERT INTO staff_org_mapping (user_id, organization_id, role_id, status, professional_license, license_verified)
+                 VALUES ($1, $2, $3, $4, $5, $6)
+                 ON CONFLICT (user_id, organization_id) DO UPDATE SET status = 'active'`,
+                [userId, orgId, nurseRole, 'active', 'LIC-RN-' + Math.floor(Math.random() * 1000), true]
             );
         }
         logger.info('✅ Nurse users seeded (Password: Nurse@123)');
