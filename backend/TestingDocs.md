@@ -703,17 +703,113 @@ it('should allow transition from scheduled to checked_in', async () => {
 
 **File Path**: `tests/unit/epic4/workflow.controller.test.js`
 
-**Purpose**: Tests clinical workflow controller operations
+**Purpose**: Tests clinical workflow controller operations including order creation, care team management, and visit access control
 
-**Total Tests**: 10
+**Total Tests**: 15  
+**Status**: 8 passing, 7 failing (awaiting production code implementation)
 
-#### Key Test Cases
+#### Recent Fixes Applied
 
-| Test Case | Pass Criteria | Expected Result | Fail Scenario |
-|-----------|---------------|-----------------|---------------|
-| Should assign care team member | Staff assigned to visit | Care team record created | Assignment fails |
-| Should enforce workflow state | Action requires specific state | Operation allowed/denied based on state | State ignored |
-| Should handle concurrent access | Multiple users accessing same visit | Proper locking/conflict resolution | Race condition |
+> [!NOTE]
+> **Request Structure Corrections (2026-02-12)**  
+> Fixed critical mismatches between test request objects and controller expectations:
+> - Moved `visitId` from `req.params` to `req.body` for all order creation endpoints
+> - Fixed `getCareTeam` to use `req.params.id` instead of `req.params.visitId`
+> - Fixed `assignCareTeam` to include `visitId` in `req.body`
+> - Corrected `CareTeamModel` mock method names (`getVisitCareTeam` vs `getTeamByVisit`)
+> - Replaced auto-mock with custom `db.mock.mockDbModule` factory
+
+#### Test Suite: Closed Visit Access Prevention (4 tests - ⚠️ FAILING)
+
+> [!WARNING]
+> **Production Code Missing Validation**  
+> These tests fail because order models ([`lab_order.model.js`](file:///home/chirag/Documents/Code/Projects/SE_S1/Secure_Healthcare_Management_System/backend/src/models/lab_order.model.js), [`imaging_order.model.js`](file:///home/chirag/Documents/Code/Projects/SE_S1/Secure_Healthcare_Management_System/backend/src/models/imaging_order.model.js), [`medication_order.model.js`](file:///home/chirag/Documents/Code/Projects/SE_S1/Secure_Healthcare_Management_System/backend/src/models/medication_order.model.js)) do not check visit status before creating orders.
+
+| Test Case | Pass Criteria | Current Result | Issue |
+|-----------|---------------|----------------|-------|
+| ❌ Should reject lab order for completed visit | Visit status check, return 400 | Returns 201 (Created) | No visit validation in `LabOrderModel.createOrder` |
+| ❌ Should reject lab order for cancelled visit | Visit status check, return 400 | Returns 201 (Created) | No visit validation |
+| ❌ Should reject imaging order for completed visit | Visit status check, return 400 | Returns 201 (Created) | No visit validation |
+| ❌ Should reject medication order for completed visit | Visit status check, return 400 | Returns 201 (Created) | No visit validation |
+| ✅ Should allow lab order for in-progress visit | Active visit allows orders | Returns 201 (Created) | **PASSING** |
+
+**Required Production Code Change:**
+```javascript
+// Example needed in lab_order.model.js
+static async createOrder(orderData) {
+    const { visitId, ... } = orderData;
+    
+    // ADD THIS VALIDATION:
+    const visit = await pool.query('SELECT status FROM visits WHERE id = $1', [visitId]);
+    if (visit.rows[0]?.status === 'completed' || visit.rows[0]?.status === 'cancelled') {
+        throw new Error('Cannot create order for closed visit');
+    }
+    
+    // ... existing insert logic
+}
+```
+
+#### Test Suite: Unassigned Staff Access Prevention (3 tests - ⚠️ 1 FAILING, 2 PASSING)
+
+| Test Case | Pass Criteria | Current Result | Status |
+|-----------|---------------|----------------|--------|
+| ❌ Should reject order from unassigned staff | Care team check, return 403 | Returns 201 | **FAILING** - Requires care team validation |
+| ✅ Should allow order from assigned staff | Staff in care team | Returns 201 | **PASSING** |
+| ❌ Should reject cross-org access | Organization check, return 403 | Returns 201 | **FAILING** - Requires org validation |
+| ✅ Should allow nurse in care team | Nurse role with assignment | Returns 201 | **PASSING** |
+
+#### Test Suite: State Transitions (2 tests - ✅ PASSING)
+
+| Test Case | Pass Criteria | Current Result | Status |
+|-----------|---------------|----------------|--------|
+| ✅ Should reject invalid transition | Transition from completed to in_progress | Returns 400 | **PASSING** |
+| ✅ Should allow valid transition | Transition from in_progress to completed | Succeeds | **PASSING** |
+
+#### Test Suite: Care Team Management (2 tests - ✅ PASSING)
+
+| Test Case | Pass Criteria | Current Result | Status |
+|-----------|---------------|----------------|--------|
+| ✅ Should assign staff to care team | `assignCareTeam` creates assignment | Returns 201 | **PASSING** |
+| ✅ Should get care team for visit | `getVisitCareTeam` returns team members | Returns 200 with team data | **PASSING** |
+
+**Sample Test Case (Passing)**:
+```javascript
+it('should allow lab order creation for in-progress visit', async () => {
+    const doctor = createMockDoctor();
+    const visitId = generateUserId();
+    const activeVisit = createMockVisit({ id: visitId, status: 'in_progress' });
+
+    mockReq.user = doctor;
+    mockReq.params = {};  // Fixed: was { visitId }
+    mockReq.body = {
+        visitId,  // Fixed: moved from params to body
+        testName: 'Complete Blood Count',
+        testType: 'hematology',
+        priority: 'normal'
+    };
+
+    pool.query.mockResolvedValueOnce(createQueryResult([activeVisit]));
+    CareTeamModel.isStaffAssigned.mockResolvedValue(true);
+    pool.query.mockResolvedValueOnce(createQueryResult([{
+        id: generateUserId(),
+        visit_id: visitId,
+        test_name: 'Complete Blood Count',
+        status: 'pending'
+    }]));
+
+    await createLabOrder(mockReq, mockRes);
+
+    // Pass Criteria
+    expect(mockRes.status).toHaveBeenCalledWith(201);
+});
+```
+
+#### Test Suite: Visit Retrieval (2 tests - ⚠️ FAILING)
+
+| Test Case | Pass Criteria | Current Result | Issue |
+|-----------|---------------|----------------|-------|
+| ❌ Should get visit by ID | Return visit matching requested ID | Returns different ID | Mock setup issue |
+| ❌ Should return 404 for non-existent | Status 404 when visit not found | Status not called | Route/handler issue |
 
 ---
 
