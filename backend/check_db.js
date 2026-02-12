@@ -9,21 +9,16 @@ const pool = new Pool({
     port: process.env.DB_PORT,
 });
 
-async function checkConstraint() {
+(async () => {
     try {
         console.log('Connecting to DB...');
-        const res = await pool.query(`
-            SELECT conname, pg_get_constraintdef(oid)
-            FROM pg_constraint
-            WHERE conrelid = 'visits'::regclass AND contype = 'c';
-        `);
-        console.log('Check Constraints on visits table:');
-        console.table(res.rows);
+        const res = await pool.query('SELECT * FROM visits LIMIT 1');
+        const hasVisitCode = res.fields.some(f => f.name === 'visit_code');
+        console.log('Has visit_code column:', hasVisitCode);
+        console.log('All Columns:', res.fields.map(f => f.name).join(', '));
     } catch (err) {
         console.error('Error:', err);
     } finally {
         pool.end();
     }
-}
-
-checkConstraint();
+})();

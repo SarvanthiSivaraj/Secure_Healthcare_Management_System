@@ -17,7 +17,7 @@ const getStaffByRole = async (req, res) => {
                 r.name as role_name
             FROM users u
             JOIN roles r ON u.role_id = r.id
-            WHERE r.name = $1
+            WHERE LOWER(r.name) = LOWER($1)
             AND u.status = 'active'
             AND u.is_verified = true
             ORDER BY u.first_name, u.last_name

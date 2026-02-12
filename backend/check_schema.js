@@ -1,32 +1,31 @@
+require('dotenv').config();
 const { Pool } = require('pg');
-const config = require('./src/config/env');
+const fs = require('fs');
 
 const pool = new Pool({
-    host: config.database.host,
-    port: config.database.port,
-    database: config.database.name,
-    user: config.database.user,
-    password: config.database.password,
+    user: process.env.DB_USER,
+    host: process.env.DB_HOST,
+    database: process.env.DB_NAME,
+    password: process.env.DB_PASSWORD,
+    port: process.env.DB_PORT,
 });
 
-const checkSchema = async () => {
+async function checkSchema() {
     try {
-        console.log('🔍 Checking users table schema...\n');
-
-        const query = `
+        console.log('Connecting to DB...');
+        const res = await pool.query(`
             SELECT column_name, data_type 
             FROM information_schema.columns 
-            WHERE table_name = 'users';
-        `;
-
-        const result = await pool.query(query);
-        console.table(result.rows);
-
-        await pool.end();
-    } catch (error) {
-        console.error('Error:', error);
-        await pool.end();
+            WHERE table_name = 'visits';
+        `);
+        const output = JSON.stringify(res.rows, null, 2);
+        fs.writeFileSync('schema_output.json', output);
+        console.log('Schema written to schema_output.json');
+    } catch (err) {
+        console.error('Error:', err);
+    } finally {
+        pool.end();
     }
-};
+}
 
 checkSchema();

@@ -70,31 +70,39 @@
 
 .view-toggle {
     display: flex;
-    background: #f0f2f5;
-    padding: 4px;
-    border-radius: 8px;
-    gap: 4px;
+    background: transparent;
+    padding: 0;
+    border-radius: 0;
+    gap: 20px;
+    border-bottom: 2px solid #e2e8f0;
+    margin-bottom: 0;
 }
 
 .toggle-btn {
-    padding: 8px 16px;
+    padding: 12px 4px;
     border: none;
     background: transparent;
     cursor: pointer;
-    border-radius: 6px;
     font-weight: 500;
-    color: #666;
-    transition: all 0.2s;
+    color: #64748b;
+    transition: all 0.2s ease;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -2px;
+    /* Overlap border */
+    border-radius: 0;
 }
 
 .toggle-btn.active {
-    background: white;
-    color: #1a73e8;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    background: transparent;
+    color: #0284c7;
+    /* Brand Blue */
+    border-bottom: 2px solid #0284c7;
+    box-shadow: none;
 }
 
 .toggle-btn:hover:not(.active) {
-    background: rgba(0, 0, 0, 0.05);
+    background: transparent;
+    color: #0284c7;
 }
 
 /* ========================================

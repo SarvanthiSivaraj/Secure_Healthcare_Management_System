@@ -88,7 +88,7 @@ const otpLimiter = rateLimit({
  */
 const registrationLimiter = rateLimit({
     windowMs: 60 * 60 * 1000, // 1 hour
-    max: 3,
+    max: 100, // Increased for testing
     message: {
         success: false,
         message: 'Too many registration attempts. Please try again later.',
@@ -113,7 +113,7 @@ const registrationLimiter = rateLimit({
  */
 const passwordResetLimiter = rateLimit({
     windowMs: 60 * 60 * 1000, // 1 hour
-    max: 3,
+    max: 100, // Increased for testing
     message: {
         success: false,
         message: 'Too many password reset attempts. Please try again later.',

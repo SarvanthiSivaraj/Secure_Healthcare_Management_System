@@ -43,7 +43,7 @@ const config = {
     // Rate Limiting
     rateLimit: {
         windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS) || 900000, // 15 minutes
-        maxRequests: parseInt(process.env.RATE_LIMIT_MAX_REQUESTS) || 100,
+        maxRequests: parseInt(process.env.RATE_LIMIT_MAX_REQUESTS) || 1000,
         loginWindowMs: parseInt(process.env.LOGIN_RATE_LIMIT_WINDOW_MS) || 900000,
         loginMaxAttempts: parseInt(process.env.LOGIN_RATE_LIMIT_MAX_ATTEMPTS) || ((process.env.NODE_ENV || 'development') === 'development' ? 50 : 5), // More lenient in dev
         otpWindowMs: parseInt(process.env.OTP_RATE_LIMIT_WINDOW_MS) || 3600000,

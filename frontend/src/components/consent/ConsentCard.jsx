@@ -98,15 +98,15 @@ function ConsentCard({ consent, onRevoke, onEdit }) {
     }, [consent.endTime]);
 
     return (
-        <div className={`consent-card ${isActive ? 'active' : 'inactive'}`}>
+        <div className={`consent-card ${isExpired ? 'inactive' : (isActive ? 'active' : 'inactive')}`}>
             <div className="consent-header">
                 <div>
                     <h4>Dr. {consent.recipientName}</h4>
                     <span className="consent-specialization">{consent.specialization}</span>
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
-                    <span className={`consent-status ${consent.status.toLowerCase()}`}>
-                        {consent.status}
+                    <span className={`consent-status ${isExpired ? 'expired' : consent.status.toLowerCase()}`}>
+                        {isExpired ? 'EXPIRED' : consent.status}
                     </span>
                     {isActive && consent.endTime && (
                         <span style={{ fontSize: '0.8rem', color: '#666', marginTop: '4px' }}>

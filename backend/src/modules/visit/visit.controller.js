@@ -83,11 +83,15 @@ const VisitController = {
             const organizationId = mappingRes.rows[0].organization_id;
             const tests = req.query.status;
 
+            console.log(`🏥 Fetching visits for Org: ${organizationId}, Status: ${req.query.status}`);
+
             const visits = await VisitModel.findByOrganization(organizationId, {
                 status: req.query.status,
                 limit: req.query.limit,
                 offset: req.query.offset
             });
+
+            console.log(`✅ Found ${visits.length} visits for Org ${organizationId}`);
 
             res.json({
                 success: true,
@@ -396,8 +400,12 @@ const VisitController = {
             });
 
         } catch (error) {
-            logger.error('Check-in failed:', error);
-            res.status(500).json({ success: false, message: 'Failed to check in' });
+            console.error('Check-in failed:', error);
+            res.status(500).json({
+                success: false,
+                message: error.message || 'Failed to check in',
+                stack: error.stack
+            });
         }
     },
 

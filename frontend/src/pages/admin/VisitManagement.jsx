@@ -1,9 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { visitApi } from '../../api/visitApi';
+import { useNavigate } from 'react-router-dom';
 import Button from '../../components/common/Button';
 import './VisitManagement.css';
 
 function VisitManagement() {
+    const navigate = useNavigate();
     const [activeTab, setActiveTab] = useState('pending');
     const [visits, setVisits] = useState([]);
     const [loading, setLoading] = useState(false);
@@ -14,11 +16,7 @@ function VisitManagement() {
     const [nurses, setNurses] = useState([]);
     const [approvalData, setApprovalData] = useState({ doctorId: '', nurseId: '' });
 
-    useEffect(() => {
-        loadVisits();
-    }, [activeTab]);
-
-    const loadVisits = async () => {
+    const loadVisits = useCallback(async () => {
         setLoading(true);
         setError('');
         try {
@@ -56,7 +54,13 @@ function VisitManagement() {
         } finally {
             setLoading(false);
         }
-    };
+    }, [activeTab]);
+
+    useEffect(() => {
+        loadVisits();
+        // Triggered on mount and when loadVisits changes
+    }, [loadVisits]);
+
 
     const handleApproveClick = async (visit) => {
         setSelectedVisit(visit);
@@ -84,13 +88,18 @@ function VisitManagement() {
             return;
         }
 
+
         try {
-            await visitApi.approveVisit(
+            const response = await visitApi.approveVisit(
                 selectedVisit.id,
                 approvalData.doctorId,
                 approvalData.nurseId || null
             );
-            alert('Visit approved successfully! Patient will receive an email with visit code.');
+
+            // Show OTP to admin
+            const otp = response.data?.otp_code || response.data?.visitCode || response.data?.otp;
+            alert(`Visit approved successfully!\n\nVISIT CODE: ${otp}\n\nPlease share this code with the patient.`);
+
             setShowApprovalModal(false);
             setApprovalData({ doctorId: '', nurseId: '' });
             loadVisits();
@@ -142,8 +151,15 @@ function VisitManagement() {
     return (
         <div className="visit-management-container">
             <div className="visit-management-header">
-                <h1>Visit Management</h1>
-                <p className="subtitle">Manage patient visit requests and assignments</p>
+                <div className="header-content">
+                    <div>
+                        <h1>Visit Management</h1>
+                        <p className="subtitle">Manage patient visit requests and assignments</p>
+                    </div>
+                    <Button onClick={() => navigate('/admin/dashboard')} variant="secondary">
+                        Back to Dashboard
+                    </Button>
+                </div>
             </div>
 
             <div className="visit-tabs">
