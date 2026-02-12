@@ -26,9 +26,6 @@ Out-of-Scope:
 - Automated unit tests with Vitest
 - External dependencies mocked (DB and services)
 
-### Resources & Responsibilities
-- Tester: Backend developer
-
 ### Schedule & Milestones
 - On-demand for local validation before commit
 
@@ -68,7 +65,9 @@ No defects recorded in the latest unit test run.
 ## 4. Test Execution Report
 
 Project Name: Secure Healthcare Information and Patient Management System
+
 Tester: Vishnu Vardhan T
+
 Date: 2026-02-12
 
 Commands executed (from backend folder):
