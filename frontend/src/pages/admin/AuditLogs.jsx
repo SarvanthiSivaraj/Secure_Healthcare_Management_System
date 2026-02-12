@@ -1,12 +1,14 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Button from '../../components/common/Button';
+import apiClient from '../../api/client';
 import './AuditLogs.css';
 
 function AuditLogs() {
     const navigate = useNavigate();
     const [logs, setLogs] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
     const [searchTerm, setSearchTerm] = useState('');
     const [filterAction, setFilterAction] = useState('all');
     const [dateRange, setDateRange] = useState({ start: '', end: '' });
@@ -14,33 +16,26 @@ function AuditLogs() {
     const fetchLogs = useCallback(async () => {
         try {
             setLoading(true);
-            const token = localStorage.getItem('token');
+            setError(null);
 
-            // Fetch real audit logs from backend
-            const response = await fetch('http://localhost:5000/api/audit/logs', {
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json'
-                }
-            });
+            // Fetch real audit logs from backend using apiClient
+            const response = await apiClient.get('/audit/logs');
+            console.log('Audit Logs Response:', response);
 
-            if (response.status === 401 || response.status === 403) {
-                // Token might be expired
-                return;
-            }
-
-            const data = await response.json();
+            // apiClient interceptors handle 401/403, but we can check here too if needed
+            // The response.data contains the backend payload { success: true, data: [...] }
+            const data = response.data;
 
             if (data.success) {
-                setLogs(data.data);
+                setLogs(data.data || []);
             } else {
-                console.error('Failed to fetch logs:', data.message);
-                // Fallback to empty list or handle error
+                setError(data.message || 'Failed to fetch logs');
                 setLogs([]);
             }
         } catch (error) {
             console.error('Error fetching logs:', error);
-            // Fallback to empty list
+            const errorMsg = error.response?.data?.message || 'Failed to connect to the server';
+            setError(errorMsg);
             setLogs([]);
         } finally {
             setLoading(false);
@@ -77,7 +72,16 @@ function AuditLogs() {
             'staff_onboard': 'badge-primary',
             'user_login': 'badge-neutral',
             'user_logout': 'badge-neutral',
-            'staff_deactivate': 'badge-danger'
+            'staff_deactivate': 'badge-danger',
+            'create_visit': 'badge-info',
+            'approve_visit': 'badge-success',
+            'update_visit': 'badge-warning',
+            'verify_visit_otp': 'badge-success',
+            'create_lab_order': 'badge-primary',
+            'create_imaging_order': 'badge-primary',
+            'create_medication_order': 'badge-primary',
+            'create_medical_record': 'badge-info',
+            'view_medical_record': 'badge-neutral'
         };
         return actionMap[action] || 'badge-default';
     };
@@ -127,11 +131,15 @@ function AuditLogs() {
                             className="filter-select"
                         >
                             <option value="all">All Actions</option>
-                            <option value="visit_approval">Visit Approval</option>
+                            <option value="user_login">User Login</option>
+                            <option value="create_visit">Requested Visit</option>
+                            <option value="approve_visit">Visit Approved</option>
+                            <option value="create_medical_record">Created Record</option>
+                            <option value="view_medical_record">Viewed Record</option>
+                            <option value="visit_approval">Visit Approval (Legacy)</option>
                             <option value="consent_grant">Consent Grant</option>
                             <option value="emr_access">EMR Access</option>
                             <option value="staff_onboard">Staff Onboard</option>
-                            <option value="user_login">User Login</option>
                             <option value="staff_deactivate">Staff Deactivate</option>
                         </select>
 
@@ -150,6 +158,19 @@ function AuditLogs() {
                             className="date-input"
                             placeholder="End Date"
                         />
+
+                        {(searchTerm || filterAction !== 'all' || dateRange.start || dateRange.end) && (
+                            <Button
+                                onClick={() => {
+                                    setSearchTerm('');
+                                    setFilterAction('all');
+                                    setDateRange({ start: '', end: '' });
+                                }}
+                                variant="outline"
+                            >
+                                Reset Filters
+                            </Button>
+                        )}
                     </div>
                 </div>
 
@@ -157,6 +178,13 @@ function AuditLogs() {
                 <div className="logs-table-container">
                     {loading ? (
                         <p className="loading">Loading audit logs...</p>
+                    ) : error ? (
+                        <div className="error-message" style={{ textAlign: 'center', color: '#e53e3e', padding: '2rem' }}>
+                            <p>{error}</p>
+                            <p style={{ fontSize: '0.9rem', color: '#718096', marginTop: '0.5rem' }}>
+                                Please ensure you are logged in as an administrator.
+                            </p>
+                        </div>
                     ) : filteredLogs.length === 0 ? (
                         <p className="no-data">No audit logs found</p>
                     ) : (
@@ -197,34 +225,9 @@ function AuditLogs() {
                     )}
                 </div>
 
-                {/* Stats Summary */}
-                <div className="audit-stats">
-                    <div className="stat-card">
-                        <div className="stat-icon">📊</div>
-                        <div className="stat-info">
-                            <div className="stat-value">{filteredLogs.length}</div>
-                            <div className="stat-label">Total Events</div>
-                        </div>
-                    </div>
-                    <div className="stat-card">
-                        <div className="stat-icon">👥</div>
-                        <div className="stat-info">
-                            <div className="stat-value">{new Set(filteredLogs.map(l => l.user_email)).size}</div>
-                            <div className="stat-label">Unique Users</div>
-                        </div>
-                    </div>
-                    <div className="stat-card">
-                        <div className="stat-icon">⏰</div>
-                        <div className="stat-info">
-                            <div className="stat-value">Last 24h</div>
-                            <div className="stat-label">Time Range</div>
-                        </div>
-                    </div>
-                </div>
 
-                <div className="info-banner">
-                    <strong>ℹ️ Note:</strong> Currently displaying mock data. Connect to audit backend API for live logs.
-                </div>
+
+
             </div>
         </div>
     );

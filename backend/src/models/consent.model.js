@@ -150,7 +150,7 @@ const getActiveConsents = async (patientId) => {
         `;
 
         const result = await query(selectQuery, [patientId]);
-        
+
         return result.rows;
     } catch (error) {
         logger.error('Failed to get active consents:', error);
@@ -185,6 +185,7 @@ const getConsentHistory = async (patientId) => {
             INNER JOIN users u ON c.recipient_user_id = u.id
             INNER JOIN roles r ON u.role_id = r.id
             WHERE c.patient_id = $1
+            AND (c.status = 'revoked' OR c.end_time <= NOW())
             ORDER BY c.created_at DESC
         `;
 
@@ -217,19 +218,19 @@ const checkConsent = async (patientId, recipientUserId, dataCategory, accessLeve
         `;
 
         const result = await query(checkQuery, [patientId, recipientUserId, dataCategory]);
-        
+
         if (result.rows.length === 0) {
             return false;
         }
 
         // Check if access level is sufficient
         const consentAccessLevel = result.rows[0].access_level;
-        
+
         // If requesting write access, consent must have write access
         if (accessLevel === 'write') {
             return consentAccessLevel === 'write';
         }
-        
+
         // If requesting read access, either read or write is acceptable
         return consentAccessLevel === 'read' || consentAccessLevel === 'write';
     } catch (error) {

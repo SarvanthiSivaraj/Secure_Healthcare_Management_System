@@ -23,15 +23,21 @@ const seedDoctors = async () => {
         const doctorRoleId = doctorRoleRes.rows[0].id;
 
         // 2. Ensure Organization Exists
-        const orgRes = await pool.query(
-            `INSERT INTO organizations (name, type, license_number, status, verified)
-             VALUES ($1, $2, $3, $4, $5)
-             ON CONFLICT (license_number) DO UPDATE SET name = EXCLUDED.name
-             RETURNING id`,
-            ['General Hospital', 'hospital', 'ORG-1001', 'active', true]
-        );
-        const orgId = orgRes.rows[0].id;
-        logger.info(`🏥 Organization 'General Hospital' ready (ID: ${orgId})`);
+        let orgId;
+        try {
+            const orgRes = await pool.query(
+                `INSERT INTO organizations (name, type, license_number, status, verified, hospital_code)
+                     VALUES ($1, $2, $3, $4, $5, $6)
+                     ON CONFLICT (license_number) DO UPDATE SET name = EXCLUDED.name
+                     RETURNING id`,
+                ['General Hospital', 'hospital', 'ORG-1001', 'active', true, '10001']
+            );
+            orgId = orgRes.rows[0].id;
+        } catch (err) {
+            console.error('❌ Failed to seed organization:', err);
+            console.error('Error details:', JSON.stringify(err, null, 2));
+            process.exit(1);
+        }
 
         // 3. Seed Doctors
         const doctors = [
@@ -78,7 +84,7 @@ const seedDoctors = async () => {
                  ON CONFLICT (user_id, organization_id) DO NOTHING`,
                 [userId, orgId, doctorRoleId, dr.license, true, 'active']
             );
-            
+
             logger.info(`✅ Seeded Dr. ${dr.firstName} ${dr.lastName}`);
         }
 

@@ -2,6 +2,7 @@ const VisitModel = require('../../models/visit.model');
 const VisitConsentService = require('../../services/visit-consent.service');
 const { pool } = require('../../config/db'); // for direct querying if needed
 const logger = require('../../utils/logger');
+const { sendVisitApprovalEmail, sendVisitClosureEmail } = require('../../config/mail');
 
 const VisitController = {
     /**
@@ -30,15 +31,15 @@ const VisitController = {
 
             const organization = orgRes.rows[0];
 
-            // 2. Check for existing active visit (DISABLED FOR TESTING - allows multiple visits)
-            // const existingVisit = await VisitModel.findActiveByPatient(patientId);
-            // if (existingVisit) {
-            //     return res.status(409).json({
-            //         success: false,
-            //         message: 'You already have an active visit request.',
-            //         data: existingVisit
-            //     });
-            // }
+            // 2. Check for existing active visit
+            const existingVisit = await VisitModel.findActiveByPatient(patientId);
+            if (existingVisit) {
+                return res.status(409).json({
+                    success: false,
+                    message: 'You already have an active visit request.',
+                    data: existingVisit
+                });
+            }
 
             // 3. Create Visit
             const visit = await VisitModel.create({
@@ -82,11 +83,15 @@ const VisitController = {
             const organizationId = mappingRes.rows[0].organization_id;
             const tests = req.query.status;
 
+            console.log(`🏥 Fetching visits for Org: ${organizationId}, Status: ${req.query.status}`);
+
             const visits = await VisitModel.findByOrganization(organizationId, {
                 status: req.query.status,
                 limit: req.query.limit,
                 offset: req.query.offset
             });
+
+            console.log(`✅ Found ${visits.length} visits for Org ${organizationId}`);
 
             res.json({
                 success: true,
@@ -96,6 +101,52 @@ const VisitController = {
         } catch (error) {
             logger.error('Get hospital visits failed:', error);
             res.status(500).json({ success: false, message: 'Failed to fetch visits' });
+        }
+    },
+
+    /**
+     * Get visits for the logged-in patient
+     */
+    async getMyVisits(req, res) {
+        try {
+            const userId = req.user.id;
+            const visits = await VisitModel.findByPatientId(userId);
+
+            res.json({
+                success: true,
+                data: visits
+            });
+        } catch (error) {
+            logger.error('Get my visits failed:', error);
+            res.status(500).json({ success: false, message: 'Failed to fetch visits' });
+        }
+    },
+
+    /**
+     * Get visits assigned to the logged-in doctor/nurse
+     */
+    async getAssignedVisits(req, res) {
+        try {
+            const userId = req.user.id;
+            // Auth middleware sets roleName, fall back to role just in case
+            const role = (req.user.roleName || req.user.role)?.toLowerCase();
+
+            logger.info(`Fetching assigned visits for user ${userId} with role ${role}`);
+
+            if (!['doctor', 'nurse'].includes(role)) {
+                return res.status(403).json({ success: false, message: 'Only doctors and nurses can view assigned visits' });
+            }
+
+            const visits = await VisitModel.findByAssignedStaff(userId, role);
+            logger.info(`Found ${visits.length} assigned visits`);
+
+            res.json({
+                success: true,
+                data: visits
+            });
+        } catch (error) {
+            logger.error('Get assigned visits failed:', error);
+            res.status(500).json({ success: false, message: 'Failed to fetch assigned visits' });
         }
     },
 
@@ -161,9 +212,26 @@ const VisitController = {
                 return res.status(404).json({ success: false, message: 'Visit not found' });
             }
 
+            // Get full visit details for email
+            const visitDetails = await VisitModel.getFullDetails(id);
+
+            // Send approval email with visit code
+            try {
+                await sendVisitApprovalEmail(visitDetails.patient_email, {
+                    visit_code: visitDetails.visit_code,
+                    hospital_name: visitDetails.organization_name,
+                    reason: visitDetails.reason,
+                    scheduled_date: visitDetails.created_at
+                });
+                logger.info(`Visit approval email sent to ${visitDetails.patient_email}`);
+            } catch (emailError) {
+                logger.error('Failed to send visit approval email:', emailError);
+                // Don't fail the request if email fails
+            }
+
             res.json({
                 success: true,
-                message: 'Visit approved successfully',
+                message: 'Visit approved successfully. Approval email sent to patient.',
                 data: {
                     ...updatedVisit,
                     // Return OTP for display to admin/patient
@@ -244,41 +312,199 @@ const VisitController = {
     },
 
     /**
-     * Get patient's own visits
-     * GET /visits/my-visits
+     * Patient generates access code for a visit
      */
-    async getMyVisits(req, res) {
+    async generateAccessCode(req, res) {
         try {
+            const { id } = req.params;
             const patientId = req.user.id;
 
-            const query = `
-                SELECT v.*, 
-                       u.first_name as patient_first_name, 
-                       u.last_name as patient_last_name,
-                       u.email as patient_email,
-                       d.first_name as doctor_first_name,
-                       d.last_name as doctor_last_name,
-                       n.first_name as nurse_first_name,
-                       n.last_name as nurse_last_name,
-                       o.name as organization_name
-                FROM visits v
-                JOIN users u ON v.patient_id = u.id
-                LEFT JOIN users d ON v.assigned_doctor_id = d.id
-                LEFT JOIN users n ON v.assigned_nurse_id = n.id
-                LEFT JOIN organizations o ON v.organization_id = o.id
-                WHERE v.patient_id = $1
-                ORDER BY v.created_at DESC
-            `;
+            // 1. Verify visit ownership
+            const visit = await VisitModel.findById(id);
 
-            const result = await pool.query(query, [patientId]);
+            if (!visit) {
+                return res.status(404).json({ success: false, message: 'Visit not found' });
+            }
+
+            if (visit.patient_id !== patientId) {
+                return res.status(403).json({ success: false, message: 'Unauthorized access to this visit' });
+            }
+
+            // 2. Generate Code
+            const result = await VisitModel.generateAccessCode(id);
 
             res.json({
                 success: true,
-                visits: result.rows
+                message: 'Access code generated successfully',
+                data: {
+                    visitId: id,
+                    accessCode: result.otp_code,
+                    expiresAt: result.otp_expires_at
+                }
             });
+
         } catch (error) {
-            logger.error('Get my visits failed:', error);
-            res.status(500).json({ success: false, message: 'Failed to get visits' });
+            logger.error('Generate access code failed:', error);
+            res.status(500).json({ success: false, message: 'Failed to generate access code' });
+        }
+    },
+
+    /**
+     * Patient check-in using visit code
+     */
+    async checkInVisit(req, res) {
+        try {
+            const { visitCode } = req.body;
+            const patientId = req.user.id;
+
+            console.log(`🔍 Check-in Attempt: Code=${visitCode}, User=${patientId}`);
+
+            if (!visitCode) {
+                return res.status(400).json({ success: false, message: 'Visit code is required' });
+            }
+
+            // Find visit by code
+            const visit = await VisitModel.findByCode(visitCode);
+
+            if (!visit) {
+                console.log(`❌ Visit not found for code: ${visitCode}`);
+                return res.status(404).json({ success: false, message: 'Invalid visit code' });
+            }
+
+            console.log(`✅ Visit found: ID=${visit.id}, Patient=${visit.patient_id}, Status=${visit.status}`);
+
+            // Verify patient owns this visit
+            if (visit.patient_id !== patientId) {
+                console.warn(`⚠️ Ownership mismatch: VisitOwner=${visit.patient_id}, RequestUser=${patientId}`);
+                console.warn(`⚠️ User Email: ${req.user.email}`); // Log email to be sure
+                return res.status(403).json({ success: false, message: 'This visit does not belong to you' });
+            }
+
+            // Check if visit is in approved status
+            if (visit.status !== 'approved') {
+                console.warn(`⚠️ Invalid status: ${visit.status}`);
+                return res.status(400).json({
+                    success: false,
+                    message: `Cannot check in. Visit status is: ${visit.status}`
+                });
+            }
+
+            // Update status to checked_in
+            const updatedVisit = await VisitModel.updateStatus(visit.id, 'checked_in', patientId);
+            console.log(`✅ Check-in successful for visit ${visit.id}`);
+
+            res.json({
+                success: true,
+                message: 'Successfully checked in',
+                data: updatedVisit
+            });
+
+        } catch (error) {
+            console.error('Check-in failed:', error);
+            res.status(500).json({
+                success: false,
+                message: error.message || 'Failed to check in',
+                stack: error.stack
+            });
+        }
+    },
+
+    /**
+     * Close visit (complete or cancel)
+     */
+    async closeVisit(req, res) {
+        try {
+            const { id } = req.params;
+            const { status } = req.body; // 'completed' or 'cancelled'
+            const userId = req.user.id;
+
+            if (!status || !['completed', 'cancelled'].includes(status)) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'Status must be either completed or cancelled'
+                });
+            }
+
+            // Close visit (triggers automatic access revocation)
+            const closedVisit = await VisitModel.closeVisit(id, userId, status);
+
+            if (!closedVisit) {
+                return res.status(404).json({ success: false, message: 'Visit not found' });
+            }
+
+            // Get full details for email
+            const visitDetails = await VisitModel.getFullDetails(id);
+
+            // Send closure email
+            try {
+                await sendVisitClosureEmail(visitDetails.patient_email, {
+                    visit_code: visitDetails.visit_code,
+                    hospital_name: visitDetails.organization_name,
+                    status: status
+                });
+                logger.info(`Visit closure email sent to ${visitDetails.patient_email}`);
+            } catch (emailError) {
+                logger.error('Failed to send visit closure email:', emailError);
+            }
+
+            res.json({
+                success: true,
+                message: `Visit ${status} successfully. Staff access has been revoked.`,
+                data: closedVisit
+            });
+
+        } catch (error) {
+            logger.error('Close visit failed:', error);
+            res.status(500).json({ success: false, message: 'Failed to close visit' });
+        }
+    },
+
+    /**
+     * Get staff assigned to a visit
+     */
+    async getVisitStaff(req, res) {
+        try {
+            const { id } = req.params;
+
+            const staff = await VisitModel.getAssignedStaff(id);
+
+            res.json({
+                success: true,
+                data: staff
+            });
+
+        } catch (error) {
+            logger.error('Get visit staff failed:', error);
+            res.status(500).json({ success: false, message: 'Failed to get visit staff' });
+        }
+    },
+
+    /**
+     * Assign additional staff to visit
+     */
+    async assignStaff(req, res) {
+        try {
+            const { id } = req.params;
+            const { staffUserId, role } = req.body;
+
+            if (!staffUserId || !role) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'Staff user ID and role are required'
+                });
+            }
+
+            const assignment = await VisitModel.assignStaff(id, staffUserId, role);
+
+            res.json({
+                success: true,
+                message: 'Staff assigned successfully',
+                data: assignment
+            });
+
+        } catch (error) {
+            logger.error('Assign staff failed:', error);
+            res.status(500).json({ success: false, message: 'Failed to assign staff' });
         }
     }
 };

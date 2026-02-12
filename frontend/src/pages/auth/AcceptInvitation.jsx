@@ -86,7 +86,8 @@ function AcceptInvitation() {
                 });
             }
         } catch (err) {
-            const errorMsg = err.response?.data?.message || err.message || 'Failed to create account';
+            console.error('Accept invitation error:', err);
+            const errorMsg = err.response?.data?.message || err.message || 'Failed to create account. Please try again.';
             setError(errorMsg);
         } finally {
             setSubmitting(false);

@@ -348,7 +348,16 @@ const getPatientRecordAccessLogs = async (patientId, options = {}) => {
         let params = [patientId];
         let paramIndex = 2;
 
-        const relevantActions = ['view_medical_record', 'create_medical_record', 'update_medical_record', 'view_patient_records', 'consent_grant', 'consent_revoke', 'consent_expired', 'create_diagnosis', 'create_prescription', 'upload_lab_result', 'upload_imaging_report', 'user_login', 'consent_view'];
+        const relevantActions = [
+            'view_medical_record', 'create_medical_record', 'update_medical_record', 'view_patient_records',
+            'consent_grant', 'consent_revoke', 'consent_expired', 'consent_view',
+            'create_diagnosis', 'create_prescription', 'upload_lab_result', 'upload_imaging_report',
+            'user_login', 'user_register',
+            // Visit Actions
+            'create_visit', 'approve_visit', 'update_visit', 'verify_visit_otp',
+            // Clinical Workflow Actions
+            'create_lab_order', 'create_imaging_order', 'create_medication_order'
+        ];
 
         logger.info('=== AUDIT TRAIL DEBUG ===');
         logger.info(`Patient ID: ${patientId}`);

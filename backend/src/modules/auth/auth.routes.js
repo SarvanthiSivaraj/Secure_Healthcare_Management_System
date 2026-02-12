@@ -80,7 +80,6 @@ router.post(
 router.post(
     '/login',
     loginLimiter,
-    auditActions.login,
     asyncHandler(async (req, res) => {
         // Intercept the response to ensure frontend compatibility tokens are there
         const originalJson = res.json.bind(res);
@@ -131,7 +130,6 @@ router.get(
 router.post(
     '/logout',
     authenticate,
-    auditActions.logout,
     asyncHandler(authController.logout)
 );
 

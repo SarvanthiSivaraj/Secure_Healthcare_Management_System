@@ -100,7 +100,16 @@ function AuditTrail() {
             'upload_lab_result': 'Uploaded Lab Result',
             'upload_imaging_report': 'Uploaded Imaging Report',
             'user_login': 'User Login',
-            'user_register': 'User Registration'
+            'user_register': 'User Registration',
+            // Visit Actions
+            'create_visit': 'Requested Visit',
+            'approve_visit': 'Visit Approved',
+            'update_visit': 'Visit Updated',
+            'verify_visit_otp': 'Verified Visit OTP',
+            // Clinical Workflow Actions
+            'create_lab_order': 'Ordered Lab Test',
+            'create_imaging_order': 'Ordered Imaging',
+            'create_medication_order': 'Prescribed Medication'
         };
         return actionMap[action] || action;
     };
@@ -167,6 +176,8 @@ function AuditTrail() {
                         <option value="consent_grant">Granted Consent</option>
                         <option value="consent_revoke">Revoked Consent</option>
                         <option value="consent_view">Viewed Consent</option>
+                        <option value="create_visit">Requested Visit</option>
+                        <option value="approve_visit">Visit Approved</option>
                         <option value="user_login">Login</option>
                     </select>
                 </div>

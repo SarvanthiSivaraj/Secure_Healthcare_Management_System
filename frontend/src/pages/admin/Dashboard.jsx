@@ -88,35 +88,35 @@ function AdminDashboard() {
                             </p>
                         </div>
 
-                        <div className="nav-card" onClick={() => navigate('/admin/visits')}>
-                            <div className="nav-card-header">
-                                <h3>Visit Management</h3>
-                                <span className="nav-arrow">→</span>
-                            </div>
-                            <p className="nav-card-description">
-                                Oversight of patient visits and hospital flow
-                            </p>
-                        </div>
+                    <div className="nav-card" onClick={() => navigate('/admin/visits')}>
+                    <div className="nav-card-header">
+                        <h3>Visit Management</h3>
+                        <span className="nav-arrow">→</span>
+                    </div>
+                    <p className="nav-card-description">
+                        View and manage patient visit requests, approve visits, and assign staff
+                    </p>
+                </div>
 
-                        <div className="nav-card" onClick={() => navigate('/admin/staff')}>
-                            <div className="nav-card-header">
-                                <h3>Staff Management</h3>
-                                <span className="nav-arrow">→</span>
-                            </div>
-                            <p className="nav-card-description">
-                                Invite staff members and manage staff invitations across the organization
-                            </p>
-                        </div>
+                <div className="nav-card" onClick={() => navigate('/admin/staff')}>
+                    <div className="nav-card-header">
+                        <h3>Staff Management</h3>
+                        <span className="nav-arrow">→</span>
+                    </div>
+                    <p className="nav-card-description">
+                        Invite staff members and manage staff invitations across the organization
+                    </p>
+                </div>
 
-                        <div className="nav-card" onClick={() => alert('Feature coming soon')}>
-                            <div className="nav-card-header">
-                                <h3>System Settings</h3>
-                                <span className="nav-arrow">→</span>
-                            </div>
-                            <p className="nav-card-description">
-                                Configure system parameters, security policies, and integrations
-                            </p>
-                        </div>
+                <div className="nav-card">
+                    <div className="nav-card-header">
+                        <h3>System Settings</h3>
+                        <span className="nav-arrow">→</span>
+                    </div>
+                    <p className="nav-card-description">
+                        Configure system parameters, security policies, and integrations
+                    </p>
+                </div>
                     </div>
                 </div>
             </div>

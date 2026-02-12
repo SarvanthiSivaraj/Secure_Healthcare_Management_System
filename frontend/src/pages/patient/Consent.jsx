@@ -165,16 +165,7 @@ function Consent() {
                         />
                     ))}
                 </div>
-                <div className="consent-info-box">
-                    <h3>🔒 Your Data, Your Control</h3>
-                    <ul>
-                        <li>You own your medical data</li>
-                        <li>No one can access it without your explicit consent</li>
-                        <li>You can revoke consent at any time</li>
-                        <li>All access is logged and auditable</li>
-                        <li>Emergency access requires justification and notifies you</li>
-                    </ul>
-                </div>
+
             </div>
         </div>
     );

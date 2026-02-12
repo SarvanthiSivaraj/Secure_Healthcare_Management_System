@@ -22,7 +22,7 @@ function ActiveVisits() {
         setLoading(true);
         try {
             const data = await visitApi.getActiveVisits();
-            setVisits(data.visits || []);
+            setVisits(data.data || []);
         } catch (error) {
             console.error('Failed to fetch visits:', error);
         } finally {

@@ -31,9 +31,13 @@ function PatientDashboard() {
                 ]);
 
                 setStats({
-                    activeConsents: consentsRes.status === 'fulfilled' ? (consentsRes.value?.length || 0) : 0,
+                    activeConsents: consentsRes.status === 'fulfilled'
+                        ? (Array.isArray(consentsRes.value)
+                            ? consentsRes.value.length
+                            : (Array.isArray(consentsRes.value?.data) ? consentsRes.value.data.length : 0))
+                        : 0,
                     medicalRecords: recordsRes.status === 'fulfilled' ? (recordsRes.value?.data?.records?.length || recordsRes.value?.data?.length || 0) : 0,
-                    scheduledVisits: visitsRes.status === 'fulfilled' ? (visitsRes.value?.filter(v => v.status === 'approved' || v.status === 'pending').length || 0) : 0,
+                    scheduledVisits: visitsRes.status === 'fulfilled' ? (visitsRes.value?.filter(v => ['approved', 'pending', 'scheduled'].includes(v.status?.toLowerCase())).length || 0) : 0,
                     accessLogs: 0 // TODO: Implement access logs API
                 });
             } catch (error) {

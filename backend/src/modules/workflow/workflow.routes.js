@@ -7,6 +7,7 @@ const express = require('express');
 const router = express.Router();
 const workflowController = require('./workflow.controller');
 const { authenticate } = require('../../middleware/auth.middleware');
+const { auditLog } = require('../../middleware/audit.middleware');
 
 // All workflow routes require authentication
 router.use(authenticate);
@@ -33,21 +34,21 @@ router.get('/visits/:id/care-team', workflowController.getVisitCareTeam);
 // ============================================
 // LAB ORDERS
 // ============================================
-router.post('/lab-orders', workflowController.createLabOrder);
+router.post('/lab-orders', auditLog('create_lab_order', 'lab_order'), workflowController.createLabOrder);
 router.patch('/lab-orders/:id/status', workflowController.updateLabOrderStatus);
 router.get('/visits/:id/lab-orders', workflowController.getVisitLabOrders);
 
 // ============================================
 // IMAGING ORDERS
 // ============================================
-router.post('/imaging-orders', workflowController.createImagingOrder);
+router.post('/imaging-orders', auditLog('create_imaging_order', 'imaging_order'), workflowController.createImagingOrder);
 router.patch('/imaging-orders/:id/status', workflowController.updateImagingOrderStatus);
 router.get('/visits/:id/imaging-orders', workflowController.getVisitImagingOrders);
 
 // ============================================
 // MEDICATION ORDERS
 // ============================================
-router.post('/medication-orders', workflowController.createMedicationOrder);
+router.post('/medication-orders', auditLog('create_medication_order', 'medication_order'), workflowController.createMedicationOrder);
 router.patch('/medication-orders/:id/administer', workflowController.administerMedication);
 router.get('/visits/:id/medication-orders', workflowController.getVisitMedicationOrders);
 

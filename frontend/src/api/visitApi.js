@@ -11,7 +11,7 @@ export const visitApi = {
     // Patient: Get my visits
     getMyVisits: async () => {
         const response = await apiClient.get('/visits/my-visits');
-        const visits = response.data.visits || response.data || [];
+        const visits = response.data.data || [];
 
         // Transform snake_case backend data to camelCase for frontend
         return visits.map(visit => ({
@@ -36,6 +36,12 @@ export const visitApi = {
     getHospitalVisits: async (status = null) => {
         const params = status ? { status } : {};
         const response = await apiClient.get('/visits/hospital', { params });
+        return response.data;
+    },
+
+    // Doctor/Nurse: Get assigned/active visits
+    getActiveVisits: async () => {
+        const response = await apiClient.get('/visits/assigned');
         return response.data;
     },
 
@@ -64,23 +70,38 @@ export const visitApi = {
         return response.data;
     },
 
-    // Patient: Check in with code (Smart wrapper)
-    checkIn: async (otp) => {
-        // 1. Get my visits (returns transformed data with camelCase)
-        const visits = await visitApi.getMyVisits();
+    // Patient: Check in using visit code
+    checkIn: async (visitCode) => {
+        const response = await apiClient.post('/visits/check-in', { visitCode });
+        return response.data;
+    },
 
-        // 2. Find the visit that is in 'approved' state
-        const readyVisit = visits.find(v => v.status === 'approved');
+    // Admin/Doctor: Close visit (complete or cancel)
+    closeVisit: async (visitId, status) => {
+        const response = await apiClient.post(`/visits/${visitId}/close`, { status });
+        return response.data;
+    },
 
-        if (!readyVisit) {
-            throw new Error('No approved visit found to check in to. Please request a visit or wait for approval.');
-        }
+    // Admin/Doctor/Nurse: Get staff assigned to visit
+    getVisitStaff: async (visitId) => {
+        const response = await apiClient.get(`/visits/${visitId}/staff`);
+        return response.data;
+    },
 
-        // 3. Verify OTP for that visit
-        // Defaulting accessLevel to 'read' for simple check-in
-        return await visitApi.verifyVisitOTP(readyVisit.id, otp, 'read');
+    // Admin/Doctor: Assign additional staff to visit
+    assignStaff: async (visitId, staffUserId, role) => {
+        const response = await apiClient.post(`/visits/${visitId}/assign-staff`, {
+            staffUserId,
+            role
+        });
+        return response.data;
+    },
+
+    // Get staff by role (for assignment dropdowns)
+    getStaffByRole: async (role) => {
+        const response = await apiClient.get(`/visits/staff/${role}`);
+        return response.data;
     }
 };
 
 export default visitApi;
-

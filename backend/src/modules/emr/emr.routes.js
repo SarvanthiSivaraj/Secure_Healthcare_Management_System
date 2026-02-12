@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const EmrController = require('./emr.controller');
 const { authenticate } = require('../../middleware/auth.middleware');
+const { auditLog } = require('../../middleware/audit.middleware');
 const { uploadSingle, handleUploadError } = require('../../middleware/file.upload.middleware');
 
 // ==================== Medical Records ====================
@@ -11,21 +12,21 @@ const { uploadSingle, handleUploadError } = require('../../middleware/file.uploa
  * @desc    Create a new medical record
  * @access  Private (Doctor, Nurse)
  */
-router.post('/medical-records', authenticate, EmrController.createMedicalRecord);
+router.post('/medical-records', authenticate, auditLog('create_medical_record', 'medical_record'), EmrController.createMedicalRecord);
 
 /**
  * @route   GET /api/emr/medical-records/:recordId
  * @desc    Get medical record by ID
  * @access  Private
  */
-router.get('/medical-records/:recordId', authenticate, EmrController.getMedicalRecord);
+router.get('/medical-records/:recordId', authenticate, auditLog('view_medical_record', 'medical_record'), EmrController.getMedicalRecord);
 
 /**
  * @route   GET /api/emr/patients/:patientId/medical-records
  * @desc    Get all medical records for a patient
  * @access  Private
  */
-router.get('/patients/:patientId/medical-records', authenticate, EmrController.getPatientMedicalRecords);
+router.get('/patients/:patientId/medical-records', authenticate, auditLog('view_patient_records', 'medical_record'), EmrController.getPatientMedicalRecords);
 
 // ==================== Diagnoses ====================
 
@@ -34,7 +35,7 @@ router.get('/patients/:patientId/medical-records', authenticate, EmrController.g
  * @desc    Create a new diagnosis
  * @access  Private (Doctor)
  */
-router.post('/diagnoses', authenticate, EmrController.createDiagnosis);
+router.post('/diagnoses', authenticate, auditLog('create_diagnosis', 'diagnosis'), EmrController.createDiagnosis);
 
 /**
  * @route   POST /api/emr/diagnoses/:diagnosisId/addendum
@@ -57,7 +58,7 @@ router.patch('/diagnoses/:diagnosisId/status', authenticate, EmrController.updat
  * @desc    Create a new prescription with validation
  * @access  Private (Doctor)
  */
-router.post('/prescriptions', authenticate, EmrController.createPrescription);
+router.post('/prescriptions', authenticate, auditLog('create_prescription', 'prescription'), EmrController.createPrescription);
 
 /**
  * @route   POST /api/emr/prescriptions/check-interactions
