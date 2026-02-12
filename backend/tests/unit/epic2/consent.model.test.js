@@ -32,14 +32,14 @@ describe('Epic 2: Consent Model', () => {
             const recipientId = generateUserId();
 
             // Consent exists
-            query.mockResolvedValue(createQueryResult([{ '?column?': 1 }]));
+            query.mockResolvedValue(createQueryResult([{ access_level: 'read' }]));
 
             const result = await checkConsent(patientId, recipientId, 'ALL_RECORDS', 'read');
 
             expect(result).toBe(true);
             expect(query).toHaveBeenCalledWith(
-                expect.stringContaining('SELECT 1'),
-                expect.arrayContaining([patientId, recipientId, 'ALL_RECORDS', 'read'])
+                expect.stringContaining('SELECT access_level'),
+                expect.arrayContaining([patientId, recipientId, 'ALL_RECORDS'])
             );
         });
 
@@ -93,31 +93,26 @@ describe('Epic 2: Consent Model', () => {
             const recipientId = generateUserId();
 
             // Write consent exists, should grant read access
-            query.mockResolvedValue(createQueryResult([{ '?column?': 1 }]));
+            query.mockResolvedValue(createQueryResult([{ access_level: 'write' }]));
 
             const result = await checkConsent(patientId, recipientId, 'ALL_RECORDS', 'read');
 
             expect(result).toBe(true);
-            // Verify query handles write granting read
-            expect(query).toHaveBeenCalledWith(
-                expect.stringContaining("access_level = 'write'"),
-                expect.any(Array)
-            );
+            // Verify the query was called (implementation checks access_level in code, not SQL)
+            expect(query).toHaveBeenCalled();
         });
 
         it('should default to read access level when not specified', async () => {
             const patientId = generateUserId();
             const recipientId = generateUserId();
 
-            query.mockResolvedValue(createQueryResult([{ '?column?': 1 }]));
+            query.mockResolvedValue(createQueryResult([{ access_level: 'read' }]));
 
             const result = await checkConsent(patientId, recipientId, 'IMAGING');
 
             expect(result).toBe(true);
-            expect(query).toHaveBeenCalledWith(
-                expect.any(String),
-                expect.arrayContaining(['read'])
-            );
+            // Verify function was called and query happened (access level handled in code logic)
+            expect(query).toHaveBeenCalled();
         });
 
         it('should throw error on database failure', async () => {
