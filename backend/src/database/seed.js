@@ -142,13 +142,18 @@ const seed = async () => {
 
         const patientId = patientUser.rows[0].id;
 
-        await pool.query(
-            `INSERT INTO patient_profiles (user_id, unique_health_id, date_of_birth, gender, address)
-             VALUES ($1, $2, $3, $4, $5)
-             ON CONFLICT (user_id) DO NOTHING`,
-            [patientId, 'UHID-TEST-001', '1990-01-01', 'male', '123 Main St']
-        );
-        logger.info('✅ Patient user seeded (patient@example.com / Patient@123)');
+        try {
+            await pool.query(
+                `INSERT INTO patient_profiles (user_id, unique_health_id, date_of_birth, gender, address)
+                 VALUES ($1, $2, $3, $4, $5)
+                 ON CONFLICT (user_id) DO NOTHING`,
+                [patientId, 'UHID-SEED-001', '1990-01-01', 'male', '123 Main St']
+            );
+            logger.info('✅ Patient user seeded (patient@example.com / Patient@123)');
+        } catch (err) {
+            logger.error('❌ Failed to seed patient profile:', err);
+            throw err;
+        }
 
         logger.info('✅ Database seeding completed successfully');
         process.exit(0);

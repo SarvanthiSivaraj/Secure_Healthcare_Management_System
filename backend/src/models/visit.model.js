@@ -18,13 +18,16 @@ class VisitModel {
 
         const query = `
             INSERT INTO visits (
-                patient_id, organization_id, reason, symptoms, type, priority, status
+                patient_id, organization_id, reason, symptoms, type, priority, status, visit_code
             )
-            VALUES ($1, $2, $3, $4, $5, $6, 'pending')
+            VALUES ($1, $2, $3, $4, $5, $6, 'pending', $7)
             RETURNING *
         `;
 
-        const values = [patientId, organizationId, reason, symptoms, type, priority];
+        // Generate unique visit code: V-TIMESTAMP-RANDOM
+        const visitCode = `V-${Date.now()}-${Math.floor(1000 + Math.random() * 9000)}`;
+
+        const values = [patientId, organizationId, reason, symptoms, type, priority, visitCode];
         const result = await pool.query(query, values);
         return result.rows[0];
     }
@@ -172,7 +175,7 @@ class VisitModel {
      * @returns {Promise<Object>} Visit with OTP
      */
     static async approveVisit(visitId, doctorId, nurseId) {
-        // Generate 6-digit OTP
+        // Generate 6-digit OTP (this will be the visit code for check-in)
         const otp = Math.floor(100000 + Math.random() * 900000).toString();
         const otpExpiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours from now
 
@@ -182,6 +185,7 @@ class VisitModel {
                 status = 'approved',
                 assigned_doctor_id = $1,
                 assigned_nurse_id = $2,
+                visit_code = $3,
                 otp_code = $3,
                 otp_expires_at = $4,
                 updated_at = CURRENT_TIMESTAMP
@@ -233,6 +237,31 @@ class VisitModel {
     }
 
     /**
+     * Generate access code (OTP) for patient
+     * @param {string} visitId
+     * @returns {Promise<Object>} Updated visit with OTP
+     */
+    static async generateAccessCode(visitId) {
+        // Generate 6-digit OTP
+        const otp = Math.floor(100000 + Math.random() * 900000).toString();
+        // Set expiration to 15 minutes
+        const otpExpiresAt = new Date(Date.now() + 15 * 60 * 1000);
+
+        const query = `
+            UPDATE visits
+            SET
+                otp_code = $1,
+                otp_expires_at = $2,
+                updated_at = CURRENT_TIMESTAMP
+            WHERE id = $3
+            RETURNING otp_code, otp_expires_at
+        `;
+
+        const result = await pool.query(query, [otp, otpExpiresAt, visitId]);
+        return result.rows[0];
+    }
+
+    /**
      * Get visit with full details including patient and doctor info
      * @param {string} visitId 
      * @returns {Promise<Object>}
@@ -257,6 +286,244 @@ class VisitModel {
         `;
 
         const result = await pool.query(query, [visitId]);
+        return result.rows[0];
+    }
+    /**
+     * Find visit by visit code
+     * @param {string} visitCode 
+     * @returns {Promise<Object>}
+     */
+    static async findByCode(visitCode) {
+        const query = `
+            SELECT v.*, 
+                   u.first_name as patient_first_name, 
+                   u.last_name as patient_last_name,
+                   u.email as patient_email,
+                   o.name as hospital_name
+            FROM visits v
+            JOIN users u ON v.patient_id = u.id
+            JOIN organizations o ON v.organization_id = o.id
+            WHERE v.visit_code = $1
+        `;
+        const result = await pool.query(query, [visitCode]);
+        return result.rows[0];
+    }
+
+    /**
+     * Update visit status with validation
+     * @param {string} visitId 
+     * @param {string} newStatus 
+     * @param {string} userId - User making the change
+     * @returns {Promise<Object>}
+     */
+    static async updateStatus(visitId, newStatus, userId) {
+        const validStatuses = ['pending', 'approved', 'checked_in', 'in_progress', 'completed', 'cancelled'];
+
+        if (!validStatuses.includes(newStatus)) {
+            throw new Error(`Invalid status: ${newStatus}`);
+        }
+
+        const query = `
+            UPDATE visits
+            SET status = $1, updated_at = CURRENT_TIMESTAMP
+            WHERE id = $2
+            RETURNING *
+        `;
+
+        const result = await pool.query(query, [newStatus, visitId]);
+        return result.rows[0];
+    }
+
+    /**
+     * Find visits by patient ID
+     * @param {string} patientId 
+     * @returns {Promise<Array>}
+     */
+    static async findByPatientId(patientId) {
+        const query = `
+            SELECT v.*,
+            u.first_name as doctor_first_name,
+            u.last_name as doctor_last_name,
+            o.name as hospital_name
+            FROM visits v
+            LEFT JOIN users u ON v.assigned_doctor_id = u.id
+            LEFT JOIN organizations o ON v.organization_id = o.id
+            WHERE v.patient_id = $1
+            ORDER BY v.created_at DESC
+            `;
+        const result = await pool.query(query, [patientId]);
+        return result.rows;
+    }
+
+    /**
+     * Find visits assigned to a staff member
+     * @param {string} staffId 
+     * @param {string} role - 'doctor' or 'nurse'
+     * @returns {Promise<Array>}
+     */
+    static async findByAssignedStaff(staffId, role) {
+        let column = '';
+        if (role === 'doctor') {
+            column = 'assigned_doctor_id';
+        } else if (role === 'nurse') {
+            column = 'assigned_nurse_id';
+        } else {
+            throw new Error('Invalid role for visit assignment');
+        }
+
+        const query = `
+            SELECT v.*,
+            p.first_name as patient_first_name,
+            p.last_name as patient_last_name,
+            pp.date_of_birth,
+            pp.gender
+            FROM visits v
+            LEFT JOIN users p ON v.patient_id = p.id
+            LEFT JOIN patient_profiles pp ON v.patient_id = pp.user_id
+            WHERE v.${column} = $1
+            AND v.status NOT IN('completed', 'cancelled')
+            ORDER BY v.created_at ASC
+            `;
+        const result = await pool.query(query, [staffId]);
+        return result.rows;
+    }
+
+    /**
+     * Close visit and revoke staff access
+     * @param {string} visitId 
+     * @param {string} closedBy - User ID closing the visit
+     * @param {string} status - 'completed' or 'cancelled'
+     * @returns {Promise<Object>}
+     */
+    static async closeVisit(visitId, closedBy, status = 'completed') {
+        if (!['completed', 'cancelled'].includes(status)) {
+            throw new Error('Invalid close status. Must be completed or cancelled');
+        }
+
+        const query = `
+            UPDATE visits
+        SET
+        status = $1,
+            closed_at = CURRENT_TIMESTAMP,
+            closed_by = $2,
+            updated_at = CURRENT_TIMESTAMP
+            WHERE id = $3
+        RETURNING *
+            `;
+
+        const result = await pool.query(query, [status, closedBy, visitId]);
+
+        // Access revocation is handled automatically by database trigger
+        return result.rows[0];
+    }
+
+    /**
+     * Get all staff assigned to a visit
+     * @param {string} visitId 
+     * @returns {Promise<Array>}
+     */
+    static async getAssignedStaff(visitId) {
+        const query = `
+        SELECT
+        vsa.id,
+            vsa.role,
+            vsa.access_level,
+            vsa.assigned_at,
+            vsa.revoked_at,
+            u.id as user_id,
+            u.first_name,
+            u.last_name,
+            u.email,
+            u.role as user_role
+            FROM visit_staff_assignments vsa
+            JOIN users u ON vsa.staff_user_id = u.id
+            WHERE vsa.visit_id = $1
+            ORDER BY vsa.assigned_at DESC
+            `;
+
+        const result = await pool.query(query, [visitId]);
+        return result.rows;
+    }
+
+    /**
+     * Assign staff to a visit
+     * @param {string} visitId 
+     * @param {string} staffUserId 
+     * @param {string} role - 'doctor', 'nurse', 'specialist', etc.
+     * @returns {Promise<Object>}
+     */
+    static async assignStaff(visitId, staffUserId, role) {
+        const query = `
+            INSERT INTO visit_staff_assignments(visit_id, staff_user_id, role, access_level)
+        VALUES($1, $2, $3, 'full')
+            ON CONFLICT(visit_id, staff_user_id) 
+            DO UPDATE SET
+        role = EXCLUDED.role,
+            access_level = 'full',
+            revoked_at = NULL
+        RETURNING *
+            `;
+
+        const result = await pool.query(query, [visitId, staffUserId, role]);
+        return result.rows[0];
+    }
+
+    /**
+     * Revoke staff access to a visit
+     * @param {string} visitId 
+     * @param {string} staffUserId - Optional, if not provided revokes all staff
+     * @param {string} revokedBy - User ID revoking access
+     * @returns {Promise<number>} Number of records updated
+     */
+    static async revokeStaffAccess(visitId, staffUserId = null, revokedBy = null) {
+        let query, values;
+
+        if (staffUserId) {
+            query = `
+                UPDATE visit_staff_assignments
+        SET
+        access_level = 'revoked',
+            revoked_at = CURRENT_TIMESTAMP,
+            revoked_by = $3
+                WHERE visit_id = $1 AND staff_user_id = $2 AND revoked_at IS NULL
+            `;
+            values = [visitId, staffUserId, revokedBy];
+        } else {
+            query = `
+                UPDATE visit_staff_assignments
+        SET
+        access_level = 'revoked',
+            revoked_at = CURRENT_TIMESTAMP,
+            revoked_by = $2
+                WHERE visit_id = $1 AND revoked_at IS NULL
+            `;
+            values = [visitId, revokedBy];
+        }
+
+        const result = await pool.query(query, values);
+        return result.rowCount;
+    }
+
+    /**
+     * Check if user has access to visit
+     * @param {string} visitId 
+     * @param {string} userId 
+     * @returns {Promise<Object>} Access info or null
+     */
+    static async checkUserAccess(visitId, userId) {
+        const query = `
+        SELECT
+        vsa.access_level,
+            vsa.role,
+            vsa.revoked_at,
+            v.status as visit_status
+            FROM visit_staff_assignments vsa
+            JOIN visits v ON vsa.visit_id = v.id
+            WHERE vsa.visit_id = $1 
+              AND vsa.staff_user_id = $2
+            `;
+
+        const result = await pool.query(query, [visitId, userId]);
         return result.rows[0];
     }
 }
