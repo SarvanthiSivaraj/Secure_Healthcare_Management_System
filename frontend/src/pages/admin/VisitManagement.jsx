@@ -31,7 +31,8 @@ function VisitManagement() {
             const response = await visitApi.getHospitalVisits(statusFilter);
             console.log('✅ API Response:', response);
 
-            let filteredVisits = response.data || response || [];
+            // API returns { success: true, data: [...] }
+            let filteredVisits = response.data || [];
             console.log('📋 Filtered visits (before tab filter):', filteredVisits);
 
             if (activeTab === 'active') {

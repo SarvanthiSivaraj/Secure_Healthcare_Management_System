@@ -11,7 +11,7 @@ export const visitApi = {
     // Patient: Get my visits
     getMyVisits: async () => {
         const response = await apiClient.get('/visits/my-visits');
-        const visits = response.data.visits || response.data || [];
+        const visits = response.data.data || [];
 
         // Transform snake_case backend data to camelCase for frontend
         return visits.map(visit => ({

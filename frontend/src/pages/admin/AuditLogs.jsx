@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Button from '../../components/common/Button';
-import { getToken } from '../../utils/tokenManager'; // Import token manager
+import apiClient from '../../api/client';
 import './AuditLogs.css';
 
 function AuditLogs() {
@@ -17,39 +17,25 @@ function AuditLogs() {
         try {
             setLoading(true);
             setError(null);
-            const token = getToken(); // Use correct token retrieval method
 
-            // Fetch real audit logs from backend
-            const response = await fetch('http://localhost:5000/api/audit/logs', {
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json'
-                }
-            });
+            // Fetch real audit logs from backend using apiClient
+            const response = await apiClient.get('/audit/logs');
+            console.log('Audit Logs Response:', response);
 
-            if (response.status === 401) {
-                setLogs([]);
-                setError('Session expired. Please log in again.');
-                return;
-            } /* else if (response.status === 403) ... */
-
-            if (response.status === 403) {
-                setError('Access Denied: You do not have permission to view audit logs.');
-                setLogs([]);
-                return;
-            }
-
-            const data = await response.json();
+            // apiClient interceptors handle 401/403, but we can check here too if needed
+            // The response.data contains the backend payload { success: true, data: [...] }
+            const data = response.data;
 
             if (data.success) {
-                setLogs(data.data);
+                setLogs(data.data || []);
             } else {
                 setError(data.message || 'Failed to fetch logs');
                 setLogs([]);
             }
         } catch (error) {
             console.error('Error fetching logs:', error);
-            setError('Failed to connect to the server');
+            const errorMsg = error.response?.data?.message || 'Failed to connect to the server';
+            setError(errorMsg);
             setLogs([]);
         } finally {
             setLoading(false);

@@ -10,8 +10,8 @@ function ProtectedRoute({ children, allowedRoles }) {
         return <Navigate to="/login" replace />;
     }
 
-    // Handle both 'role' and 'roleName' (normalize to uppercase)
-    const userRole = (user.role || user.roleName)?.toUpperCase();
+    // Handle both 'role' and 'roleName' (normalize to lowercase)
+    const userRole = (user.role || user.roleName)?.toLowerCase();
     console.log('🔐 ProtectedRoute check:', { userRole, allowedRoles, user });
 
     if (allowedRoles && !allowedRoles.includes(userRole)) {
