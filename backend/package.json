@@ -10,7 +10,9 @@
     "db:seed": "node src/database/seed.js",
     "db:setup:all": "node src/database/setup_full_db.js",
     "test": "jest --coverage",
-    "test:integration": "jest --testPathPattern=tests/integration"
+    "test:integration": "jest --testPathPattern=tests/integration",
+    "test:vitest": "vitest run",
+    "test:vitest:watch": "vitest"
   },
   "keywords": [
     "healthcare",
@@ -42,6 +44,7 @@
   "devDependencies": {
     "jest": "^29.7.0",
     "nodemon": "^3.0.2",
-    "supertest": "^6.3.3"
+    "supertest": "^6.3.3",
+    "vitest": "^1.6.0"
   }
 }
