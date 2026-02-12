@@ -8,6 +8,7 @@
     "dev": "nodemon src/server.js",
     "db:migrate": "node src/database/migrate.js",
     "db:seed": "node src/database/seed.js",
+    "db:setup:all": "node src/database/setup_full_db.js",
     "test": "jest --coverage",
     "test:integration": "jest --testPathPattern=tests/integration"
   },
@@ -25,7 +26,7 @@
     "bcrypt": "^5.1.1",
     "cors": "^2.8.5",
     "crypto": "^1.0.1",
-    "dotenv": "^16.3.1",
+    "dotenv": "^16.6.1",
     "express": "^4.18.2",
     "express-rate-limit": "^7.1.5",
     "express-validator": "^7.0.1",

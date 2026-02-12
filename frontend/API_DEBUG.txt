@@ -1,0 +1,16 @@
+// Quick diagnostic to check what API URL the frontend is using
+// Add this temporarily to NewVisit.jsx to see what's happening
+
+console.log('API Client Base URL Check:');
+console.log('Expected: http://localhost:5005/api');
+
+// In the handleSubmit function, add before the API call:
+console.log('Attempting to call:', '/visits/request');
+console.log('Full URL will be: baseURL + /visits/request');
+
+// To check in browser:
+// 1. Open DevTools (F12)
+// 2. Go to Network tab
+// 3. Submit the form
+// 4. Look at the actual URL being called
+// 5. Check if it's http://localhost:5005/api/visits/request or something else

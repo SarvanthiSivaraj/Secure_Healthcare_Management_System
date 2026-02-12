@@ -17,9 +17,13 @@ FROM numbered_orgs n
 WHERE o.id = n.id AND o.hospital_code IS NULL;
 
 -- 3. Add constraints
-ALTER TABLE organizations 
-ADD CONSTRAINT unique_hospital_code UNIQUE (hospital_code),
-ALTER COLUMN hospital_code SET NOT NULL;
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'unique_hospital_code') THEN
+        ALTER TABLE organizations ADD CONSTRAINT unique_hospital_code UNIQUE (hospital_code);
+    END IF;
+END $$;
+ALTER TABLE organizations ALTER COLUMN hospital_code SET NOT NULL;
 
 -- 4. Create Visits Table
 CREATE TABLE IF NOT EXISTS visits (
