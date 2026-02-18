@@ -86,7 +86,7 @@ router.put(
 router.get(
     '/',
     authenticate,
-    requireSystemAdmin,
+    requireAdmin,
     asyncHandler(userController.getUsers)
 );
 

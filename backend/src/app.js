@@ -78,6 +78,7 @@ app.use('/api/audit', auditRoutes);
 app.use('/api/workflow', workflowRoutes);
 
 // Phase 1: Staff Management routes
+app.use(`${API_PREFIX}/staff`, staffRoutes);
 app.use('/api/staff', staffRoutes);
 app.use('/api/doctors/verification', doctorVerificationRoutes);
 app.use('/api/visits', require('./modules/visit/visit.routes'));

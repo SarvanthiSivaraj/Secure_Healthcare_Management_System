@@ -339,13 +339,22 @@ const isAccountLocked = async (userId) => {
  * @param {Object} options - Query options
  * @returns {Promise<Array>} Users list
  */
-const getAllUsers = async (options = {}) => {
+    const getAllUsers = async (options = {}) => {
     try {
-        const { limit = 50, offset = 0, role, status } = options;
+        const { limit = 50, offset = 0, role, status, organizationId } = options;
 
         let conditions = [];
         let params = [];
         let paramIndex = 1;
+
+        let joinClause = 'LEFT JOIN roles r ON u.role_id = r.id';
+        
+        if (organizationId) {
+            joinClause += ' JOIN staff_org_mapping som ON u.id = som.user_id AND som.status = \'active\'';
+            conditions.push(`som.organization_id = $${paramIndex}`);
+            params.push(organizationId);
+            paramIndex++;
+        }
 
         if (role) {
             conditions.push(`r.name = $${paramIndex}`);
@@ -362,9 +371,9 @@ const getAllUsers = async (options = {}) => {
         const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
 
         const selectQuery = `
-      SELECT u.id, u.email, u.phone, u.is_verified, u.status, u.created_at, r.name as role_name
+      SELECT u.id, u.email, u.phone, u.first_name, u.last_name, u.is_verified, u.status, u.created_at, r.name as role_name
       FROM users u
-      LEFT JOIN roles r ON u.role_id = r.id
+      ${joinClause}
       ${whereClause}
       ORDER BY u.created_at DESC
       LIMIT $${paramIndex} OFFSET $${paramIndex + 1}
