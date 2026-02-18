@@ -181,7 +181,7 @@ function Login() {
                         </Button>
 
                         <p className="auth-footer">
-                            Don't have an account? <a href="/register/patient">Register as Patient</a>
+                            Don't have an account? <a href="/register">Create new account</a>
                         </p>
                     </form>
                 </div>

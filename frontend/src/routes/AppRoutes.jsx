@@ -1,7 +1,7 @@
 import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import Login from '../pages/auth/Login';
-import RegisterPatient from '../pages/auth/RegisterPatient';
+import Register from '../pages/auth/Register';
 import DevLogin from '../pages/auth/DevLogin';
 import PatientDashboard from '../pages/patient/Dashboard';
 import DoctorDashboard from '../pages/doctor/Dashboard';
@@ -39,7 +39,7 @@ function AppRoutes() {
                 {/* Public Routes */}
                 <Route path="/login" element={<Login />} />
                 <Route path="/dev-login" element={<DevLogin />} />
-                <Route path="/register/patient" element={<RegisterPatient />} />
+                <Route path="/register" element={<Register />} />
                 <Route path="/staff/invitation/:token" element={<AcceptInvitation />} />
 
                 {/* Protected Routes */}

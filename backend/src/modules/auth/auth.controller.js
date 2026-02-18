@@ -1,3 +1,4 @@
+const crypto = require('crypto');
 const { createUser, findUserByEmailOrPhone, userExists, updateUserVerification, updateLastLogin, incrementFailedLoginAttempts, isAccountLocked } = require('../../models/user.model');
 const { createPatientProfile, findPatientByUserId } = require('../../models/patient.model');
 const { createOrganization } = require('../../models/organization.model');
@@ -13,6 +14,7 @@ const { HTTP_STATUS, SUCCESS_MESSAGES, ERROR_MESSAGES, ROLES, OTP_PURPOSE, AUDIT
 const { isValidEmail, isValidPhone, validatePassword, validateRequiredFields } = require('../../utils/validators');
 const logger = require('../../utils/logger');
 const config = require('../../config/env');
+const { verifyAadhaar, verifyDoctorReg } = require('../../services/mockVerification.service');
 
 /**
  * Register patient
@@ -71,6 +73,19 @@ const registerPatient = async (req, res) => {
                 success: false,
                 message: ERROR_MESSAGES.USER_ALREADY_EXISTS,
             });
+        }
+
+        // Verify Aadhaar with Mock Service
+        if (govtId) { // check if govtId is provided first, though usually required for patients
+             try {
+                // Verify against mock DB including email and phone check
+                await verifyAadhaar(govtId, email, phone);
+            } catch (error) {
+                return res.status(HTTP_STATUS.BAD_REQUEST).json({
+                    success: false,
+                    message: error.message || 'Aadhaar verification failed',
+                });
+            }
         }
 
         // Check if government ID already exists
@@ -260,11 +275,14 @@ const registerOrganization = async (req, res) => {
             const user = userResult.rows[0];
 
             // Create organization
+            // Generate hospital code (e.g., H12345) - Must be max 6 chars
+            const hospitalCode = `H${Math.floor(10000 + Math.random() * 90000)}`;
+
             const orgQuery = `
         INSERT INTO organizations (
           name, type, license_number, address, city, state, country,
-          postal_code, phone, email, admin_user_id, status
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, 'pending')
+          postal_code, phone, email, admin_user_id, status, hospital_code
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, 'pending', $12)
         RETURNING *
       `;
 
@@ -280,6 +298,7 @@ const registerOrganization = async (req, res) => {
                 organizationPhone || null,
                 organizationEmail || null,
                 user.id,
+                hospitalCode,
             ]);
 
             return { user, organization: orgResult.rows[0] };
@@ -346,6 +365,7 @@ const registerOrganization = async (req, res) => {
  */
 const verifyOTPController = async (req, res) => {
     try {
+        // If purpose is not provided, default to 'registration'
         // If purpose is not provided, default to 'registration'
         if (!req.body.purpose) {
             req.body.purpose = OTP_PURPOSE.REGISTRATION;
@@ -690,6 +710,24 @@ const registerDoctor = async (req, res) => {
                 success: false,
                 message: ERROR_MESSAGES.USER_ALREADY_EXISTS,
             });
+        }
+
+        // Verify Doctor Registration
+        // Assuming regId/licenseNumber is passed. The request body has licenseNumber? 
+        // Need to check what field holds the ID. 
+        // In doctor model it is license_number. In frontend it is licenseNumber (for Doctor form).
+        // Let's assume req.body.licenseNumber is the ID to verify.
+        const regId = req.body.licenseNumber;
+        if (regId) {
+             try {
+                // Verify against mock DB including email and phone check
+                await verifyDoctorReg(regId, email, phone);
+            } catch (error) {
+                 return res.status(HTTP_STATUS.BAD_REQUEST).json({
+                    success: false,
+                    message: error.message || 'Medical registration verification failed',
+                });
+            }
         }
 
         // Get doctor role

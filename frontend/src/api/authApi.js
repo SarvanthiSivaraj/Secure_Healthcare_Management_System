@@ -9,12 +9,16 @@ export const authApi = {
     },
     // Doctor registration
     registerDoctor: async (data) => {
-        const response = await apiClient.post('/auth/register/doctor', data);
+        const response = await apiClient.post('/auth/register/doctor', data, {
+            headers: { 'Content-Type': 'multipart/form-data' },
+        });
         return response.data;
     },
     // Organization registration
     registerOrganization: async (data) => {
-        const response = await apiClient.post('/auth/register/organization', data);
+        const response = await apiClient.post('/auth/register/organization', data, {
+            headers: { 'Content-Type': 'multipart/form-data' },
+        });
         return response.data;
     },
     // Verify OTP

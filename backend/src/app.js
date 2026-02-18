@@ -68,6 +68,7 @@ app.use(`${API_PREFIX}/consent`, consentRoutes);
 app.use(`${API_PREFIX}/emr`, emrRoutes);
 app.use(`${API_PREFIX}/visits`, require('./modules/visit/visit.routes'));
 app.use(`${API_PREFIX}/audit`, auditRoutes);
+app.use(`${API_PREFIX}/admin`, require('./modules/admin/admin.routes'));
 
 // Mount routes (Legacy /api support for Frontend)
 app.use('/api/auth', authRoutes);

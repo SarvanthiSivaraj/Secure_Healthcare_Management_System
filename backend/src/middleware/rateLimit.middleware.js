@@ -87,11 +87,11 @@ const otpLimiter = rateLimit({
  * 3 registrations per hour per IP
  */
 const registrationLimiter = rateLimit({
-    windowMs: 60 * 60 * 1000, // 1 hour
-    max: 3,
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 1000, // Limit each IP to 1000 requests per windowMs
     message: {
         success: false,
-        message: 'Too many registration attempts. Please try again later.',
+        message: 'Too many requests from this IP, please try again after 15 minutes',
     },
     standardHeaders: true,
     legacyHeaders: false,

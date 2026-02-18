@@ -46,6 +46,7 @@ CREATE TABLE IF NOT EXISTS users (
     last_login TIMESTAMP,
     failed_login_attempts INTEGER DEFAULT 0,
     account_locked_until TIMESTAMP,
+    profile_photo VARCHAR(255),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT email_or_phone_required CHECK (email IS NOT NULL OR phone IS NOT NULL)
@@ -65,6 +66,7 @@ CREATE TABLE IF NOT EXISTS organizations (
     name VARCHAR(255) NOT NULL,
     type VARCHAR(50) NOT NULL CHECK (type IN ('hospital', 'clinic', 'pharmacy', 'laboratory', 'imaging_center')),
     license_number VARCHAR(100) UNIQUE NOT NULL,
+    license_document_url VARCHAR(255),
     address TEXT,
     city VARCHAR(100),
     state VARCHAR(100),
@@ -74,7 +76,7 @@ CREATE TABLE IF NOT EXISTS organizations (
     email VARCHAR(255),
     verified BOOLEAN DEFAULT FALSE,
     admin_user_id UUID REFERENCES users(id),
-    status VARCHAR(20) DEFAULT 'pending' CHECK (status IN ('active', 'inactive', 'pending', 'suspended')),
+    status VARCHAR(20) DEFAULT 'pending' CHECK (status IN ('active', 'inactive', 'pending', 'suspended', 'rejected')),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
@@ -143,6 +145,10 @@ CREATE TABLE IF NOT EXISTS doctor_profiles (
     bio TEXT,
     consultation_fee DECIMAL(10, 2),
     availability JSONB, -- { "monday": ["09:00-12:00", "14:00-17:00"], ... }
+    reg_year INTEGER,
+    state_medical_council VARCHAR(255),
+    degree_certificate_url VARCHAR(255),
+    medical_reg_certificate_url VARCHAR(255),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );

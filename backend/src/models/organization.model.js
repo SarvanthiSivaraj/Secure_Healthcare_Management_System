@@ -13,6 +13,7 @@ const createOrganization = async (orgData) => {
             name,
             type,
             licenseNumber,
+            licenseDocumentUrl,
             address,
             city,
             state,
@@ -33,11 +34,14 @@ const createOrganization = async (orgData) => {
             throw new Error('Organization with this license number already exists');
         }
 
+        // Generate hospital code (e.g., H12345)
+        const hospitalCode = `H${Math.floor(10000 + Math.random() * 90000)}`;
+
         const insertQuery = `
       INSERT INTO organizations (
-        name, type, license_number, address, city, state, country,
-        postal_code, phone, email, admin_user_id, status
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+        name, type, license_number, license_document_url, address, city, state, country,
+        postal_code, phone, email, admin_user_id, status, hospital_code
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
       RETURNING *
     `;
 
@@ -45,6 +49,7 @@ const createOrganization = async (orgData) => {
             name,
             type,
             licenseNumber,
+            licenseDocumentUrl || null,
             address || null,
             city || null,
             state || null,
@@ -54,6 +59,7 @@ const createOrganization = async (orgData) => {
             email || null,
             adminUserId || null,
             ORGANIZATION_STATUS.PENDING,
+            hospitalCode,
         ]);
 
         return result.rows[0];
