@@ -29,7 +29,7 @@ function WorkflowDashboard() {
     const fetchData = async () => {
         setLoading(true);
         try {
-            const [bedsData, notifs, logsData] = await Promise.all([
+            const [bedsData, notifs] = await Promise.all([
                 workflowApi.getAvailableBeds(),
                 workflowApi.getUserNotifications(true),
                 // workflowApi.getWorkflowLogs() // API might not be exposed to all roles, handled gracefully

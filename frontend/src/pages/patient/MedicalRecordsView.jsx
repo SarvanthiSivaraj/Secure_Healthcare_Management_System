@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
 import { getToken } from '../../utils/tokenManager';
 import { useAuth } from '../../context/AuthContext';
@@ -12,13 +12,37 @@ function MedicalRecordsView() {
     const [filterType, setFilterType] = useState('all');
     const [expandedRecords, setExpandedRecords] = useState(new Set());
 
-    useEffect(() => {
-        if (user && user.id) {
-            fetchMedicalRecords();
-        }
-    }, [user, filterType]);
+    // useEffect(() => {
+    //     if (user && user.id) {
+    //         fetchMedicalRecords();
+    //     }
+    // }, [user, filterType]);
 
-    const fetchMedicalRecords = async () => {
+    // const fetchMedicalRecords = async () => {
+    //     try {
+    //         const token = getToken();
+    //         const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:5004/api';
+
+    //         const response = await axios.get(
+    //             `${apiUrl}/emr/patients/${user.id}/medical-records`,
+    //             {
+    //                 headers: { Authorization: `Bearer ${token}` }
+    //             }
+    //         );
+
+    //         if (response.data.success) {
+    //             const recordsData = response.data.data.records || [];
+    //             setRecords(recordsData);
+    //         }
+    //         setLoading(false);
+    //     } catch (err) {
+    //         console.error('Failed to fetch medical records:', err);
+    //         setError(err.response?.data?.message || 'Failed to load medical records.');
+    //         setLoading(false);
+    //     }
+    // };
+
+    const fetchMedicalRecords = useCallback(async () => {
         try {
             const token = getToken();
             const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:5004/api';
@@ -40,7 +64,14 @@ function MedicalRecordsView() {
             setError(err.response?.data?.message || 'Failed to load medical records.');
             setLoading(false);
         }
-    };
+    }, [user]);
+
+    useEffect(() => {
+        if (user && user.id) {
+            fetchMedicalRecords();
+        }
+    }, [user, filterType, fetchMedicalRecords]);
+
 
     const formatDate = (dateString) => {
         if (!dateString) return 'N/A';

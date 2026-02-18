@@ -31,24 +31,8 @@ function DoctorRegistration() {
         setLoading(true);
 
         try {
-            const response = await fetch('http://localhost:5000/api/v1/users/staff/onboard', { // Use onboard endpoint or register endpoint?
-                // The auth route is /api/auth/register/doctor. Let's use that.
-                // Wait, if I use register/doctor, it might be public.
-                // But admin can use it too. 
-                // Let's try /api/auth/register/doctor first.
-                // Actually, let's use the full URL to be safe given the UserManagement issue.
-            });
-
-            // Re-evaluating: /api/auth/register/doctor is public registration.
-            // Admin "Onboarding" might be different.
-            // Let's use /api/auth/register/doctor but add admin token? 
-            // No, the endpoint is public. 
-            // BUT, if I want to "Verify" them immediately, an admin endpoint would be better.
-            // 'users.routes.js' has '/staff/onboard'. Let's check 'user.controller.js' -> onboardStaff.
-
-            // Let's stick to /api/auth/register/doctor for now as it's definitely there.
-            // Or better, check user.controller.js content if possible.
-            // I'll use the public registration endpoint as a fallback.
+            // const response = await fetch('http://localhost:5000/api/v1/users/staff/onboard', {
+            // });
 
             const res = await fetch('http://localhost:5000/api/v1/auth/register/doctor', {
                 method: 'POST',
