@@ -58,7 +58,7 @@ function StaffManagement() {
         try {
             const response = await staffApi.inviteStaff(formData);
             if (response.success) {
-                alert('Staff invitation sent successfully!');
+                // alert('Staff invitation sent successfully!');
                 setShowInviteForm(false);
                 setFormData({ email: '', role: 'NURSE', organizationId: '' });
                 loadData(); // Reload invitations
@@ -82,15 +82,11 @@ function StaffManagement() {
     };
 
     const handleCancel = async (invitationId) => {
-        if (!window.confirm('Are you sure you want to cancel this invitation?')) {
-            return;
-        }
-
+        // Immediate cancellation without confirmation as requested
         try {
             const response = await staffApi.cancelInvitation(invitationId);
             if (response.success) {
-                alert('Invitation cancelled successfully!');
-                loadData(); // Reload invitations
+                loadData(); // Reload invitations silently
             }
         } catch (err) {
             alert(err.response?.data?.message || 'Failed to cancel invitation');
