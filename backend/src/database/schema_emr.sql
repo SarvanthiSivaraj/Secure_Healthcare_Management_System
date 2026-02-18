@@ -14,7 +14,6 @@ CREATE TABLE IF NOT EXISTS visits (
     visit_code VARCHAR(20) UNIQUE NOT NULL,
     visit_type VARCHAR(50) DEFAULT 'consultation',
     chief_complaint TEXT,
-    chief_complaint TEXT,
     check_in_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     check_out_time TIMESTAMP,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
