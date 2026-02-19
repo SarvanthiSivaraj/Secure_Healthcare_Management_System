@@ -11,6 +11,13 @@ const { asyncHandler } = require('../../middleware/error.middleware');
  * @desc    Register a new patient
  * @access  Public
  */
+const upload = require('../../middleware/upload.middleware');
+
+/**
+ * @route   POST /api/auth/register/patient
+ * @desc    Register a new patient
+ * @access  Public
+ */
 router.post(
     '/register/patient',
     registrationLimiter,
@@ -25,6 +32,10 @@ router.post(
 router.post(
     '/register/doctor',
     registrationLimiter,
+    upload.fields([
+        { name: 'degreeCertificate', maxCount: 1 },
+        { name: 'medicalRegCertificate', maxCount: 1 }
+    ]),
     asyncHandler(authController.registerDoctor)
 );
 
@@ -36,6 +47,7 @@ router.post(
 router.post(
     '/register/organization',
     registrationLimiter,
+    upload.single('licenseDocument'),
     asyncHandler(authController.registerOrganization)
 );
 

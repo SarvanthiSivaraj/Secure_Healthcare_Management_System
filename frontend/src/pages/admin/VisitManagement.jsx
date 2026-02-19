@@ -1,11 +1,9 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import { visitApi } from '../../api/visitApi';
-import { useNavigate } from 'react-router-dom';
 import Button from '../../components/common/Button';
 import './VisitManagement.css';
 
 function VisitManagement() {
-    const navigate = useNavigate();
     const [activeTab, setActiveTab] = useState('pending');
     const [visits, setVisits] = useState([]);
     const [loading, setLoading] = useState(false);
@@ -16,7 +14,11 @@ function VisitManagement() {
     const [nurses, setNurses] = useState([]);
     const [approvalData, setApprovalData] = useState({ doctorId: '', nurseId: '' });
 
-    const loadVisits = useCallback(async () => {
+    useEffect(() => {
+        loadVisits();
+    }, [activeTab]);
+
+    const loadVisits = async () => {
         setLoading(true);
         setError('');
         try {
@@ -54,13 +56,7 @@ function VisitManagement() {
         } finally {
             setLoading(false);
         }
-    }, [activeTab]);
-
-    useEffect(() => {
-        loadVisits();
-        // Triggered on mount and when loadVisits changes
-    }, [loadVisits]);
-
+    };
 
     const handleApproveClick = async (visit) => {
         setSelectedVisit(visit);
@@ -68,15 +64,25 @@ function VisitManagement() {
 
         // Fetch doctors and nurses from API
         try {
+            console.log('🔍 Fetching doctors and nurses...');
             const [doctorsResponse, nursesResponse] = await Promise.all([
                 visitApi.getStaffByRole('doctor'),
                 visitApi.getStaffByRole('nurse')
             ]);
 
+            console.log('✅ Doctors response:', doctorsResponse);
+            console.log('✅ Nurses response:', nursesResponse);
+            console.log('👨‍⚕️ Doctors data:', doctorsResponse.data);
+            console.log('👩‍⚕️ Nurses data:', nursesResponse.data);
+
             setDoctors(doctorsResponse.data || []);
             setNurses(nursesResponse.data || []);
+
+            console.log('📊 Doctors state set to:', doctorsResponse.data || []);
+            console.log('📊 Nurses state set to:', nursesResponse.data || []);
         } catch (err) {
-            console.error('Failed to load staff:', err);
+            console.error('❌ Failed to load staff:', err);
+            console.error('❌ Error response:', err.response);
             setDoctors([]);
             setNurses([]);
         }
@@ -88,20 +94,16 @@ function VisitManagement() {
             return;
         }
 
-
         try {
-            const response = await visitApi.approveVisit(
+            await visitApi.approveVisit(
                 selectedVisit.id,
                 approvalData.doctorId,
                 approvalData.nurseId || null
             );
-
-            // Show OTP to admin
-            const otp = response.data?.otp_code || response.data?.visitCode || response.data?.otp;
-            alert(`Visit approved successfully!\n\nVISIT CODE: ${otp}\n\nPlease share this code with the patient.`);
-
+            // Close modal and switch to active tab to show the approved visit
             setShowApprovalModal(false);
             setApprovalData({ doctorId: '', nurseId: '' });
+            setActiveTab('active'); // Switch to active tab
             loadVisits();
         } catch (err) {
             alert(err.response?.data?.message || 'Failed to approve visit');
@@ -109,13 +111,9 @@ function VisitManagement() {
     };
 
     const handleCloseVisit = async (visitId, status) => {
-        if (!window.confirm(`Are you sure you want to ${status} this visit?`)) {
-            return;
-        }
-
         try {
             await visitApi.closeVisit(visitId, status);
-            alert(`Visit ${status} successfully. Staff access has been revoked.`);
+            // Silently refresh the visits list
             loadVisits();
         } catch (err) {
             alert(err.response?.data?.message || 'Failed to close visit');
@@ -151,15 +149,8 @@ function VisitManagement() {
     return (
         <div className="visit-management-container">
             <div className="visit-management-header">
-                <div className="header-content">
-                    <div>
-                        <h1>Visit Management</h1>
-                        <p className="subtitle">Manage patient visit requests and assignments</p>
-                    </div>
-                    <Button onClick={() => navigate('/admin/dashboard')} variant="secondary">
-                        Back to Dashboard
-                    </Button>
-                </div>
+                <h1>Visit Management</h1>
+                <p className="subtitle">Manage patient visit requests and assignments</p>
             </div>
 
             <div className="visit-tabs">

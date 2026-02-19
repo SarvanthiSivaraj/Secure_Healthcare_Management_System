@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { userApi } from '../../api/userApi';
 import Button from '../../components/common/Button';
 import './UserManagement.css';
 
@@ -14,39 +15,23 @@ function UserManagement() {
     const fetchUsers = useCallback(async () => {
         try {
             setLoading(true);
-            const token = localStorage.getItem('token');
-            console.log('Fetching users with token:', token ? 'Token exists' : 'No token');
+            const data = await userApi.getAllUsers();
 
-            const response = await fetch('http://localhost:5000/api/v1/users', {
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json'
-                }
-            });
-
-            console.log('Response status:', response.status);
-
-            if (response.status === 401 || response.status === 403) {
-                alert('Session expired. Please log in again.');
-                navigate('/login');
-                return;
-            }
-
-            const data = await response.json();
-            console.log('Response data:', data);
-
-            if (data.success && data.data) {
-                setUsers(data.data);
+            if (data && data.success) {
+                setUsers(data.data || []);
             } else {
                 console.error('API returned no data:', data);
-                // alert('No users found or API error: ' + (data.message || 'Unknown error'));
             }
         } catch (error) {
             console.error('Error fetching users:', error);
-            // alert('Error loading users. Please check console for details.');
+            if (error.response && (error.response.status === 401 || error.response.status === 403)) {
+                alert('Session expired. Please log in again.');
+                navigate('/login');
+            }
         } finally {
             setLoading(false);
         }
+
     }, [navigate]);
 
     useEffect(() => {

@@ -325,20 +325,48 @@ const getUserProfile = async (req, res) => {
  * Get all users (admin only)
  * GET /api/users
  */
-const getUsers = async (req, res) => {
+    const getUsers = async (req, res) => {
     try {
         const { limit, offset, role, status } = req.query;
+        let organizationId = null;
 
-        const users = await getAllUsers({
+        // If not system admin, restrict to own organization
+        if (req.user.role !== 'SYSTEM_ADMIN') {
+            const orgResult = await query(
+                'SELECT organization_id FROM staff_org_mapping WHERE user_id = $1 AND status = \'active\'',
+                [req.user.id]
+            );
+            
+            if (orgResult.rows.length > 0) {
+                organizationId = orgResult.rows[0].organization_id;
+            } else {
+                // If user has no organization and is not system admin, they shouldn't see any other users
+                // Return empty list or error? Empty list seems safer.
+                return res.status(HTTP_STATUS.OK).json({
+                    success: true,
+                    data: [],
+                });
+            }
+        }
+
+        const result = await getAllUsers({
             limit: parseInt(limit) || 50,
             offset: parseInt(offset) || 0,
             role,
             status,
+            organizationId
         });
+
+        // Map users to match frontend expectations
+        const mappedUsers = result.map(user => ({
+            ...user,
+            role: user.role_name,
+            is_active: user.status === 'active'
+        }));
 
         res.status(HTTP_STATUS.OK).json({
             success: true,
-            data: users,
+            data: mappedUsers,
         });
     } catch (error) {
         logger.error('Get users failed:', error);

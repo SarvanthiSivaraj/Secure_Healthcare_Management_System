@@ -1,10 +1,10 @@
 import React, { useState, useContext } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { AuthContext } from '../../context/AuthContext';
-import Input from '../../components/common/Input';
-import Button from '../../components/common/Button';
 import { authApi } from '../../api/authApi';
-import './Auth.css';
+import ThemeToggle from '../../components/common/ThemeToggle';
+import ParticleBackground from '../../components/common/ParticleBackground';
+import loginBg from '../../assets/images/login-bg.png';
 
 function Login() {
     const navigate = useNavigate();
@@ -31,159 +31,197 @@ function Login() {
 
         try {
             const response = await authApi.login(formData.email, formData.password);
-            console.log('DEBUG: Full Login Response:', response);
 
-            // Robust parsing: handle if response is { success: true, data: { user... } } OR { user... }
             const payload = response.data || response;
             const user = payload.user || payload.data?.user;
             const accessToken = payload.accessToken || payload.token || payload.data?.accessToken;
 
             if (!user || !accessToken) {
-                console.error('CRITICAL: User or Token missing in response', response);
                 throw new Error('Invalid server response: Missing user/token');
             }
 
-            // Save user and token
             login(user, accessToken);
 
-            // Role-based redirect
-            // Note: Backend returns HOSPITAL_ADMIN, DOCTOR, PATIENT, etc.
             const role = user.role?.toUpperCase();
-
             switch (role) {
-                case 'PATIENT':
-                    navigate('/patient/dashboard');
-                    break;
-                case 'DOCTOR':
-                    navigate('/doctor/dashboard');
-                    break;
+                case 'PATIENT': navigate('/patient/dashboard'); break;
+                case 'DOCTOR': navigate('/doctor/dashboard'); break;
                 case 'ADMIN':
                 case 'HOSPITAL_ADMIN':
-                case 'SYSTEM_ADMIN':
-                    navigate('/admin/dashboard');
-                    break;
-                case 'STAFF':
-                case 'RECEPTIONIST':
-                case 'PHARMACIST':
-                case 'INSURANCE_PROVIDER':
-                case 'RESEARCHER':
-                case 'COMPLIANCE_OFFICER':
-                    navigate('/staff/dashboard');
-                    break;
-                case 'NURSE':
-                    navigate('/nurse/dashboard');
-                    break;
-                case 'LAB_TECHNICIAN':
-                    navigate('/lab/dashboard');
-                    break;
-                case 'RADIOLOGIST':
-                    navigate('/radiology/dashboard');
-                    break;
-                default:
-                    navigate('/');
+                case 'SYSTEM_ADMIN': navigate('/admin/dashboard'); break;
+                case 'NURSE': navigate('/nurse/dashboard'); break;
+                case 'LAB_TECHNICIAN': navigate('/lab/dashboard'); break;
+                case 'RADIOLOGIST': navigate('/radiology/dashboard'); break;
+                default: navigate('/staff/dashboard');
             }
         } catch (err) {
             const errorMsg = err.response?.data?.message || err.message || 'Login failed';
             setError(errorMsg);
-            alert(`Login Failed: ${errorMsg}\nCode: ${err.code}\nStatus: ${err.response?.status}`);
         } finally {
             setLoading(false);
         }
     };
 
     return (
-        <div className="split-auth-container">
-            {/* Left Side - Quote & Welcome */}
-            <div className="auth-left-panel">
-                <div className="auth-branding">
-                    <div className="brand-icon">
-                        <div className="pulse-ring"></div>
-                        <div className="heartbeat-icon">❤️</div>
-                    </div>
-                    <h1>Secure Healthcare</h1>
-                    <p className="brand-tagline">Your Health, Your Privacy, Your Control</p>
-                </div>
+        <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-dark-bg p-4 sm:p-6 lg:p-8 transition-colors duration-300 relative overflow-hidden">
+            {/* Dynamic Background Elements */}
+            <ParticleBackground />
 
-                <div className="quote-section">
-                    <div className="quote-icon">"</div>
-                    <blockquote>
-                        <p className="quote-text">
-                            The art of medicine consists of amusing the patient while nature cures the disease.
-                        </p>
-                        <cite>— Voltaire</cite>
-                    </blockquote>
-                </div>
-
-                <div className="features-list">
-                    <div className="feature-item">
-                        <span className="feature-icon">🔒</span>
-                        <span>HIPAA Compliant</span>
-                    </div>
-                    <div className="feature-item">
-                        <span className="feature-icon">🛡️</span>
-                        <span>End-to-End Encryption</span>
-                    </div>
-                    <div className="feature-item">
-                        <span className="feature-icon">✓</span>
-                        <span>Patient Data Ownership</span>
-                    </div>
-                </div>
+            {/* Theme Toggle styling */}
+            <div className="absolute top-4 right-4 z-50">
+                <ThemeToggle />
             </div>
 
-            {/* Right Side - Login Form */}
-            <div className="auth-right-panel">
-                <div className="login-form-container">
-                    <div className="form-header">
-                        <h2>Welcome Back</h2>
-                        <p className="form-subtitle">Sign in to access your healthcare dashboard</p>
+            <div className="w-full max-w-6xl bg-white dark:bg-dark-card rounded-3xl shadow-card dark:shadow-none hover:shadow-2xl hover:shadow-primary-500/20 dark:hover:shadow-glow transform transition-all duration-500 overflow-hidden flex flex-col lg:flex-row min-h-[600px] animate-fade-in z-10">
+
+                {/* Left Side - Image & Branding */}
+                <div className="hidden lg:flex w-1/2 relative flex-col justify-between p-12 text-white">
+                    <div className="absolute inset-0 transition-transform duration-700 hover:scale-105">
+                        <img
+                            src={loginBg}
+                            alt="Healthcare Background"
+                            className="w-full h-full object-cover"
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-br from-primary-900/90 to-primary-700/80 backdrop-blur-[2px]"></div>
                     </div>
 
-                    {successMessage && (
-                        <div className="success-alert">{successMessage}</div>
-                    )}
+                    <div className="relative z-10 group">
+                        <div className="flex items-center space-x-3 mb-6 transform transition-transform duration-300 group-hover:translate-x-2">
+                            <div className="w-10 h-10 bg-white/20 backdrop-blur-md rounded-xl flex items-center justify-center border border-white/30 shadow-lg group-hover:shadow-primary-500/50 transition-shadow duration-300">
+                                <span className="text-2xl animate-pulse-slow">❤️</span>
+                            </div>
+                            <span className="text-2xl font-bold tracking-wide text-white">SecureHealth</span>
+                        </div>
+                        <h1 className="text-4xl font-bold leading-tight mb-4 text-white drop-shadow-lg">
+                            Advanced Healthcare <br /> Management System
+                        </h1>
+                        <p className="text-primary-100 text-lg max-w-sm">
+                            Secure, efficient, and patient-centric platform for modern medical facilities.
+                        </p>
+                    </div>
 
-                    <form onSubmit={handleSubmit} className="login-form">
-                        <Input
-                            label="Email Address"
-                            type="email"
-                            name="email"
-                            value={formData.email}
-                            onChange={handleChange}
-                            required
-                        />
+                    <div className="relative z-10 glass-panel p-6 rounded-2xl bg-white/10 backdrop-blur-md border border-white/20 shadow-xl transition-all duration-300 hover:bg-white/20 hover:scale-[1.02]">
+                        <blockquote className="text-lg italic font-light mb-4 text-white">
+                            "The art of medicine consists of amusing the patient while nature cures the disease."
+                        </blockquote>
+                        <cite className="block text-primary-200 font-semibold not-italic">— Voltaire</cite>
+                    </div>
+                </div>
 
-                        <Input
-                            label="Password"
-                            type="password"
-                            name="password"
-                            value={formData.password}
-                            onChange={handleChange}
-                            required
-                        />
-
-                        {error && <div className="error-alert">{error}</div>}
-
-                        <Button type="submit" loading={loading} className="btn-primary btn-lg">
-                            Sign In
-                        </Button>
-
-                        <div className="auth-divider">
-                            <span>OR</span>
+                {/* Right Side - Login Form */}
+                <div className="w-full lg:w-1/2 p-8 sm:p-12 lg:p-16 flex flex-col justify-center bg-white dark:bg-dark-card relative transition-colors duration-300">
+                    <div className="max-w-md mx-auto w-full">
+                        <div className="text-center mb-10 group">
+                            <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-2 transition-colors group-hover:text-primary-600 dark:group-hover:text-primary-400">Welcome Back</h2>
+                            <p className="text-gray-500 dark:text-dark-muted">Sign in to access your dashboard</p>
                         </div>
 
-                        <Button
-                            type="button"
-                            variant="secondary"
-                            onClick={() => navigate('/dev-login')}
-                            className="btn-lg"
-                        >
-                            🔧 Dev Login (No Backend)
-                        </Button>
+                        {successMessage && (
+                            <div className="mb-6 p-4 rounded-xl bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400 border border-green-200 dark:border-green-800 flex items-center shadow-sm animate-slide-down">
+                                <svg className="w-5 h-5 mr-3 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                                </svg>
+                                {successMessage}
+                            </div>
+                        )}
 
-                        <p className="auth-footer">
-                            Don't have an account? <a href="/register/patient">Register as Patient</a>
+                        {error && (
+                            <div className="mb-6 p-4 rounded-xl bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400 border border-red-200 dark:border-red-800 flex items-center shadow-sm animate-slide-down">
+                                <svg className="w-5 h-5 mr-3 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                                </svg>
+                                {error}
+                            </div>
+                        )}
+
+                        <form onSubmit={handleSubmit} className="space-y-6">
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5 ml-1">Email Address</label>
+                                <div className="relative">
+                                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
+                                        <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 12a4 4 0 10-8 0 4 4 0 008 0zm0 0v1.5a2.5 2.5 0 005 0V12a9 9 0 10-9 9m4.5-1.206a8.959 8.959 0 01-4.5 1.207" />
+                                        </svg>
+                                    </div>
+                                    <input
+                                        type="email"
+                                        name="email"
+                                        value={formData.email}
+                                        onChange={handleChange}
+                                        required
+                                        className="block w-full pl-10 pr-3 py-3 border border-gray-300 dark:border-dark-border rounded-xl leading-5 bg-gray-50 dark:bg-dark-bg text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:bg-white dark:focus:bg-dark-card focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all duration-200 sm:text-sm shadow-sm"
+                                        placeholder="Enter your email"
+                                    />
+                                </div>
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5 ml-1">Password</label>
+                                <div className="relative">
+                                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
+                                        <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                                        </svg>
+                                    </div>
+                                    <input
+                                        type="password"
+                                        name="password"
+                                        value={formData.password}
+                                        onChange={handleChange}
+                                        required
+                                        className="block w-full pl-10 pr-3 py-3 border border-gray-300 dark:border-dark-border rounded-xl leading-5 bg-gray-50 dark:bg-dark-bg text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:bg-white dark:focus:bg-dark-card focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all duration-200 sm:text-sm shadow-sm"
+                                        placeholder="••••••••"
+                                    />
+                                </div>
+                            </div>
+
+                            <button
+                                type="submit"
+                                disabled={loading}
+                                className={`w-full flex justify-center py-3.5 px-4 border border-transparent rounded-xl shadow-lg shadow-primary-500/30 text-sm font-medium text-white bg-gradient-to-r from-primary-600 to-primary-500 hover:from-primary-700 hover:to-primary-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-all duration-300 transform hover:scale-[1.02] ${loading ? 'opacity-70 cursor-not-allowed' : ''}`}
+                            >
+                                {loading ? (
+                                    <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" fill="none" viewBox="0 0 24 24">
+                                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                    </svg>
+                                ) : 'Sign In'}
+                            </button>
+
+                            <div className="relative my-8">
+                                <div className="absolute inset-0 flex items-center">
+                                    <div className="w-full border-t border-gray-200 dark:border-gray-700"></div>
+                                </div>
+                                <div className="relative flex justify-center text-sm">
+                                    <span className="px-4 bg-white dark:bg-dark-card text-gray-500 dark:text-gray-400 font-medium">Developer Access</span>
+                                </div>
+                            </div>
+
+                            <button
+                                type="button"
+                                onClick={() => navigate('/dev-login')}
+                                className="w-full inline-flex justify-center items-center px-4 py-3 border border-gray-200 dark:border-gray-700 shadow-sm text-sm font-medium rounded-xl text-gray-700 dark:text-gray-200 bg-white dark:bg-dark-bg hover:bg-gray-50 dark:hover:bg-gray-800 hover:border-gray-300 dark:hover:border-gray-600 transition-all duration-200"
+                            >
+                                <svg className="h-4 w-4 mr-2 text-gray-500 dark:text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
+                                </svg>
+                                Developer Login (No Backend)
+                            </button>
+
+                            <p className="mt-8 text-center text-sm text-gray-500 dark:text-gray-400">
+                                Don't have an account?{' '}
+                                <a href="/register" className="font-semibold text-primary-600 hover:text-primary-500 hover:underline transition-colors">
+                                    Create new account
+                                </a>
+                            </p>
+                        </form>
+                    </div>
+
+                    <div className="absolute bottom-6 w-full text-center">
+                        <p className="text-xs text-gray-400 dark:text-gray-500">
+                            &copy; 2026 SecureHealth Systems. privacy & terms
                         </p>
-                    </form>
+                    </div>
                 </div>
             </div>
         </div>

@@ -218,7 +218,7 @@ const VisitController = {
             // Send approval email with visit code
             try {
                 await sendVisitApprovalEmail(visitDetails.patient_email, {
-                    visit_code: visitDetails.visit_code,
+                    visit_code: visitDetails.otp_code,
                     hospital_name: visitDetails.organization_name,
                     reason: visitDetails.reason,
                     scheduled_date: visitDetails.created_at

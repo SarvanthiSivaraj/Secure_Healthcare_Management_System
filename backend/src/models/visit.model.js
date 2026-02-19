@@ -12,22 +12,26 @@ class VisitModel {
             organizationId,
             reason,
             symptoms,
-            type = 'walk_in',
-            priority = 'normal'
+            type,
+            priority
         } = visitData;
 
         const query = `
             INSERT INTO visits (
-                patient_id, organization_id, reason, symptoms, type, priority, status, visit_code
+                patient_id, organization_id, reason, symptoms, type, priority, status
             )
-            VALUES ($1, $2, $3, $4, $5, $6, 'pending', $7)
+            VALUES ($1, $2, $3, $4, $5, $6, 'pending')
             RETURNING *
         `;
 
-        // Generate unique visit code: V-TIMESTAMP-RANDOM
-        const visitCode = `V-${Date.now()}-${Math.floor(1000 + Math.random() * 9000)}`;
-
-        const values = [patientId, organizationId, reason, symptoms, type, priority, visitCode];
+        const values = [
+            patientId,
+            organizationId,
+            reason || null,
+            symptoms || null,
+            type || 'walk_in',
+            priority || 'normal'
+        ];
         const result = await pool.query(query, values);
         return result.rows[0];
     }
@@ -185,7 +189,6 @@ class VisitModel {
                 status = 'approved',
                 assigned_doctor_id = $1,
                 assigned_nurse_id = $2,
-                visit_code = $3,
                 otp_code = $3,
                 otp_expires_at = $4,
                 updated_at = CURRENT_TIMESTAMP
@@ -194,7 +197,27 @@ class VisitModel {
         `;
 
         const result = await pool.query(query, [doctorId, nurseId, otp, otpExpiresAt, visitId]);
-        return result.rows[0];
+        const visit = result.rows[0];
+
+        // Auto-grant consent to Doctor if approved
+        if (visit && doctorId) {
+            await pool.query(`
+                INSERT INTO consents (
+                    patient_id, recipient_user_id, data_category, purpose, access_level, status, start_time, created_at, updated_at
+                ) VALUES ($1, $2, 'all_medical_data', 'Visit Care', 'write', 'active', NOW(), NOW(), NOW())
+            `, [visit.patient_id, doctorId]);
+        }
+
+        // Auto-grant consent to Nurse if assigned
+        if (visit && nurseId) {
+            await pool.query(`
+                INSERT INTO consents (
+                    patient_id, recipient_user_id, data_category, purpose, access_level, status, start_time, created_at, updated_at
+                ) VALUES ($1, $2, 'all_medical_data', 'Visit Care', 'write', 'active', NOW(), NOW(), NOW())
+            `, [visit.patient_id, nurseId]);
+        }
+
+        return visit;
     }
 
     /**
@@ -303,7 +326,7 @@ class VisitModel {
             FROM visits v
             JOIN users u ON v.patient_id = u.id
             JOIN organizations o ON v.organization_id = o.id
-            WHERE v.visit_code = $1
+            WHERE v.otp_code = $1
         `;
         const result = await pool.query(query, [visitCode]);
         return result.rows[0];
@@ -389,31 +412,25 @@ class VisitModel {
     }
 
     /**
-     * Close visit and revoke staff access
+     * Close visit (complete or cancel)
      * @param {string} visitId 
-     * @param {string} closedBy - User ID closing the visit
+     * @param {string} userId - User closing the visit
      * @param {string} status - 'completed' or 'cancelled'
-     * @returns {Promise<Object>}
+     * @returns {Promise<Object>} Updated visit
      */
-    static async closeVisit(visitId, closedBy, status = 'completed') {
-        if (!['completed', 'cancelled'].includes(status)) {
-            throw new Error('Invalid close status. Must be completed or cancelled');
-        }
-
+    static async closeVisit(visitId, userId, status) {
         const query = `
-            UPDATE visits
-        SET
-        status = $1,
-            closed_at = CURRENT_TIMESTAMP,
-            closed_by = $2,
-            updated_at = CURRENT_TIMESTAMP
-            WHERE id = $3
-        RETURNING *
-            `;
+            UPDATE visits 
+            SET 
+                status = $1,
+                check_out_time = CURRENT_TIMESTAMP,
+                updated_at = CURRENT_TIMESTAMP
+            WHERE id = $2
+            RETURNING *
+        `;
 
-        const result = await pool.query(query, [status, closedBy, visitId]);
-
-        // Access revocation is handled automatically by database trigger
+        const result = await pool.query(query, [status, visitId]);
+        
         return result.rows[0];
     }
 

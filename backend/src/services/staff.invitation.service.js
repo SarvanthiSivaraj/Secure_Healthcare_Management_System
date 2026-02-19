@@ -121,11 +121,67 @@ class StaffInvitationService {
                 throw new Error('This email already has a pending invitation');
             }
 
-            // Check if user already exists
             const db = require('../config/db');
+            
+            // Check if user already exists
             const userCheck = await db.query('SELECT id FROM users WHERE email = $1', [email]);
+            let userId;
+
             if (userCheck.rows.length > 0) {
-                throw new Error('A user with this email already exists');
+                // User exists - maybe inactive or existing user?
+                // For now, we assume we are just inviting them to a new role/org?
+                // But the requirement says "register from start", implying new users.
+                // If user exists, we'll just link them? 
+                // But let's follow the requirement: "make sure they are active and role is shown correctly"
+                // If they exist, they are likely already shown.
+                // We'll proceed to create invitation, but we won't create a NEW user.
+                userId = userCheck.rows[0].id;
+                // We might want to ensure they are active?
+                await db.query("UPDATE users SET status = 'active' WHERE id = $1", [userId]);
+            } else {
+                // Create new user immediately as ACTIVE
+                // Generate random password
+                const randomPassword = require('crypto').randomBytes(8).toString('hex');
+                const { hashPassword } = require('../services/encryption.service'); // Need this service
+                const passwordHash = await hashPassword(randomPassword);
+
+                // Get role ID
+                const roleRes = await db.query('SELECT id FROM roles WHERE name = $1', [role.toLowerCase()]);
+                if (roleRes.rows.length === 0) {
+                    throw new Error(`Invalid role: ${role}`);
+                }
+                const roleId = roleRes.rows[0].id;
+
+                const userQuery = `
+                    INSERT INTO users (email, password_hash, role_id, is_verified, status, first_name, last_name)
+                    VALUES ($1, $2, $3, true, 'active', 'Staff', 'Member')
+                    RETURNING id;
+                `;
+                // Default name 'Staff Member' until they accept and update it
+                
+                const userResult = await db.query(userQuery, [email, passwordHash, roleId]);
+                userId = userResult.rows[0].id;
+            }
+
+            // Create/Ensure Staff Organization Mapping
+            if (organizationId) {
+                // Check if mapping exists
+                const mappingCheck = await db.query(
+                    'SELECT id FROM staff_org_mapping WHERE user_id = $1 AND organization_id = $2',
+                    [userId, organizationId]
+                );
+
+                if (mappingCheck.rows.length === 0) {
+                    // Get role ID again if needed (or pass it)
+                    const roleRes = await db.query('SELECT id FROM roles WHERE name = $1', [role.toLowerCase()]);
+                    const roleId = roleRes.rows[0].id;
+
+                    await db.query(
+                        `INSERT INTO staff_org_mapping (user_id, organization_id, role_id, status)
+                         VALUES ($1, $2, $3, 'active')`,
+                        [userId, organizationId, roleId]
+                    );
+                }
             }
 
             // Create invitation
@@ -147,10 +203,10 @@ class StaffInvitationService {
                 actionType: 'invite',
                 actionBy: invitedBy,
                 notes: `Invited ${email} as ${role}`,
-                metadata: { email, role, invitationId: invitation.id }
+                metadata: { email, role, invitationId: invitation.id, createdUserId: userId }
             });
 
-            logger.info(`Staff invitation created for ${email} by ${invitedBy}`);
+            logger.info(`Staff invitation created for ${email} by ${invitedBy}. Pre-created user ${userId}.`);
             return invitation;
         } catch (error) {
             logger.error('Error inviting staff:', error);
@@ -172,7 +228,7 @@ class StaffInvitationService {
     }
 
     /**
-     * Accept invitation and create user account
+     * Accept invitation and update user account
      */
     static async acceptInvitation(token, userData) {
         try {
@@ -183,61 +239,72 @@ class StaffInvitationService {
             }
 
             const invitation = validation.invitation;
-
-            // Create user account
             const db = require('../config/db');
 
-            // Get role ID
-            const roleRes = await db.query('SELECT id FROM roles WHERE name = $1', [invitation.role.toLowerCase()]);
-            if (roleRes.rows.length === 0) {
-                throw new Error(`Invalid role: ${invitation.role}`);
-            }
-            const roleId = roleRes.rows[0].id;
+            // Find existing user by email
+            const userRes = await db.query('SELECT id FROM users WHERE email = $1', [invitation.email]);
+            let userId;
 
-            const userQuery = `
-                INSERT INTO users (email, password_hash, first_name, last_name, role_id, is_verified, status)
-                VALUES ($1, $2, $3, $4, $5, true, 'active')
-                RETURNING *;
-            `;
+            if (userRes.rows.length > 0) {
+                // Update existing user
+                userId = userRes.rows[0].id;
+                const { hashPassword } = require('../services/encryption.service');
+                const passwordHash = await hashPassword(userData.password);
 
-            const userValues = [
-                invitation.email,
-                userData.password, // hashed password
-                userData.firstName,
-                userData.lastName,
-                roleId
-            ];
-
-            const userResult = await db.query(userQuery, userValues);
-            const newUser = userResult.rows[0];
-
-            // Create Staff Organization Mapping
-            if (invitation.organization_id) {
                 await db.query(
-                    `INSERT INTO staff_org_mapping (user_id, organization_id, role_id, status)
-                     VALUES ($1, $2, $3, 'active')`,
-                    [newUser.id, invitation.organization_id, roleId]
+                    `UPDATE users 
+                     SET password_hash = $1, first_name = $2, last_name = $3, status = 'active', is_verified = true
+                     WHERE id = $4`,
+                    [passwordHash, userData.firstName, userData.lastName, userId]
                 );
+            } else {
+                // Should not happen if inviteStaff pre-created user, but fallback just in case
+                // Insert new user logic (same as before)
+                const { hashPassword } = require('../services/encryption.service');
+                const passwordHash = await hashPassword(userData.password);
+
+                const roleRes = await db.query('SELECT id FROM roles WHERE name = $1', [invitation.role.toLowerCase()]);
+                const roleId = roleRes.rows[0].id;
+
+                const userResult = await db.query(
+                    `INSERT INTO users (email, password_hash, first_name, last_name, role_id, is_verified, status)
+                     VALUES ($1, $2, $3, $4, $5, true, 'active')
+                     RETURNING id`,
+                    [invitation.email, passwordHash, userData.firstName, userData.lastName, roleId]
+                );
+                userId = userResult.rows[0].id;
+                
+                // Create mapping if needed...
+                if (invitation.organization_id) {
+                     await db.query(
+                        `INSERT INTO staff_org_mapping (user_id, organization_id, role_id, status)
+                         VALUES ($1, $2, $3, 'active')`,
+                        [userId, invitation.organization_id, roleId]
+                    );
+                }
             }
 
             // Mark invitation as accepted
-            await StaffInvitation.accept(token, newUser.id);
+            await StaffInvitation.accept(token, userId);
+
+            // Fetch final user object
+            const finalUserRes = await db.query('SELECT * FROM users WHERE id = $1', [userId]);
+            const finalUser = finalUserRes.rows[0];
 
             // Log the action
-            // ... (rest of logging logic)
             await AccountAction.log({
-                userId: newUser.id,
+                userId: userId,
                 actionType: 'invite_accept',
-                actionBy: newUser.id,
-                notes: 'Invitation accepted and account created',
+                actionBy: userId,
+                notes: 'Invitation accepted and account setup completed',
                 metadata: { invitationId: invitation.id }
             });
 
             // Send Welcome Email
-            await this.sendWelcomeEmail(newUser, invitation.role);
+            await this.sendWelcomeEmail(finalUser, invitation.role);
 
-            logger.info(`Invitation accepted by ${newUser.email}`);
-            return newUser;
+            logger.info(`Invitation accepted by ${finalUser.email}`);
+            return finalUser;
         } catch (error) {
             logger.error('Error accepting invitation:', error);
             throw error;
