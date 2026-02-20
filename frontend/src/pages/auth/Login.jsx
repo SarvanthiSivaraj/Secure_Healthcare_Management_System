@@ -4,7 +4,6 @@ import { AuthContext } from '../../context/AuthContext';
 import { authApi } from '../../api/authApi';
 import ThemeToggle from '../../components/common/ThemeToggle';
 import ParticleBackground from '../../components/common/ParticleBackground';
-import loginBg from '../../assets/images/login-bg.png';
 
 function Login() {
     const navigate = useNavigate();
@@ -50,7 +49,10 @@ function Login() {
                 case 'HOSPITAL_ADMIN':
                 case 'SYSTEM_ADMIN': navigate('/admin/dashboard'); break;
                 case 'NURSE': navigate('/nurse/dashboard'); break;
+                case 'LAB_TECH':
                 case 'LAB_TECHNICIAN': navigate('/lab/dashboard'); break;
+                case 'RECEPTIONIST': navigate('/reception/dashboard'); break;
+                case 'PHARMACIST': navigate('/pharmacy/dashboard'); break;
                 case 'RADIOLOGIST': navigate('/radiology/dashboard'); break;
                 default: navigate('/staff/dashboard');
             }

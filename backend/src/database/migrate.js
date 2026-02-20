@@ -12,6 +12,33 @@ const pool = new Pool({
     password: config.database.password,
 });
 
+const ensureOrganizationHospitalCode = async () => {
+    await pool.query(`
+        ALTER TABLE organizations
+        ADD COLUMN IF NOT EXISTS hospital_code VARCHAR(6)
+    `);
+
+    await pool.query(`
+        UPDATE organizations
+        SET hospital_code = LPAD((100000 + FLOOR(RANDOM() * 900000))::text, 6, '0')
+        WHERE hospital_code IS NULL
+    `);
+
+    await pool.query(`
+        DO $$
+        BEGIN
+            IF NOT EXISTS (
+                SELECT 1
+                FROM pg_constraint
+                WHERE conname = 'unique_hospital_code'
+            ) THEN
+                ALTER TABLE organizations
+                ADD CONSTRAINT unique_hospital_code UNIQUE (hospital_code);
+            END IF;
+        END $$
+    `);
+};
+
 /**
  * Run database migrations
  */
@@ -25,6 +52,9 @@ const migrate = async () => {
 
         // Execute schema
         await pool.query(schema);
+
+        // Repair schema drift for organizations.hospital_code used by seed/auth/visit flows
+        await ensureOrganizationHospitalCode();
 
         logger.info('✅ Database migration completed successfully');
         process.exit(0);

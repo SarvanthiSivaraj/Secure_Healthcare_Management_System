@@ -30,10 +30,13 @@ const seedStaffAndOrganization = async () => {
         const orgResult = await client.query(`
             INSERT INTO organizations (name, type, license_number, status, verified, hospital_code)
             VALUES ($1, $2, $3, $4, $5, $6)
-            ON CONFLICT (hospital_code) DO UPDATE 
-            SET name = EXCLUDED.name, verified = EXCLUDED.verified
+            ON CONFLICT (license_number) DO UPDATE 
+            SET name = EXCLUDED.name,
+                status = EXCLUDED.status,
+                verified = EXCLUDED.verified,
+                hospital_code = EXCLUDED.hospital_code
             RETURNING id, name, hospital_code
-        `, ['General Hospital', 'hospital', 'ORG-1001', 'active', true, '100001']);
+        `, ['General Hospital', 'hospital', 'ORG-001', 'active', true, '100001']);
         
         const orgId = orgResult.rows[0].id;
         console.log(`✅ Organization: ${orgResult.rows[0].name} (ID: ${orgId}, Code: ${orgResult.rows[0].hospital_code})\n`);

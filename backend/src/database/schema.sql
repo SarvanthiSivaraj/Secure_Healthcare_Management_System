@@ -64,6 +64,7 @@ CREATE INDEX IF NOT EXISTS idx_users_status ON users(status);
 CREATE TABLE IF NOT EXISTS organizations (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     name VARCHAR(255) NOT NULL,
+    hospital_code VARCHAR(6) UNIQUE,
     type VARCHAR(50) NOT NULL CHECK (type IN ('hospital', 'clinic', 'pharmacy', 'laboratory', 'imaging_center')),
     license_number VARCHAR(100) UNIQUE NOT NULL,
     license_document_url VARCHAR(255),
