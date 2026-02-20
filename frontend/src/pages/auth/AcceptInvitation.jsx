@@ -3,7 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import Input from '../../components/common/Input';
 import Button from '../../components/common/Button';
 import { staffApi } from '../../api/staffApi';
-import './Auth.css';
+import './AcceptInvitation.css';
 
 function AcceptInvitation() {
     const navigate = useNavigate();
@@ -14,6 +14,7 @@ function AcceptInvitation() {
     const [submitting, setSubmitting] = useState(false);
     const [error, setError] = useState('');
     const [validationError, setValidationError] = useState('');
+    const [success, setSuccess] = useState(false);
 
     const [formData, setFormData] = useState({
         firstName: '',
@@ -23,7 +24,6 @@ function AcceptInvitation() {
         phone: '',
     });
 
-    // Validate invitation token on mount
     useEffect(() => {
         const validateToken = async () => {
             try {
@@ -57,20 +57,16 @@ function AcceptInvitation() {
         e.preventDefault();
         setError('');
 
-        // Validate passwords match
         if (formData.password !== formData.confirmPassword) {
             setError('Passwords do not match');
             return;
         }
-
-        // Validate password strength
         if (formData.password.length < 8) {
             setError('Password must be at least 8 characters long');
             return;
         }
 
         setSubmitting(true);
-
         try {
             const response = await staffApi.acceptInvitation(token, {
                 firstName: formData.firstName,
@@ -80,15 +76,13 @@ function AcceptInvitation() {
             });
 
             if (response.success) {
-                alert('Account created successfully! Please login with your credentials.');
-                navigate('/login', {
+                setSuccess(true);
+                setTimeout(() => navigate('/login', {
                     state: { message: 'Account created successfully! Please login.' }
-                });
+                }), 2500);
             }
         } catch (err) {
-            console.error('Accept invitation error:', err);
-            const errorMsg = err.response?.data?.message || err.message || 'Failed to create account. Please try again.';
-            setError(errorMsg);
+            setError(err.response?.data?.message || err.message || 'Failed to create account. Please try again.');
         } finally {
             setSubmitting(false);
         }
@@ -96,21 +90,10 @@ function AcceptInvitation() {
 
     if (loading) {
         return (
-            <div className="split-auth-container">
-                <div className="auth-left-panel">
-                    <div className="auth-branding">
-                        <div className="brand-icon">
-                            <div className="pulse-ring"></div>
-                            <div className="heartbeat-icon">❤️</div>
-                        </div>
-                        <h1>Secure Healthcare</h1>
-                        <p className="brand-tagline">Your Health, Your Privacy, Your Control</p>
-                    </div>
-                </div>
-                <div className="auth-right-panel">
-                    <div className="login-form-container">
-                        <div className="loading-spinner">Validating invitation...</div>
-                    </div>
+            <div className="ai-page">
+                <div className="ai-card ai-card--center">
+                    <div className="ai-spinner"></div>
+                    <p className="ai-loading-text">Validating your invitation…</p>
                 </div>
             </div>
         );
@@ -118,112 +101,95 @@ function AcceptInvitation() {
 
     if (validationError) {
         return (
-            <div className="split-auth-container">
-                <div className="auth-left-panel">
-                    <div className="auth-branding">
-                        <div className="brand-icon">
-                            <div className="pulse-ring"></div>
-                            <div className="heartbeat-icon">❤️</div>
-                        </div>
-                        <h1>Secure Healthcare</h1>
-                        <p className="brand-tagline">Your Health, Your Privacy, Your Control</p>
+            <div className="ai-page">
+                <div className="ai-card">
+                    <div className="ai-card-header">
+                        <div className="ai-header-icon ai-header-icon--error">✕</div>
+                        <h2 className="ai-card-title">Invalid Invitation</h2>
+                        <p className="ai-card-subtitle">This invitation link is invalid or has expired.</p>
                     </div>
+                    <div className="ai-alert ai-alert--error">{validationError}</div>
+                    <Button className="ai-btn-full" onClick={() => navigate('/login')}>
+                        Go to Login
+                    </Button>
                 </div>
-                <div className="auth-right-panel">
-                    <div className="login-form-container">
-                        <div className="form-header">
-                            <h2>Invalid Invitation</h2>
-                        </div>
-                        <div className="error-alert">{validationError}</div>
-                        <Button
-                            type="button"
-                            onClick={() => navigate('/login')}
-                            className="btn-primary btn-lg"
-                        >
-                            Go to Login
-                        </Button>
-                    </div>
+            </div>
+        );
+    }
+
+    if (success) {
+        return (
+            <div className="ai-page">
+                <div className="ai-card ai-card--center">
+                    <div className="ai-success-icon">✓</div>
+                    <h2 className="ai-card-title">Account Created!</h2>
+                    <p className="ai-card-subtitle">Redirecting you to the login page…</p>
                 </div>
             </div>
         );
     }
 
     return (
-        <div className="split-auth-container">
-            {/* Left Side - Quote & Welcome */}
-            <div className="auth-left-panel">
-                <div className="auth-branding">
-                    <div className="brand-icon">
-                        <div className="pulse-ring"></div>
-                        <div className="heartbeat-icon">❤️</div>
+        <div className="ai-page">
+            {/* Header Banner */}
+            <div className="ai-banner">
+                <div className="ai-banner-inner">
+                    <div className="ai-banner-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                            <circle cx="12" cy="7" r="4" />
+                        </svg>
                     </div>
-                    <h1>Secure Healthcare</h1>
-                    <p className="brand-tagline">Your Health, Your Privacy, Your Control</p>
-                </div>
-
-                <div className="quote-section">
-                    <div className="quote-icon">"</div>
-                    <blockquote>
-                        <p className="quote-text">
-                            The good physician treats the disease; the great physician treats the patient who has the disease.
-                        </p>
-                        <cite>— William Osler</cite>
-                    </blockquote>
-                </div>
-
-                <div className="features-list">
-                    <div className="feature-item">
-                        <span className="feature-icon">🔒</span>
-                        <span>HIPAA Compliant</span>
-                    </div>
-                    <div className="feature-item">
-                        <span className="feature-icon">🛡️</span>
-                        <span>Secure Authentication</span>
-                    </div>
-                    <div className="feature-item">
-                        <span className="feature-icon">✓</span>
-                        <span>Role-Based Access</span>
+                    <div>
+                        <h1 className="ai-banner-title">Secure Healthcare</h1>
+                        <p className="ai-banner-sub">Staff Onboarding Portal</p>
                     </div>
                 </div>
             </div>
 
-            {/* Right Side - Registration Form */}
-            <div className="auth-right-panel">
-                <div className="login-form-container">
-                    <div className="form-header">
-                        <h2>Complete Your Registration</h2>
-                        <p className="form-subtitle">
-                            You've been invited to join as {invitation?.role}
+            {/* Main Card */}
+            <div className="ai-content">
+                <div className="ai-card">
+                    {/* Role Badge */}
+                    <div className="ai-role-badge">
+                        <span className="ai-role-dot"></span>
+                        Invited as <strong>{invitation?.role}</strong>
+                    </div>
+
+                    <div className="ai-card-header">
+                        <h2 className="ai-card-title">Complete Your Registration</h2>
+                        <p className="ai-card-subtitle">
+                            Set up your account to access the healthcare management system.
                         </p>
-                        {invitation?.organizationName && (
-                            <p className="form-subtitle">
-                                Organization: <strong>{invitation.organizationName}</strong>
-                            </p>
-                        )}
                     </div>
 
-                    <div className="info-alert" style={{ marginBottom: '1.5rem' }}>
-                        <strong>Email:</strong> {invitation?.email}
+                    {/* Email info box */}
+                    <div className="ai-info-box">
+                        <span className="ai-info-label">📧 &nbsp;Invitation sent to</span>
+                        <span className="ai-info-value">{invitation?.email}</span>
                     </div>
 
-                    <form onSubmit={handleSubmit} className="login-form">
-                        <Input
-                            label="First Name"
-                            type="text"
-                            name="firstName"
-                            value={formData.firstName}
-                            onChange={handleChange}
-                            required
-                        />
-
-                        <Input
-                            label="Last Name"
-                            type="text"
-                            name="lastName"
-                            value={formData.lastName}
-                            onChange={handleChange}
-                            required
-                        />
+                    <form onSubmit={handleSubmit} className="ai-form">
+                        <div className="ai-form-row">
+                            <Input
+                                label="First Name"
+                                type="text"
+                                name="firstName"
+                                value={formData.firstName}
+                                onChange={handleChange}
+                                placeholder="First name"
+                                required
+                            />
+                            <Input
+                                label="Last Name"
+                                type="text"
+                                name="lastName"
+                                value={formData.lastName}
+                                onChange={handleChange}
+                                placeholder="Last name"
+                                required
+                            />
+                        </div>
 
                         <Input
                             label="Phone Number"
@@ -231,43 +197,58 @@ function AcceptInvitation() {
                             name="phone"
                             value={formData.phone}
                             onChange={handleChange}
-                            placeholder="+1234567890"
+                            placeholder="+91 98765 43210"
                             required
                         />
 
-                        <Input
-                            label="Password"
-                            type="password"
-                            name="password"
-                            value={formData.password}
-                            onChange={handleChange}
-                            placeholder="Minimum 8 characters"
-                            required
-                        />
+                        <div className="ai-form-row">
+                            <Input
+                                label="Password"
+                                type="password"
+                                name="password"
+                                value={formData.password}
+                                onChange={handleChange}
+                                placeholder="Min. 8 characters"
+                                required
+                            />
+                            <Input
+                                label="Confirm Password"
+                                type="password"
+                                name="confirmPassword"
+                                value={formData.confirmPassword}
+                                onChange={handleChange}
+                                placeholder="Re-enter password"
+                                required
+                            />
+                        </div>
 
-                        <Input
-                            label="Confirm Password"
-                            type="password"
-                            name="confirmPassword"
-                            value={formData.confirmPassword}
-                            onChange={handleChange}
-                            required
-                        />
-
-                        {error && <div className="error-alert">{error}</div>}
+                        {error && <div className="ai-alert ai-alert--error">{error}</div>}
 
                         <Button
                             type="submit"
                             loading={submitting}
-                            className="btn-primary btn-lg"
+                            className="ai-btn-full ai-btn-primary"
                         >
-                            Create Account
+                            Create My Account
                         </Button>
-
-                        <p className="auth-footer">
-                            Already have an account? <a href="/login">Sign in</a>
-                        </p>
                     </form>
+
+                    <p className="ai-footer-link">
+                        Already have an account? <a href="/login">Sign in here</a>
+                    </p>
+                </div>
+
+                {/* Features strip */}
+                <div className="ai-features">
+                    <div className="ai-feature-item">
+                        <span>🔒</span> HIPAA Compliant
+                    </div>
+                    <div className="ai-feature-item">
+                        <span>🛡️</span> Secure Auth
+                    </div>
+                    <div className="ai-feature-item">
+                        <span>✓</span> Role-Based Access
+                    </div>
                 </div>
             </div>
         </div>
