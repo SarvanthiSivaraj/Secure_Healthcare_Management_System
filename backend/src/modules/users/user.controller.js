@@ -1,8 +1,14 @@
-const { findUserById, getAllUsers, updateUserStatus } = require('../../models/user.model');
+const {
+    findUserById,
+    getAllUsers,
+    updateUserStatus,
+    createUser,
+    userExists,
+    updateUserProfile: updateUserProfileModel
+} = require('../../models/user.model');
 const { createStaffMapping, deactivateStaffMapping, verifyStaffLicense, getUserStaffMappings } = require('../../models/staffOrgMapping.model');
 const { findOrganizationById } = require('../../models/organization.model');
 const { getRoleByName } = require('../../models/role.model');
-const { createUser, userExists } = require('../../models/user.model');
 const { generateAndSendOTP } = require('../../services/otp.service');
 const { createAuditLog } = require('../../services/audit.service');
 const { HTTP_STATUS, SUCCESS_MESSAGES, ERROR_MESSAGES, AUDIT_ACTIONS, OTP_PURPOSE, STAFF_STATUS } = require('../../utils/constants');
@@ -294,8 +300,13 @@ const getUserProfile = async (req, res) => {
             });
         }
 
-        // Get staff mappings if applicable
-        const staffMappings = await getUserStaffMappings(userId);
+        // Get staff mappings if applicable - safely
+        let staffMappings = [];
+        try {
+            staffMappings = await getUserStaffMappings(userId);
+        } catch (err) {
+            logger.warn(`Failed to fetch staff mappings for user ${userId}:`, err);
+        }
 
         res.status(HTTP_STATUS.OK).json({
             success: true,
@@ -304,6 +315,8 @@ const getUserProfile = async (req, res) => {
                     id: user.id,
                     email: user.email,
                     phone: user.phone,
+                    firstName: user.first_name,
+                    lastName: user.last_name,
                     role: user.role_name,
                     isVerified: user.is_verified,
                     status: user.status,
@@ -325,7 +338,7 @@ const getUserProfile = async (req, res) => {
  * Get all users (admin only)
  * GET /api/users
  */
-    const getUsers = async (req, res) => {
+const getUsers = async (req, res) => {
     try {
         const { limit, offset, role, status } = req.query;
         let organizationId = null;
@@ -336,7 +349,7 @@ const getUserProfile = async (req, res) => {
                 'SELECT organization_id FROM staff_org_mapping WHERE user_id = $1 AND status = \'active\'',
                 [req.user.id]
             );
-            
+
             if (orgResult.rows.length > 0) {
                 organizationId = orgResult.rows[0].organization_id;
             } else {
@@ -458,6 +471,39 @@ const getNurses = async (req, res) => {
     }
 };
 
+/**
+ * Update user profile
+ * PUT /api/users/profile
+ */
+const updateUserProfile = async (req, res) => {
+    try {
+        const userId = req.user.id;
+        const { firstName, lastName, phone } = req.body;
+
+        // Simple validation
+        if (!firstName && !lastName && !phone) {
+            return res.status(HTTP_STATUS.BAD_REQUEST).json({
+                success: false,
+                message: 'At least one field (First Name, Last Name, or Phone) must be provided for update',
+            });
+        }
+
+        const updatedUser = await updateUserProfileModel(userId, { firstName, lastName, phone });
+
+        res.status(HTTP_STATUS.OK).json({
+            success: true,
+            message: 'Profile updated successfully',
+            data: updatedUser,
+        });
+    } catch (error) {
+        logger.error('Update user profile failed:', error);
+        res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
+            success: false,
+            message: ERROR_MESSAGES.INTERNAL_ERROR,
+        });
+    }
+};
+
 module.exports = {
     onboardStaff,
     deactivateStaff,
@@ -466,4 +512,5 @@ module.exports = {
     getUsers,
     getDoctors,
     getNurses,
+    updateUserProfile,
 };

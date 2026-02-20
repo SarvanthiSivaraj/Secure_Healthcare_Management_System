@@ -29,6 +29,18 @@ export const userApi = {
     deactivateStaff: async (userId) => {
         const response = await apiClient.put('/users/staff/deactivate', { userId });
         return response.data;
+    },
+
+    // Get current user profile
+    getProfile: async () => {
+        const response = await apiClient.get('/users/profile');
+        return response.data;
+    },
+
+    // Update current user profile
+    updateProfile: async (profileData) => {
+        const response = await apiClient.put('/users/profile', profileData);
+        return response.data;
     }
 };
 

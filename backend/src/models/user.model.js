@@ -339,7 +339,7 @@ const isAccountLocked = async (userId) => {
  * @param {Object} options - Query options
  * @returns {Promise<Array>} Users list
  */
-    const getAllUsers = async (options = {}) => {
+const getAllUsers = async (options = {}) => {
     try {
         const { limit = 50, offset = 0, role, status, organizationId } = options;
 
@@ -348,7 +348,7 @@ const isAccountLocked = async (userId) => {
         let paramIndex = 1;
 
         let joinClause = 'LEFT JOIN roles r ON u.role_id = r.id';
-        
+
         if (organizationId) {
             joinClause += ' JOIN staff_org_mapping som ON u.id = som.user_id AND som.status = \'active\'';
             conditions.push(`som.organization_id = $${paramIndex}`);
@@ -389,6 +389,36 @@ const isAccountLocked = async (userId) => {
     }
 };
 
+/**
+ * Update user profile information
+ * @param {String} userId - User ID
+ * @param {Object} profileData - Profile data to update
+ * @returns {Promise<Object>} Updated user
+ */
+const updateUserProfile = async (userId, profileData) => {
+    try {
+        const { firstName, lastName, phone } = profileData;
+        const updateQuery = `
+      UPDATE users
+      SET first_name = $1, last_name = $2, phone = $3
+      WHERE id = $4
+      RETURNING id, email, phone, first_name, last_name, role_id, is_verified, status
+    `;
+
+        const result = await query(updateQuery, [
+            firstName || null,
+            lastName || null,
+            phone || null,
+            userId
+        ]);
+
+        return result.rows[0];
+    } catch (error) {
+        logger.error('Failed to update user profile:', error);
+        throw error;
+    }
+};
+
 module.exports = {
     createUser,
     findUserById,
@@ -404,4 +434,5 @@ module.exports = {
     lockUserAccount,
     isAccountLocked,
     getAllUsers,
+    updateUserProfile,
 };

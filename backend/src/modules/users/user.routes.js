@@ -18,6 +18,17 @@ router.get(
 );
 
 /**
+ * @route   PUT /api/users/profile
+ * @desc    Update current user profile
+ * @access  Private
+ */
+router.put(
+    '/profile',
+    authenticate,
+    asyncHandler(userController.updateUserProfile)
+);
+
+/**
  * @route   GET /api/users/doctors
  * @desc    Get all active doctors (for consent management)
  * @access  Private

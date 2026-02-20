@@ -15,6 +15,7 @@ const { isValidEmail, isValidPhone, validatePassword, validateRequiredFields } =
 const logger = require('../../utils/logger');
 const config = require('../../config/env');
 const { verifyAadhaar, verifyDoctorReg } = require('../../services/mockVerification.service');
+const { sendDoctorRegistrationNotification } = require('../../config/mail');
 
 /**
  * Register patient
@@ -77,7 +78,7 @@ const registerPatient = async (req, res) => {
 
         // Verify Aadhaar with Mock Service
         if (govtId) { // check if govtId is provided first, though usually required for patients
-             try {
+            try {
                 // Verify against mock DB including email and phone check
                 await verifyAadhaar(govtId, email, phone);
             } catch (error) {
@@ -719,11 +720,11 @@ const registerDoctor = async (req, res) => {
         // Let's assume req.body.licenseNumber is the ID to verify.
         const regId = req.body.licenseNumber;
         if (regId) {
-             try {
+            try {
                 // Verify against mock DB including email and phone check
                 await verifyDoctorReg(regId, email, phone);
             } catch (error) {
-                 return res.status(HTTP_STATUS.BAD_REQUEST).json({
+                return res.status(HTTP_STATUS.BAD_REQUEST).json({
                     success: false,
                     message: error.message || 'Medical registration verification failed',
                 });
@@ -765,6 +766,14 @@ const registerDoctor = async (req, res) => {
             requestMethod: req.method,
             requestPath: req.path,
             statusCode: HTTP_STATUS.CREATED,
+        });
+
+        // Notify Admins
+        await sendDoctorRegistrationNotification({
+            email,
+            firstName,
+            lastName,
+            registrationId: regId
         });
 
         logger.info('Doctor registered successfully:', { userId: user.id, email });

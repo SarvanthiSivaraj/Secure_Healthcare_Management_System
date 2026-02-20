@@ -1,6 +1,7 @@
 const VerificationDocument = require('../models/verification_document.model');
 const AccountAction = require('../models/account_action.model');
 const db = require('../config/db');
+const { sendDoctorAcceptanceEmail } = require('../config/mail');
 const logger = require('../utils/logger');
 
 /**
@@ -126,6 +127,12 @@ class DoctorVerificationService {
             `;
 
             await db.query(docsQuery, [userId, approvedBy, notes]);
+
+            // Send acceptance email
+            await sendDoctorAcceptanceEmail(userResult.rows[0].email, {
+                firstName: userResult.rows[0].first_name,
+                lastName: userResult.rows[0].last_name
+            });
 
             // Log the action
             await AccountAction.log({

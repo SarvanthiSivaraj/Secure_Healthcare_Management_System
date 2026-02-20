@@ -14,15 +14,15 @@ const transporter = nodemailer.createTransport({
 
 // Verify transporter configuration (disabled in development)
 if (process.env.NODE_ENV === 'production') {
-    transporter.verify((error, success) => {
-        if (error) {
-            logger.error('Email transporter configuration error:', error);
-        } else {
-            logger.info('Email server is ready to send messages');
-        }
-    });
+  transporter.verify((error, success) => {
+    if (error) {
+      logger.error('Email transporter configuration error:', error);
+    } else {
+      logger.info('Email server is ready to send messages');
+    }
+  });
 } else {
-    logger.info('Email verification skipped in development mode');
+  logger.info('Email verification skipped in development mode');
 }
 
 /**
@@ -169,6 +169,94 @@ const sendVisitClosureEmail = async (email, visitData) => {
   return sendEmail({ to: email, subject, text, html });
 };
 
+/**
+ * Send notification to admins about a new doctor registration
+ * @param {Object} doctorData - Doctor information
+ * @returns {Promise} Send result
+ */
+const sendDoctorRegistrationNotification = async (doctorData) => {
+  const { email, firstName, lastName, registrationId } = doctorData;
+  const adminEmail = process.env.ADMIN_EMAIL || process.env.EMAIL_USER; // Default to EMAIL_USER if no ADMIN_EMAIL
+
+  const subject = `New Doctor Registration: ${firstName} ${lastName}`;
+  const text = `A new doctor has registered and is pending approval.\n\nName: ${firstName} ${lastName}\nEmail: ${email}\nRegistration ID: ${registrationId}\n\nPlease log in to the admin dashboard to review and approve this account.`;
+  const html = `
+        <div style="font-family: 'Segoe UI', Arial, sans-serif; max-width: 600px; margin: 0 auto; color: #1e293b; border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden;">
+            <div style="background: linear-gradient(135deg, #326773 0%, #438a99 100%); padding: 24px; text-align: center; color: white;">
+                <h2 style="margin: 0; font-size: 24px;">New Doctor Registration</h2>
+            </div>
+            <div style="padding: 32px; background-color: #ffffff;">
+                <p style="font-size: 16px; margin-top: 0;">A new medical professional has registered on the platform and requires verification.</p>
+                
+                <div style="background-color: #f8fafc; padding: 20px; border-radius: 8px; margin: 24px 0; border: 1px solid #edf2f7;">
+                    <h3 style="margin-top: 0; color: #326773; font-size: 18px; border-bottom: 2px solid #326773; padding-bottom: 8px; display: inline-block;">Doctor Details</h3>
+                    <p style="margin: 12px 0;"><strong>Name:</strong> ${firstName} ${lastName}</p>
+                    <p style="margin: 12px 0;"><strong>Email:</strong> ${email}</p>
+                    <p style="margin: 12px 0;"><strong>Registration ID:</strong> ${registrationId}</p>
+                </div>
+                
+                <p style="font-size: 15px; line-height: 1.6;">Please review the submitted credentials and registration details in the administration portal to proceed with account activation.</p>
+                
+                <div style="text-align: center; margin-top: 32px;">
+                    <a href="${process.env.FRONTEND_URL || 'http://localhost:3000'}/admin/dashboard" style="background-color: #326773; color: white; padding: 12px 32px; text-decoration: none; border-radius: 6px; font-weight: 600; display: inline-block; transition: background-color 0.2s;">
+                        Go to Admin Dashboard
+                    </a>
+                </div>
+            </div>
+            <div style="padding: 16px; background-color: #f1f5f9; text-align: center; font-size: 12px; color: #64748b;">
+                <p style="margin: 0;">This is an automated notification from the Secure Healthcare Management System.</p>
+            </div>
+        </div>
+    `;
+
+  return sendEmail({ to: adminEmail, subject, text, html });
+};
+
+/**
+ * Send acceptance email to doctor
+ * @param {String} email - Doctor email
+ * @param {Object} userData - User information
+ * @returns {Promise} Send result
+ */
+const sendDoctorAcceptanceEmail = async (email, userData) => {
+  const { firstName, lastName } = userData;
+  const loginUrl = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/login`;
+
+  const subject = 'Your Secure Healthcare Account Approved';
+  const text = `Congratulations Dr. ${lastName}, your account has been approved!\n\nYou can now log in to the healthcare management system: ${loginUrl}`;
+  const html = `
+        <div style="font-family: 'Segoe UI', Arial, sans-serif; max-width: 600px; margin: 0 auto; color: #1e293b; border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden;">
+            <div style="background: linear-gradient(135deg, #326773 0%, #438a99 100%); padding: 32px; text-align: center; color: white;">
+                <h2 style="margin: 0; font-size: 28px;">Account Approved</h2>
+                <p style="margin-top: 8px; opacity: 0.9;">Welcome to the Medical Network</p>
+            </div>
+            <div style="padding: 40px; background-color: #ffffff;">
+                <h3 style="margin-top: 0; font-size: 20px;">Congratulations Dr. ${lastName},</h3>
+                <p style="font-size: 16px; line-height: 1.6; color: #475569;">
+                    We are pleased to inform you that your registration and medical credentials have been successfully verified. 
+                    Your account is now <strong>active</strong> and you can access the medical dashboard.
+                </p>
+                
+                <div style="background-color: #f0fdfa; padding: 24px; border-radius: 12px; margin: 32px 0; border: 1px solid #ccfbf1; text-align: center;">
+                    <p style="margin: 0 0 16px 0; font-weight: 600; color: #115e59;">Ready to get started?</p>
+                    <a href="${loginUrl}" style="background-color: #326773; color: white; padding: 14px 40px; text-decoration: none; border-radius: 8px; font-weight: 600; display: inline-block; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);">
+                        Login to Dashboard
+                    </a>
+                </div>
+                
+                <p style="font-size: 15px; color: #64748b;">
+                    If you have any questions or need technical assistance, please contact the hospital administration.
+                </p>
+            </div>
+            <div style="padding: 20px; background-color: #f8fafc; text-align: center; border-top: 1px solid #edf2f7;">
+                <p style="margin: 0; font-size: 12px; color: #94a3b8;">&copy; 2026 Secure Healthcare Management System. All rights reserved.</p>
+            </div>
+        </div>
+    `;
+
+  return sendEmail({ to: email, subject, text, html });
+};
+
 module.exports = {
   transporter,
   sendEmail,
@@ -176,4 +264,6 @@ module.exports = {
   sendVisitApprovalEmail,
   sendVisitReminderEmail,
   sendVisitClosureEmail,
+  sendDoctorRegistrationNotification,
+  sendDoctorAcceptanceEmail,
 };

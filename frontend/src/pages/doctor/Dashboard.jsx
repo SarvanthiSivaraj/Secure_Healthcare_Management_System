@@ -94,6 +94,15 @@ function DoctorDashboard() {
                     <div className="flex items-center space-x-3">
                         <ThemeToggle />
                         <button
+                            onClick={() => navigate('/profile')}
+                            className="p-2 rounded-xl border border-white/30 text-white hover:bg-white/10 transition-all duration-200"
+                            title="View Profile"
+                        >
+                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                            </svg>
+                        </button>
+                        <button
                             onClick={logout}
                             className="px-4 py-2 rounded-xl border border-white/30 text-white text-sm font-medium hover:bg-white/10 transition-all duration-200"
                         >

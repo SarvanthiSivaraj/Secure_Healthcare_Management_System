@@ -32,7 +32,9 @@ import WorkflowDashboard from '../pages/staff/WorkflowDashboard';
 import UserManagement from '../pages/admin/UserManagement';
 import AuditLogs from '../pages/admin/AuditLogs';
 import DoctorRegistration from '../pages/admin/DoctorRegistration';
+import DoctorVerification from '../pages/admin/DoctorVerification';
 import AuditTrail from '../pages/patient/AuditTrail';
+import Profile from '../pages/common/Profile';
 
 function AppRoutes() {
     return (
@@ -279,6 +281,15 @@ function AppRoutes() {
                 />
 
                 <Route
+                    path="/admin/doctor-verification"
+                    element={
+                        <ProtectedRoute allowedRoles={['admin', 'hospital_admin', 'system_admin']}>
+                            <DoctorVerification />
+                        </ProtectedRoute>
+                    }
+                />
+
+                <Route
                     path="/staff/dashboard"
                     element={
                         <ProtectedRoute allowedRoles={[
@@ -306,6 +317,15 @@ function AppRoutes() {
                             'staff', 'nurse', 'doctor', 'admin', 'hospital_admin', 'system_admin'
                         ]}>
                             <WorkflowDashboard />
+                        </ProtectedRoute>
+                    }
+                />
+
+                <Route
+                    path="/profile"
+                    element={
+                        <ProtectedRoute allowedRoles={['patient', 'doctor', 'staff', 'nurse', 'lab_tech', 'lab_technician', 'radiologist', 'admin', 'hospital_admin', 'system_admin']}>
+                            <Profile />
                         </ProtectedRoute>
                     }
                 />

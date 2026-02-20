@@ -49,6 +49,11 @@ function HospitalAdminDashboard() {
                         <button className="ha-header-theme-toggle">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
                         </button>
+                        <button className="ha-header-profile-btn" onClick={() => navigate('/profile')} title="View Profile">
+                            <svg className="w-5 h-5" fill="none" stroke="#fff" viewBox="0 0 24 24" strokeWidth="2">
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                            </svg>
+                        </button>
                         <button className="ha-header-signout" onClick={logout}>Sign Out</button>
                     </div>
                 </div>
@@ -100,6 +105,28 @@ function HospitalAdminDashboard() {
                         </div>
                         <div className="ha-stat-num">{statsLoading ? '—' : stats.totalPatients}</div>
                         <div className="ha-stat-lbl">TOTAL PATIENTS</div>
+                    </div>
+                </div>
+
+                <div className="ha-nav-section">
+                    <h2 className="ha-section-title">Healthcare Management</h2>
+                    <div className="ha-nav-grid">
+
+                        <div className="ha-nav-card" onClick={() => navigate('/admin/doctor-verification')}>
+                            <div className="ha-nav-card-main">
+                                <div className="ha-nav-icon">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="8.5" cy="7" r="4"></circle><polyline points="17 11 19 13 23 9"></polyline></svg>
+                                </div>
+                                <div className="ha-nav-text">
+                                    <h3>Doctor Verification</h3>
+                                    <p>Review and approve new doctor registrations and medical credentials</p>
+                                </div>
+                            </div>
+                            <span className="ha-arrow">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                            </span>
+                        </div>
+
                     </div>
                 </div>
 
