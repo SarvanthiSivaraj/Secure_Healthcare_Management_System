@@ -81,9 +81,21 @@ class StaffController {
      */
     static getInvitations = asyncHandler(async (req, res) => {
         const { status, limit = 50, offset = 0 } = req.query;
+        const db = require('../../config/db');
+
+        // Identify organization ID for the requester
+        const orgQuery = `
+            SELECT id FROM organizations WHERE admin_user_id = $1
+            UNION
+            SELECT organization_id as id FROM staff_org_mapping WHERE user_id = $1
+            LIMIT 1
+        `;
+        const orgResult = await db.query(orgQuery, [req.user.id]);
+        const organizationId = orgResult.rows.length > 0 ? orgResult.rows[0].id : null;
 
         const invitations = await StaffInvitationService.getInvitations({
             status,
+            organizationId,
             limit: parseInt(limit),
             offset: parseInt(offset)
         });
@@ -188,7 +200,19 @@ class StaffController {
      * GET /api/staff/invitations/stats
      */
     static getInvitationStats = asyncHandler(async (req, res) => {
-        const stats = await StaffInvitationService.getStats();
+        const db = require('../../config/db');
+
+        // Identify organization ID for the requester
+        const orgQuery = `
+            SELECT id FROM organizations WHERE admin_user_id = $1
+            UNION
+            SELECT organization_id as id FROM staff_org_mapping WHERE user_id = $1
+            LIMIT 1
+        `;
+        const orgResult = await db.query(orgQuery, [req.user.id]);
+        const organizationId = orgResult.rows.length > 0 ? orgResult.rows[0].id : null;
+
+        const stats = await StaffInvitationService.getStats({ organizationId });
 
         res.json({
             success: true,

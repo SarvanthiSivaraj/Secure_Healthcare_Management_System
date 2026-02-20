@@ -77,6 +77,8 @@ app.use('/api/consent', consentRoutes);
 app.use('/api/emr', emrRoutes);
 app.use('/api/audit', auditRoutes);
 app.use('/api/workflow', workflowRoutes);
+app.use('/api/admin', require('./modules/admin/admin.routes'));
+app.use('/api/users', userRoutes);
 
 // Phase 1: Staff Management routes
 app.use(`${API_PREFIX}/staff`, staffRoutes);

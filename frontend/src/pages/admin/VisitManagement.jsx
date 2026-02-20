@@ -149,157 +149,165 @@ function VisitManagement() {
     return (
         <div className="visit-management-container">
             <div className="visit-management-header">
-                <h1>Visit Management</h1>
-                <p className="subtitle">Manage patient visit requests and assignments</p>
-            </div>
-
-            <div className="visit-tabs">
-                <button
-                    className={`tab ${activeTab === 'pending' ? 'active' : ''}`}
-                    onClick={() => setActiveTab('pending')}
-                >
-                    Pending
-                </button>
-                <button
-                    className={`tab ${activeTab === 'active' ? 'active' : ''}`}
-                    onClick={() => setActiveTab('active')}
-                >
-                    Active
-                </button>
-                <button
-                    className={`tab ${activeTab === 'completed' ? 'active' : ''}`}
-                    onClick={() => setActiveTab('completed')}
-                >
-                    Completed
-                </button>
-            </div>
-
-            {error && <div className="error-message">{error}</div>}
-            {loading && <div className="loading-message">Loading visits...</div>}
-
-            {!loading && (
-                <div className="visits-list">
-                    {visits.length === 0 ? (
-                        <div className="empty-state">
-                            <p>No {activeTab} visits found</p>
-                        </div>
-                    ) : (
-                        visits.map(visit => (
-                            <div key={visit.id} className="visit-card">
-                                <div className="visit-card-header">
-                                    <div className="visit-info">
-                                        <h3>Visit Code: {visit.visit_code}</h3>
-                                        {getStatusBadge(visit.status)}
-                                    </div>
-                                    <span className="visit-time">{formatDate(visit.created_at)}</span>
-                                </div>
-
-                                <div className="visit-card-body">
-                                    <div className="visit-detail">
-                                        <strong>Patient:</strong> {visit.patient_first_name} {visit.patient_last_name}
-                                    </div>
-                                    <div className="visit-detail">
-                                        <strong>Reason:</strong> {visit.reason}
-                                    </div>
-                                    {visit.symptoms && (
-                                        <div className="visit-detail">
-                                            <strong>Symptoms:</strong> {visit.symptoms}
-                                        </div>
-                                    )}
-                                    {visit.doctor_first_name && (
-                                        <div className="visit-detail">
-                                            <strong>Doctor:</strong> Dr. {visit.doctor_first_name} {visit.doctor_last_name}
-                                        </div>
-                                    )}
-                                </div>
-
-                                <div className="visit-card-actions">
-                                    {visit.status === 'pending' && (
-                                        <>
-                                            <Button onClick={() => handleApproveClick(visit)} variant="primary">
-                                                Approve
-                                            </Button>
-                                            <Button onClick={() => handleCloseVisit(visit.id, 'cancelled')} variant="secondary">
-                                                Reject
-                                            </Button>
-                                        </>
-                                    )}
-                                    {['approved', 'checked_in', 'in_progress'].includes(visit.status) && (
-                                        <>
-                                            <Button onClick={() => handleCloseVisit(visit.id, 'completed')} variant="primary">
-                                                Complete Visit
-                                            </Button>
-                                            <Button onClick={() => handleCloseVisit(visit.id, 'cancelled')} variant="secondary">
-                                                Cancel Visit
-                                            </Button>
-                                        </>
-                                    )}
-                                </div>
-                            </div>
-                        ))
-                    )}
+                <div className="header-left">
+                    <h1>Visit Management</h1>
+                    <p className="subtitle">Manage patient visit requests and assignments</p>
                 </div>
-            )}
+                <Button onClick={() => window.history.back()} variant="secondary" className="back-btn">
+                    ← Back
+                </Button>
+            </div>
 
-            {showApprovalModal && (
-                <div className="modal-overlay" onClick={() => setShowApprovalModal(false)}>
-                    <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-                        <h2>Approve Visit Request</h2>
+            <div className="visit-management-content">
+                <div className="visit-tabs">
+                    <button
+                        className={`tab ${activeTab === 'pending' ? 'active' : ''}`}
+                        onClick={() => setActiveTab('pending')}
+                    >
+                        Pending
+                    </button>
+                    <button
+                        className={`tab ${activeTab === 'active' ? 'active' : ''}`}
+                        onClick={() => setActiveTab('active')}
+                    >
+                        Active
+                    </button>
+                    <button
+                        className={`tab ${activeTab === 'completed' ? 'active' : ''}`}
+                        onClick={() => setActiveTab('completed')}
+                    >
+                        Completed
+                    </button>
+                </div>
 
-                        <div className="modal-body">
-                            <div className="form-group">
-                                <label>Patient</label>
-                                <p>{selectedVisit?.patient_first_name} {selectedVisit?.patient_last_name}</p>
+                {error && <div className="error-message">{error}</div>}
+                {loading && <div className="loading-message">Loading visits...</div>}
+
+                {!loading && (
+                    <div className="visits-list">
+                        {visits.length > 0 ? (
+                            visits.map(visit => (
+                                <div key={visit.id} className="visit-card">
+                                    <div className="visit-card-header">
+                                        <div className="visit-info">
+                                            <h3>Visit Code: {visit.visit_code}</h3>
+                                            {getStatusBadge(visit.status)}
+                                        </div>
+                                        <span className="visit-time">{formatDate(visit.created_at)}</span>
+                                    </div>
+
+                                    <div className="visit-card-body">
+                                        <div className="visit-detail">
+                                            <strong>Patient:</strong> {visit.patient_first_name} {visit.patient_last_name}
+                                        </div>
+                                        <div className="visit-detail">
+                                            <strong>Reason:</strong> {visit.reason}
+                                        </div>
+                                        {visit.symptoms && (
+                                            <div className="visit-detail">
+                                                <strong>Symptoms:</strong> {visit.symptoms}
+                                            </div>
+                                        )}
+                                        {visit.doctor_first_name && (
+                                            <div className="visit-detail">
+                                                <strong>Doctor:</strong> Dr. {visit.doctor_first_name} {visit.doctor_last_name}
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    <div className="visit-card-actions">
+                                        {visit.status === 'pending' && (
+                                            <>
+                                                <Button onClick={() => handleApproveClick(visit)} variant="primary">
+                                                    Approve
+                                                </Button>
+                                                <Button onClick={() => handleCloseVisit(visit.id, 'cancelled')} variant="secondary">
+                                                    Reject
+                                                </Button>
+                                            </>
+                                        )}
+                                        {['approved', 'checked_in', 'in_progress'].includes(visit.status) && (
+                                            <>
+                                                <Button onClick={() => handleCloseVisit(visit.id, 'completed')} variant="primary">
+                                                    Complete Visit
+                                                </Button>
+                                                <Button onClick={() => handleCloseVisit(visit.id, 'cancelled')} variant="secondary">
+                                                    Cancel Visit
+                                                </Button>
+                                            </>
+                                        )}
+                                    </div>
+                                </div>
+                            ))
+                        ) : (
+                            <div className="no-requests-container">
+                                <div className="no-requests-icon">📅</div>
+                                <p>No {activeTab} requests</p>
+                            </div>
+                        )}
+                    </div>
+                )}
+
+                {showApprovalModal && (
+                    <div className="modal-overlay" onClick={() => setShowApprovalModal(false)}>
+                        <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+                            <h2>Approve Visit Request</h2>
+
+                            <div className="modal-body">
+                                <div className="form-group">
+                                    <label>Patient</label>
+                                    <p>{selectedVisit?.patient_first_name} {selectedVisit?.patient_last_name}</p>
+                                </div>
+
+                                <div className="form-group">
+                                    <label>Reason</label>
+                                    <p>{selectedVisit?.reason}</p>
+                                </div>
+
+                                <div className="form-group">
+                                    <label>Assign Doctor *</label>
+                                    <select
+                                        value={approvalData.doctorId}
+                                        onChange={(e) => setApprovalData({ ...approvalData, doctorId: e.target.value })}
+                                        required
+                                    >
+                                        <option value="">Select a doctor</option>
+                                        {doctors.map(doc => (
+                                            <option key={doc.id} value={doc.id}>{doc.name}</option>
+                                        ))}
+                                    </select>
+                                </div>
+
+                                <div className="form-group">
+                                    <label>Assign Nurse (Optional)</label>
+                                    <select
+                                        value={approvalData.nurseId}
+                                        onChange={(e) => setApprovalData({ ...approvalData, nurseId: e.target.value })}
+                                    >
+                                        <option value="">Select a nurse</option>
+                                        {nurses.map(nurse => (
+                                            <option key={nurse.id} value={nurse.id}>{nurse.name}</option>
+                                        ))}
+                                    </select>
+                                </div>
+
+                                <p className="info-text">
+                                    ℹ️ Patient will receive an email with the visit code after approval.
+                                </p>
                             </div>
 
-                            <div className="form-group">
-                                <label>Reason</label>
-                                <p>{selectedVisit?.reason}</p>
+                            <div className="modal-actions">
+                                <Button onClick={() => setShowApprovalModal(false)} variant="secondary">
+                                    Cancel
+                                </Button>
+                                <Button onClick={handleApproveVisit} variant="primary">
+                                    Approve & Notify Patient
+                                </Button>
                             </div>
-
-                            <div className="form-group">
-                                <label>Assign Doctor *</label>
-                                <select
-                                    value={approvalData.doctorId}
-                                    onChange={(e) => setApprovalData({ ...approvalData, doctorId: e.target.value })}
-                                    required
-                                >
-                                    <option value="">Select a doctor</option>
-                                    {doctors.map(doc => (
-                                        <option key={doc.id} value={doc.id}>{doc.name}</option>
-                                    ))}
-                                </select>
-                            </div>
-
-                            <div className="form-group">
-                                <label>Assign Nurse (Optional)</label>
-                                <select
-                                    value={approvalData.nurseId}
-                                    onChange={(e) => setApprovalData({ ...approvalData, nurseId: e.target.value })}
-                                >
-                                    <option value="">Select a nurse</option>
-                                    {nurses.map(nurse => (
-                                        <option key={nurse.id} value={nurse.id}>{nurse.name}</option>
-                                    ))}
-                                </select>
-                            </div>
-
-                            <p className="info-text">
-                                ℹ️ Patient will receive an email with the visit code after approval.
-                            </p>
-                        </div>
-
-                        <div className="modal-actions">
-                            <Button onClick={() => setShowApprovalModal(false)} variant="secondary">
-                                Cancel
-                            </Button>
-                            <Button onClick={handleApproveVisit} variant="primary">
-                                Approve & Notify Patient
-                            </Button>
                         </div>
                     </div>
-                </div>
-            )}
+                )}
+            </div>
         </div>
     );
 }

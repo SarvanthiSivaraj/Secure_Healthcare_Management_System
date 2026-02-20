@@ -24,6 +24,11 @@ export const userApi = {
     onboardStaff: async (data) => {
         const response = await apiClient.post('/users/staff/onboard', data);
         return response.data;
+    },
+    // Deactivate staff
+    deactivateStaff: async (userId) => {
+        const response = await apiClient.put('/users/staff/deactivate', { userId });
+        return response.data;
     }
 };
 

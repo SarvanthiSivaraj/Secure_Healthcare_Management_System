@@ -42,7 +42,7 @@ class AdminController {
         const organization = await verifyOrgModel(orgId);
 
         if (!organization) {
-             return res.status(404).json({
+            return res.status(404).json({
                 success: false,
                 message: 'Organization not found'
             });
@@ -97,16 +97,16 @@ class AdminController {
             'UPDATE organizations SET status = $1 WHERE id = $2 RETURNING *',
             ['rejected', orgId] // Assuming 'rejected' is valid status. Schema says: active, inactive, pending, suspended. I added 'rejected' in schema update!
         );
-        
+
         const organization = orgResult.rows[0];
 
         if (!organization) {
-             return res.status(404).json({
+            return res.status(404).json({
                 success: false,
                 message: 'Organization not found'
             });
         }
-        
+
         // Update user status
         await query(
             'UPDATE users SET status = $1 WHERE id = $2',
@@ -131,6 +131,65 @@ class AdminController {
             success: true,
             message: 'Organization rejected',
             data: organization
+        });
+    });
+
+    /**
+     * Get hospital statistics for dashboard
+     * GET /api/admin/hospital/stats
+     */
+    static getHospitalStats = asyncHandler(async (req, res) => {
+        // Find the organization linked to this admin (either as owner or assigned staff)
+        const orgQuery = `
+            SELECT id FROM organizations WHERE admin_user_id = $1
+            UNION
+            SELECT organization_id as id FROM staff_org_mapping WHERE user_id = $1
+            LIMIT 1
+        `;
+        const orgResult = await query(orgQuery, [req.user.id]);
+
+        if (orgResult.rows.length === 0) {
+            return res.json({
+                success: true,
+                data: {
+                    totalStaff: 0,
+                    activeDoctors: 0,
+                    pendingVisits: 0,
+                    totalPatients: 0
+                }
+            });
+        }
+
+        const orgId = orgResult.rows[0].id;
+
+        // Total Staff (users mapped to this organization)
+        const staffCountQuery = 'SELECT COUNT(*) FROM staff_org_mapping WHERE organization_id = $1';
+        const staffCount = await query(staffCountQuery, [orgId]);
+
+        // Active Doctors (mapped to this org with status 'active' and role 'doctor')
+        const doctorCountQuery = `
+            SELECT COUNT(*) FROM staff_org_mapping som
+            JOIN roles r ON som.role_id = r.id
+            WHERE som.organization_id = $1 AND som.status = 'active' AND r.name = 'doctor'
+        `;
+        const doctorCount = await query(doctorCountQuery, [orgId]);
+
+        // Pending Visits for this organization
+        const visitCountQuery = "SELECT COUNT(*) FROM visits WHERE organization_id = $1 AND status = 'pending'";
+        const visitCount = await query(visitCountQuery, [orgId]);
+
+        // Total Patients (unique patients who have visited this organization)
+        const patientCountQuery = 'SELECT COUNT(DISTINCT patient_id) FROM visits WHERE organization_id = $1';
+        const patientCount = await query(patientCountQuery, [orgId]);
+
+        res.json({
+            success: true,
+            data: {
+                totalStaff: parseInt(staffCount.rows[0].count),
+                activeDoctors: parseInt(doctorCount.rows[0].count),
+                pendingVisits: parseInt(visitCount.rows[0].count),
+                totalPatients: parseInt(patientCount.rows[0].count)
+            }
         });
     });
 }

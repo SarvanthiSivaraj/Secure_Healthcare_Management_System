@@ -32,4 +32,12 @@ router.post(
     AdminController.rejectOrganization
 );
 
+// Hospital Dashboard Stats
+router.get(
+    '/hospital/stats',
+    authenticate,
+    requireRole(['hospital_admin', 'system_admin']),
+    AdminController.getHospitalStats
+);
+
 module.exports = router;

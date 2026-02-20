@@ -5,7 +5,7 @@ import Register from '../pages/auth/Register';
 import DevLogin from '../pages/auth/DevLogin';
 import PatientDashboard from '../pages/patient/Dashboard';
 import DoctorDashboard from '../pages/doctor/Dashboard';
-import AdminDashboard from '../pages/admin/Dashboard';
+import HospitalAdminDashboard from '../pages/admin/HospitalAdminDashboard';
 import StaffDashboard from '../pages/staff/Dashboard';
 import ProtectedRoute from './ProtectedRoute';
 import Consent from '../pages/patient/Consent';
@@ -181,7 +181,7 @@ function AppRoutes() {
                     path="/admin/dashboard"
                     element={
                         <ProtectedRoute allowedRoles={['admin', 'hospital_admin', 'system_admin']}>
-                            <AdminDashboard />
+                            <HospitalAdminDashboard />
                         </ProtectedRoute>
                     }
                 />

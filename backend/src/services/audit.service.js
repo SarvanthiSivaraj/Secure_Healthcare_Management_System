@@ -214,25 +214,25 @@ const getAllAuditLogs = async (options = {}) => {
         let paramIndex = 1;
 
         if (action) {
-            conditions.push(`action = $${paramIndex}`);
+            conditions.push(`a.action = $${paramIndex}`);
             params.push(action);
             paramIndex++;
         }
 
         if (userId) {
-            conditions.push(`user_id = $${paramIndex}`);
+            conditions.push(`a.user_id = $${paramIndex}`);
             params.push(userId);
             paramIndex++;
         }
 
         if (startDate) {
-            conditions.push(`timestamp >= $${paramIndex}`);
+            conditions.push(`a.timestamp >= $${paramIndex}`);
             params.push(startDate);
             paramIndex++;
         }
 
         if (endDate) {
-            conditions.push(`timestamp <= $${paramIndex}`);
+            conditions.push(`a.timestamp <= $${paramIndex}`);
             params.push(endDate);
             paramIndex++;
         }
@@ -240,18 +240,20 @@ const getAllAuditLogs = async (options = {}) => {
         const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
 
         // Get total count
-        const countQuery = `SELECT COUNT(*) as total FROM audit_logs ${whereClause}`;
+        const countQuery = `SELECT COUNT(*) as total FROM audit_logs a ${whereClause}`;
         const countResult = await query(countQuery, params);
         const total = parseInt(countResult.rows[0].total);
 
         // Get logs
         const selectQuery = `
       SELECT 
-        id, user_id, action, entity_type, entity_id,
-        purpose, ip_address, timestamp, status_code
-      FROM audit_logs
+        a.id, a.user_id, a.action, a.entity_type as resource, a.entity_id,
+        a.purpose as details, a.ip_address, a.timestamp, a.status_code,
+        u.email as user_email
+      FROM audit_logs a
+      LEFT JOIN users u ON a.user_id = u.id
       ${whereClause}
-      ORDER BY timestamp DESC
+      ORDER BY a.timestamp DESC
       LIMIT $${paramIndex} OFFSET $${paramIndex + 1}
     `;
 

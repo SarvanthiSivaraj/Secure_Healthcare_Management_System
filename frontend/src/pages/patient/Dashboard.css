@@ -64,9 +64,10 @@
 
 .header-subtitle {
     margin: 0;
-    color: rgba(255, 255, 255, 0.9);
+    color: #FFFFFF;
     font-size: 15px;
     font-weight: 400;
+    opacity: 1;
 }
 
 /* ========================================

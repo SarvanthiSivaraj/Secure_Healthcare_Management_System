@@ -122,7 +122,7 @@ class StaffInvitationService {
             }
 
             const db = require('../config/db');
-            
+
             // Check if user already exists
             const userCheck = await db.query('SELECT id FROM users WHERE email = $1', [email]);
             let userId;
@@ -158,7 +158,7 @@ class StaffInvitationService {
                     RETURNING id;
                 `;
                 // Default name 'Staff Member' until they accept and update it
-                
+
                 const userResult = await db.query(userQuery, [email, passwordHash, roleId]);
                 userId = userResult.rows[0].id;
             }
@@ -273,10 +273,10 @@ class StaffInvitationService {
                     [invitation.email, passwordHash, userData.firstName, userData.lastName, roleId]
                 );
                 userId = userResult.rows[0].id;
-                
+
                 // Create mapping if needed...
                 if (invitation.organization_id) {
-                     await db.query(
+                    await db.query(
                         `INSERT INTO staff_org_mapping (user_id, organization_id, role_id, status)
                          VALUES ($1, $2, $3, 'active')`,
                         [userId, invitation.organization_id, roleId]
@@ -380,9 +380,9 @@ class StaffInvitationService {
     /**
      * Get invitation statistics
      */
-    static async getStats(invitedBy = null) {
+    static async getStats(filters = {}) {
         try {
-            return await StaffInvitation.getStats(invitedBy);
+            return await StaffInvitation.getStats(filters);
         } catch (error) {
             logger.error('Error getting invitation stats:', error);
             throw error;
