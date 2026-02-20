@@ -5,7 +5,6 @@ import { consentApi } from '../../api/consentApi';
 import { visitApi } from '../../api/visitApi';
 import { emrApi } from '../../api/emrApi';
 import PasskeySetupCard from '../../components/common/PasskeySetupCard';
-import ThemeToggle from '../../components/common/ThemeToggle';
 import './Dashboard.css';
 
 // Remove image imports and replace with inline SVGs for cleaner Doctor Portal match
@@ -64,10 +63,9 @@ function PatientDashboard() {
                 </div>
 
                 <div className="flex items-center space-x-3">
-                    <ThemeToggle />
                     <button
                         onClick={() => navigate('/profile')}
-                        className="bg-white/20 hover:bg-white/30 transition-colors border border-white/20 text-white p-2 rounded-lg"
+                        className="h-[38px] w-[38px] flex items-center justify-center rounded-xl border border-white/30 text-white hover:bg-white/10 transition-all duration-200"
                         title="View Profile"
                     >
                         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

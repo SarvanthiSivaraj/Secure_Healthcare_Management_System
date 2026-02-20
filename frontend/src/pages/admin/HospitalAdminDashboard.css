@@ -95,6 +95,30 @@
     height: 18px;
 }
 
+.ha-header-profile-btn {
+    background: rgba(255, 255, 255, 0.15);
+    border: none;
+    color: white;
+    width: 38px;
+    height: 38px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.ha-header-profile-btn:hover {
+    background: rgba(255, 255, 255, 0.25);
+    transform: translateY(-1px);
+}
+
+.ha-header-profile-btn svg {
+    width: 20px;
+    height: 20px;
+}
+
 .ha-header-signout {
     background: white;
     border: none;
@@ -188,6 +212,10 @@
     box-shadow: 0 4px 20px rgba(50, 103, 115, 0.15);
     transition: transform 0.2s, box-shadow 0.2s;
     min-height: 160px;
+}
+
+.ha-stat.clickable {
+    cursor: pointer;
 }
 
 .ha-stat:hover {

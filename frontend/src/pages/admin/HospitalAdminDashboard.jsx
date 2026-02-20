@@ -46,9 +46,6 @@ function HospitalAdminDashboard() {
                         </div>
                     </div>
                     <div className="ha-header-right">
-                        <button className="ha-header-theme-toggle">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
-                        </button>
                         <button className="ha-header-profile-btn" onClick={() => navigate('/profile')} title="View Profile">
                             <svg className="w-5 h-5" fill="none" stroke="#fff" viewBox="0 0 24 24" strokeWidth="2">
                                 <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
@@ -92,7 +89,7 @@ function HospitalAdminDashboard() {
                         <div className="ha-stat-num">{statsLoading ? '—' : stats.activeDoctors}</div>
                         <div className="ha-stat-lbl">ACTIVE DOCTORS</div>
                     </div>
-                    <div className="ha-stat">
+                    <div className="ha-stat clickable" onClick={() => navigate('/admin/visits', { state: { activeTab: 'pending' } })}>
                         <div className="ha-stat-icon">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
                         </div>

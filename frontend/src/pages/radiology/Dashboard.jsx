@@ -57,11 +57,6 @@ const IconShield = () => (
         <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
     </svg>
 );
-const IconMoon = () => (
-    <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
-    </svg>
-);
 
 function RadiologistDashboard() {
     const navigate = useNavigate();
@@ -152,9 +147,6 @@ function RadiologistDashboard() {
                         </div>
                     </div>
                     <div className="rad-header-actions">
-                        <button className="rad-theme-btn" title="Toggle theme">
-                            <IconMoon />
-                        </button>
                         <button className="rad-profile-btn" onClick={() => navigate('/profile')} title="View Profile">
                             <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2">
                                 <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />

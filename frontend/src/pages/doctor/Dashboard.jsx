@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import { AuthContext } from '../../context/AuthContext';
 import PasskeySetupCard from '../../components/common/PasskeySetupCard';
 import EmergencyToggle from '../../components/emergency/EmergencyToggle';
-import ThemeToggle from '../../components/common/ThemeToggle';
 
 const NAV_CARDS = [
     {
@@ -92,10 +91,9 @@ function DoctorDashboard() {
                         </div>
                     </div>
                     <div className="flex items-center space-x-3">
-                        <ThemeToggle />
                         <button
                             onClick={() => navigate('/profile')}
-                            className="p-2 rounded-xl border border-white/30 text-white hover:bg-white/10 transition-all duration-200"
+                            className="h-[38px] w-[38px] flex items-center justify-center rounded-xl border border-white/30 text-white hover:bg-white/10 transition-all duration-200"
                             title="View Profile"
                         >
                             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

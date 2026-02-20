@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import { visitApi } from '../../api/visitApi';
 import Button from '../../components/common/Button';
 import './VisitManagement.css';
 
 function VisitManagement() {
-    const [activeTab, setActiveTab] = useState('pending');
+    const location = useLocation();
+    const [activeTab, setActiveTab] = useState(location.state?.activeTab || 'pending');
     const [visits, setVisits] = useState([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
@@ -95,13 +97,20 @@ function VisitManagement() {
         }
 
         try {
-            await visitApi.approveVisit(
+            const response = await visitApi.approveVisit(
                 selectedVisit.id,
                 approvalData.doctorId,
                 approvalData.nurseId || null
             );
-            // Close modal and switch to active tab to show the approved visit
+            // Close modal and show success with code
             setShowApprovalModal(false);
+            const approvedCode = response.data?.otp_code || response.data?.otp;
+            if (approvedCode) {
+                alert(`Visit Approved! Visit Code: ${approvedCode}\n\nThis code has been sent to the patient's email.`);
+            } else {
+                alert('Visit Approved and assigned successfully!');
+            }
+
             setApprovalData({ doctorId: '', nurseId: '' });
             setActiveTab('active'); // Switch to active tab
             loadVisits();
@@ -200,6 +209,11 @@ function VisitManagement() {
                                         <div className="visit-detail">
                                             <strong>Patient:</strong> {visit.patient_first_name} {visit.patient_last_name}
                                         </div>
+                                        {visit.otp_code && (
+                                            <div className="visit-detail">
+                                                <strong>Visit Code:</strong> <span className="code-highlight">{visit.otp_code}</span>
+                                            </div>
+                                        )}
                                         <div className="visit-detail">
                                             <strong>Reason:</strong> {visit.reason}
                                         </div>

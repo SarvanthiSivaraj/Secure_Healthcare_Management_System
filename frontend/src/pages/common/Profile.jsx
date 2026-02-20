@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useContext } from 'react';
 import { AuthContext } from '../../context/AuthContext';
 import { userApi } from '../../api/userApi';
-import ThemeToggle from '../../components/common/ThemeToggle';
 import PasskeySetupCard from '../../components/common/PasskeySetupCard';
 import './Profile.css';
 
@@ -98,7 +97,6 @@ function Profile() {
                     </div>
                 </div>
                 <div className="flex items-center space-x-3">
-                    <ThemeToggle />
                     <button
                         onClick={() => window.history.back()}
                         className="text-[10px] font-bold uppercase tracking-wider bg-white/10 hover:bg-white/20 px-4 py-2 rounded-lg transition-all"
