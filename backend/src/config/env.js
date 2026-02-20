@@ -97,6 +97,9 @@ const config = {
         rpName: process.env.WEBAUTHN_RP_NAME || 'SecureHealth',
         rpID: process.env.WEBAUTHN_RP_ID || 'localhost',
         origin: process.env.WEBAUTHN_ORIGIN || 'http://localhost:3000',
+        origins: process.env.WEBAUTHN_ORIGIN
+            ? process.env.WEBAUTHN_ORIGIN.split(',').map((origin) => origin.trim()).filter(Boolean)
+            : ['http://localhost:3000'],
     },
 };
 

@@ -13,7 +13,7 @@ router.post('/request', authenticate, authorize(['patient']), auditLog('create_v
 router.post('/:id/verify-otp', authenticate, authorize(['patient']), auditLog('verify_visit_otp', 'visit'), VisitController.verifyVisitOTP);
 
 // Staff/Admin routes
-router.get('/hospital', authenticate, authorize(['hospital_admin', 'system_admin', 'doctor', 'nurse', 'receptionist']), VisitController.getHospitalVisits);
+router.get('/hospital', authenticate, authorize(['hospital_admin', 'system_admin', 'doctor', 'nurse', 'receptionist', 'lab_technician', 'pharmacist']), VisitController.getHospitalVisits);
 router.post('/:id/approve', authenticate, authorize(['hospital_admin', 'system_admin']), auditLog('approve_visit', 'visit'), VisitController.approveVisit);
 router.patch('/:id/assign', authenticate, authorize(['hospital_admin', 'system_admin', 'doctor', 'nurse', 'receptionist']), auditLog('update_visit', 'visit'), VisitController.updateVisit);
 router.get('/assigned', authenticate, authorize(['doctor', 'nurse']), VisitController.getAssignedVisits);

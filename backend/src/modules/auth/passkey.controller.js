@@ -25,6 +25,39 @@ const { HTTP_STATUS, AUDIT_ACTIONS, SUCCESS_MESSAGES, ROLES } = require('../../u
 const challengeStore = new Map();
 const CHALLENGE_TTL_MS = 5 * 60 * 1000; // 5 minutes
 
+function getWebAuthnContext(req) {
+    const configuredOrigins = Array.isArray(config.webauthn.origins)
+        ? config.webauthn.origins
+        : [config.webauthn.origin].filter(Boolean);
+
+    const expectedOrigins = [...new Set(configuredOrigins)];
+    const expectedRPIDs = [config.webauthn.rpID];
+    let rpID = config.webauthn.rpID;
+    let originForOptions = expectedOrigins[0] || config.webauthn.origin;
+
+    const requestOrigin = req.headers.origin;
+    if (requestOrigin) {
+        expectedOrigins.push(requestOrigin);
+        try {
+            const originUrl = new URL(requestOrigin);
+            if (['localhost', '127.0.0.1'].includes(originUrl.hostname)) {
+                expectedRPIDs.push(originUrl.hostname);
+                rpID = originUrl.hostname;
+                originForOptions = requestOrigin;
+            }
+        } catch (error) {
+            logger.warn('Invalid Origin header for WebAuthn context', { origin: requestOrigin });
+        }
+    }
+
+    return {
+        rpID,
+        originForOptions,
+        expectedOrigins: [...new Set(expectedOrigins)],
+        expectedRPIDs: [...new Set(expectedRPIDs)],
+    };
+}
+
 function setChallenge(userId, challenge) {
     challengeStore.set(userId, {
         challenge,
@@ -71,6 +104,7 @@ async function getUserPasskeys(userId) {
 // ============================================
 const registerOptions = async (req, res) => {
     try {
+        const webauthnContext = getWebAuthnContext(req);
         const userId = req.user.id || req.user.userId;
         const user = await findUserById(userId);
 
@@ -90,7 +124,7 @@ const registerOptions = async (req, res) => {
 
         const options = await generateRegistrationOptions({
             rpName: config.webauthn.rpName,
-            rpID: config.webauthn.rpID,
+            rpID: webauthnContext.rpID,
             userName: user.email || user.phone,
             userDisplayName: `${user.first_name || ''} ${user.last_name || ''}`.trim() || user.email,
             userID: new TextEncoder().encode(userId),
@@ -128,6 +162,7 @@ const registerOptions = async (req, res) => {
 // ============================================
 const registerVerify = async (req, res) => {
     try {
+        const webauthnContext = getWebAuthnContext(req);
         const userId = req.user.id || req.user.userId;
         const { credential, credentialName } = req.body;
 
@@ -149,8 +184,8 @@ const registerVerify = async (req, res) => {
         const verification = await verifyRegistrationResponse({
             response: credential,
             expectedChallenge,
-            expectedOrigin: config.webauthn.origin,
-            expectedRPID: config.webauthn.rpID,
+            expectedOrigin: webauthnContext.expectedOrigins,
+            expectedRPID: webauthnContext.expectedRPIDs,
         });
 
         if (!verification.verified || !verification.registrationInfo) {
@@ -213,6 +248,7 @@ const registerVerify = async (req, res) => {
 // ============================================
 const loginOptions = async (req, res) => {
     try {
+        const webauthnContext = getWebAuthnContext(req);
         const { email } = req.body;
 
         if (!email) {
@@ -249,7 +285,7 @@ const loginOptions = async (req, res) => {
         }));
 
         const options = await generateAuthenticationOptions({
-            rpID: config.webauthn.rpID,
+            rpID: webauthnContext.rpID,
             allowCredentials,
             userVerification: 'preferred',
         });
@@ -282,6 +318,7 @@ const loginOptions = async (req, res) => {
 // ============================================
 const loginVerify = async (req, res) => {
     try {
+        const webauthnContext = getWebAuthnContext(req);
         const { email, credential } = req.body;
 
         if (!email || !credential) {
@@ -330,8 +367,8 @@ const loginVerify = async (req, res) => {
         const verification = await verifyAuthenticationResponse({
             response: credential,
             expectedChallenge,
-            expectedOrigin: config.webauthn.origin,
-            expectedRPID: config.webauthn.rpID,
+            expectedOrigin: webauthnContext.expectedOrigins,
+            expectedRPID: webauthnContext.expectedRPIDs,
             credential: {
                 id: storedCredential.credential_id,
                 publicKey: storedCredential.public_key,

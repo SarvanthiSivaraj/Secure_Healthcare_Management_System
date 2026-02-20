@@ -20,8 +20,8 @@ export const workflowApi = {
     // ============================================
     transitionVisitState: async (visitId, newState, notes) => {
         const response = await apiClient.patch(`/workflow/visits/${visitId}/state`, {
-            state: newState,
-            notes
+            newState,
+            reason: notes
         });
         return response.data;
     },
@@ -67,10 +67,10 @@ export const workflowApi = {
         return response.data;
     },
 
-    updateLabOrderStatus: async (orderId, status, notes) => {
+    updateLabOrderStatus: async (orderId, status, additionalData = {}) => {
         const response = await apiClient.patch(`/workflow/lab-orders/${orderId}/status`, {
             status,
-            notes
+            ...additionalData
         });
         return response.data;
     },

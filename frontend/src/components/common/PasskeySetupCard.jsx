@@ -36,6 +36,8 @@ function PasskeySetupCard() {
             setStatus('error');
             if (err.name === 'NotAllowedError') {
                 setMessage('Passkey setup was cancelled.');
+            } else if (err.response?.status === 401) {
+                setMessage('Passkey setup needs a real backend login session. Dev Login tokens cannot register passkeys.');
             } else {
                 setMessage(err.response?.data?.message || err.message || 'Failed to set up passkey');
             }

@@ -35,7 +35,10 @@ function Login() {
             case 'HOSPITAL_ADMIN':
             case 'SYSTEM_ADMIN': navigate('/admin/dashboard'); break;
             case 'NURSE': navigate('/nurse/dashboard'); break;
+            case 'LAB_TECH':
             case 'LAB_TECHNICIAN': navigate('/lab/dashboard'); break;
+            case 'RECEPTIONIST': navigate('/reception/dashboard'); break;
+            case 'PHARMACIST': navigate('/pharmacy/dashboard'); break;
             case 'RADIOLOGIST': navigate('/radiology/dashboard'); break;
             default: navigate('/staff/dashboard');
         }
