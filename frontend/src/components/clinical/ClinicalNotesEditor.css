@@ -1,28 +1,36 @@
 /* Clinical Notes Editor - Matching Epic 3 Theme */
 
 .clinical-notes-editor {
-    background: var(--white);
-    border-radius: var(--radius-lg);
+    background: #ffffff;
+    border-radius: 12px;
     padding: 32px;
-    box-shadow: var(--shadow-lg);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+}
+
+.dark .clinical-notes-editor {
+    background: #1e293b;
 }
 
 .editor-header {
     margin-bottom: 32px;
     padding-bottom: 16px;
-    border-bottom: 2px solid var(--gray-200);
+    border-bottom: 2px solid #e5e7eb;
 }
 
 .editor-header h3 {
     margin: 0 0 8px 0;
-    color: var(--gray-900);
+    color: #111827;
     font-size: 24px;
     font-weight: 600;
 }
 
+.dark .editor-header h3 {
+    color: #f1f5f9;
+}
+
 .editor-subtitle {
     margin: 0;
-    color: var(--gray-600);
+    color: #6b7280;
     font-size: 14px;
 }
 
@@ -30,24 +38,33 @@
 .form-section {
     margin-bottom: 24px;
     padding: 24px;
-    background: var(--gray-50);
-    border-radius: var(--radius-md);
-    border: 1px solid var(--gray-200);
+    background: #f9fafb;
+    border-radius: 10px;
+    border: 1px solid #e5e7eb;
+}
+
+.dark .form-section {
+    background: #0f172a;
+    border-color: #334155;
 }
 
 .section-label {
     display: block;
     font-weight: 600;
-    color: var(--gray-900);
+    color: #111827;
     margin-bottom: 12px;
     font-size: 16px;
+}
+
+.dark .section-label {
+    color: #f1f5f9;
 }
 
 .section-title {
     margin: 0 0 12px 0;
     font-size: 18px;
     font-weight: 600;
-    color: var(--primary-blue);
+    color: #54acbf;
     display: flex;
     align-items: center;
     gap: 12px;
@@ -57,8 +74,8 @@
     content: '';
     width: 4px;
     height: 20px;
-    background: var(--gradient-primary);
-    border-radius: var(--radius-full);
+    background: linear-gradient(180deg, #54acbf, #438a99);
+    border-radius: 9999px;
 }
 
 .soap-letter {
@@ -67,16 +84,16 @@
     justify-content: center;
     width: 36px;
     height: 36px;
-    background: var(--gradient-primary);
-    color: var(--white);
-    border-radius: var(--radius-md);
+    background: linear-gradient(135deg, #54acbf, #438a99);
+    color: #ffffff;
+    border-radius: 8px;
     font-weight: 700;
     font-size: 18px;
 }
 
 .section-hint {
     margin: 0 0 12px 0;
-    color: var(--gray-600);
+    color: #6b7280;
     font-size: 13px;
     font-style: italic;
 }
@@ -85,24 +102,34 @@
 .form-input {
     width: 100%;
     padding: 12px 16px;
-    border: 2px solid var(--gray-300);
-    border-radius: var(--radius-md);
+    border: 2px solid #d1d5db;
+    border-radius: 8px;
     font-family: 'Inter', sans-serif;
     font-size: 15px;
-    color: var(--gray-900);
-    background: var(--white);
-    transition: all var(--transition-base);
+    color: #111827;
+    background: #ffffff;
+    transition: all 0.2s ease;
+}
+
+.dark .form-input {
+    background: #0f172a;
+    border-color: #334155;
+    color: #f1f5f9;
 }
 
 .form-input:focus {
     outline: none;
-    border-color: var(--primary-blue);
-    box-shadow: 0 0 0 3px rgba(0, 102, 204, 0.1);
+    border-color: #54acbf;
+    box-shadow: 0 0 0 3px rgba(84, 172, 191, 0.15);
 }
 
 /* Vital Signs */
 .vitals-section {
-    background: linear-gradient(135deg, #E6F2FF 0%, #F0F9FF 100%);
+    background: linear-gradient(135deg, #f0f9fa 0%, #e8f5f7 100%);
+}
+
+.dark .vitals-section {
+    background: linear-gradient(135deg, #0f2027 0%, #0d2433 100%);
 }
 
 .vitals-grid {
@@ -120,33 +147,43 @@
 .form-group label {
     font-size: 14px;
     font-weight: 500;
-    color: var(--gray-700);
+    color: #374151;
+}
+
+.dark .form-group label {
+    color: #cbd5e1;
 }
 
 /* Textarea */
 .textarea-field {
     width: 100%;
     padding: 12px 16px;
-    border: 2px solid var(--gray-300);
-    border-radius: var(--radius-md);
+    border: 2px solid #d1d5db;
+    border-radius: 8px;
     font-family: 'Inter', sans-serif;
     font-size: 15px;
-    color: var(--gray-900);
-    background: var(--white);
-    transition: all var(--transition-base);
+    color: #111827;
+    background: #ffffff;
+    transition: all 0.2s ease;
     resize: vertical;
     min-height: 100px;
     line-height: 1.6;
 }
 
+.dark .textarea-field {
+    background: #0f172a;
+    border-color: #334155;
+    color: #f1f5f9;
+}
+
 .textarea-field:focus {
     outline: none;
-    border-color: var(--primary-blue);
-    box-shadow: 0 0 0 3px rgba(0, 102, 204, 0.1);
+    border-color: #54acbf;
+    box-shadow: 0 0 0 3px rgba(84, 172, 191, 0.15);
 }
 
 .textarea-field::placeholder {
-    color: var(--gray-400);
+    color: #9ca3af;
 }
 
 /* Form Actions */
@@ -156,7 +193,11 @@
     justify-content: flex-end;
     margin-top: 8px;
     padding-top: 24px;
-    border-top: 2px solid var(--gray-200);
+    border-top: 2px solid #e5e7eb;
+}
+
+.dark .form-actions {
+    border-top-color: #334155;
 }
 
 /* Responsive */

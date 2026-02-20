@@ -45,55 +45,86 @@ function PasskeySetupCard() {
     };
 
     return (
-        <div className="mt-4 pt-4 border-t border-gray-100 dark:border-slate-700 w-full transition-all">
+        <div style={{ borderTop: '1px solid rgba(0,0,0,0.08)', marginTop: '12px', paddingTop: '8px' }}>
             {/* Toggle Button */}
             <button
                 onClick={() => setExpanded(!expanded)}
-                className="flex items-center gap-2 bg-transparent border-none cursor-pointer text-sm font-semibold text-[#4a9fae] dark:text-[#3a8d9b] py-1 w-full hover:text-[#257582] dark:hover:text-teal-300 transition-colors focus:outline-none"
+                style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    background: 'none',
+                    border: 'none',
+                    cursor: 'pointer',
+                    fontSize: '13px',
+                    fontWeight: '500',
+                    color: '#54ACBF',
+                    padding: '4px 0',
+                    width: '100%',
+                }}
             >
-                <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
+                <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
                 </svg>
                 Set Up Passkey
                 <svg
-                    width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"
-                    className={`ml-auto transition-transform duration-200 ${expanded ? 'rotate-180' : 'rotate-0'}`}
+                    width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"
+                    style={{ transition: 'transform 0.2s', transform: expanded ? 'rotate(180deg)' : 'rotate(0deg)', marginLeft: 'auto' }}
                 >
                     <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
                 </svg>
             </button>
 
             {/* Expandable content */}
-            <div className={`overflow-hidden transition-all duration-300 ease-in-out ${expanded ? 'max-h-64 opacity-100 mt-3' : 'max-h-0 opacity-0'}`}>
-                <div className="py-2">
-                    <p className="m-0 mb-3 text-sm text-gray-500 dark:text-gray-400">
+            <div style={{
+                maxHeight: expanded ? '300px' : '0',
+                overflow: 'hidden',
+                transition: 'max-height 0.3s ease, opacity 0.3s ease',
+                opacity: expanded ? 1 : 0,
+            }}>
+                <div style={{ padding: '10px 0 4px' }}>
+                    <p style={{ margin: '0 0 10px', fontSize: '12px', color: '#64748b', lineHeight: 1.5 }}>
                         Use fingerprint, face, PIN, or security key to sign in without a password.
                     </p>
 
                     {/* Auth method icons row */}
-                    <div className="flex gap-4 mb-4">
+                    <div style={{ display: 'flex', gap: '16px', marginBottom: '12px' }}>
                         {[
-                            { icon: '👆', label: 'Fingerprint' },
-                            { icon: '😊', label: 'Face' },
-                            { icon: '🔢', label: 'PIN' },
-                            { icon: '🔑', label: 'Key' },
+                            {
+                                label: 'Fingerprint',
+                                icon: <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#54ACBF" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M12 11c0 3.517-1.009 6.799-2.753 9.571m-3.44-2.04l.054-.09A13.916 13.916 0 008 11a4 4 0 118 0c0 1.017-.07 2.019-.203 3m-2.118 6.844A21.88 21.88 0 0015.171 17m3.839 1.132c.645-2.266.99-4.659.99-7.132A8 8 0 008 4.07M3 15.364c.64-1.319 1-2.8 1-4.364 0-1.457.39-2.823 1.07-4" /></svg>
+                            },
+                            {
+                                label: 'Face',
+                                icon: <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#54ACBF" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><path d="M8 14s1.5 2 4 2 4-2 4-2" /><line x1="9" y1="9" x2="9.01" y2="9" /><line x1="15" y1="9" x2="15.01" y2="9" /></svg>
+                            },
+                            {
+                                label: 'PIN',
+                                icon: <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#54ACBF" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2" /><path d="M7 11V7a5 5 0 0110 0v4" /></svg>
+                            },
+                            {
+                                label: 'Key',
+                                icon: <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#54ACBF" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 11-7.778 7.778 5.5 5.5 0 017.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4" /></svg>
+                            },
                         ].map(m => (
-                            <div key={m.label} className="text-xs text-gray-500 dark:text-gray-400 text-center flex flex-col items-center gap-1">
-                                <span className="text-xl bg-gray-50 dark:bg-slate-700 w-10 h-10 flex items-center justify-center rounded-full border border-gray-100 dark:border-slate-600">{m.icon}</span>
-                                <span>{m.label}</span>
-                            </div>
+                            <span key={m.label} style={{ fontSize: '11px', color: '#475569', textAlign: 'center' }}>
+                                <span style={{ display: 'flex', justifyContent: 'center', marginBottom: '3px' }}>{m.icon}</span>
+                                {m.label}
+                            </span>
                         ))}
                     </div>
 
                     {/* Status */}
                     {status === 'success' && (
-                        <div className="px-3 py-2 rounded-lg bg-green-50 dark:bg-green-900/30 border border-green-200 dark:border-green-800 text-green-700 dark:text-green-400 text-sm mb-3">
-                            ✅ {message}
+                        <div style={{ padding: '8px 10px', borderRadius: '6px', background: '#f0fdf4', border: '1px solid #bbf7d0', color: '#166534', fontSize: '12px', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#166534" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>
+                            {message}
                         </div>
                     )}
                     {status === 'error' && (
-                        <div className="px-3 py-2 rounded-lg bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 text-sm mb-3">
-                            ⚠️ {message}
+                        <div style={{ padding: '8px 10px', borderRadius: '6px', background: '#fef2f2', border: '1px solid #fecaca', color: '#991b1b', fontSize: '12px', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#991b1b" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" /><line x1="12" y1="9" x2="12" y2="13" /><line x1="12" y1="17" x2="12.01" y2="17" /></svg>
+                            {message}
                         </div>
                     )}
 
@@ -102,17 +133,23 @@ function PasskeySetupCard() {
                         <button
                             onClick={handleSetupPasskey}
                             disabled={loading}
-                            className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-transparent bg-[#4a9fae] hover:bg-[#257582] text-white text-sm font-semibold cursor-pointer transition-all disabled:opacity-70 disabled:cursor-not-allowed shadow-sm"
+                            style={{
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: '6px',
+                                padding: '7px 14px',
+                                borderRadius: '8px',
+                                border: 'none',
+                                background: 'linear-gradient(135deg, #54ACBF, #3d8fa0)',
+                                color: 'white',
+                                fontSize: '12px',
+                                fontWeight: '600',
+                                cursor: loading ? 'not-allowed' : 'pointer',
+                                opacity: loading ? 0.7 : 1,
+                                transition: 'all 0.2s',
+                            }}
                         >
-                            {loading ? (
-                                <>
-                                    <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                                    </svg>
-                                    Setting up...
-                                </>
-                            ) : '+ Register Passkey'}
+                            {loading ? 'Setting up...' : '+ Register Passkey'}
                         </button>
                     )}
                 </div>
