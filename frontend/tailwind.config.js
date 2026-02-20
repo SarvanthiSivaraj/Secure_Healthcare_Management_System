@@ -7,19 +7,19 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        // Vibrant Violet (Primary) - energetic yet professional
+        // Healthcare Cyan (Primary) - #54ACBF
         primary: {
-          50: '#f5f3ff',
-          100: '#ede9fe',
-          200: '#ddd6fe',
-          300: '#c4b5fd',
-          400: '#818cf8',
-          500: '#6366f1',
-          600: '#3c23d7', // Main Brand Color
-          700: '#311cb1',
-          800: '#28178f',
-          900: '#211375',
-          950: '#140c47',
+          50: '#f0f9fa',
+          100: '#d9f0f3',
+          200: '#bce1e7',
+          300: '#8fccd6',
+          400: '#54acbf', // Base
+          500: '#54acbf', // Brand
+          600: '#438a99',
+          700: '#326773',
+          800: '#22454d',
+          900: '#112226',
+          950: '#081113',
         },
         // Electric Cyan (Secondary) - high contrast accent
         secondary: {
@@ -79,7 +79,7 @@ module.exports = {
       boxShadow: {
         'soft': '0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03)',
         'card': '0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -2px rgba(0, 0, 0, 0.025)',
-        'glow': '0 0 20px rgba(60, 35, 215, 0.5)', // Indigo glow
+        'glow': '0 0 20px rgba(84, 172, 191, 0.5)', // #54ACBF glow
       },
     },
   },

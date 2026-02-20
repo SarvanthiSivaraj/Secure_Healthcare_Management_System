@@ -75,16 +75,7 @@ function Login() {
             <div className="w-full max-w-6xl bg-white dark:bg-dark-card rounded-3xl shadow-card dark:shadow-none hover:shadow-2xl hover:shadow-primary-500/20 dark:hover:shadow-glow transform transition-all duration-500 overflow-hidden flex flex-col lg:flex-row min-h-[600px] animate-fade-in z-10">
 
                 {/* Left Side - Image & Branding */}
-                <div className="hidden lg:flex w-1/2 relative flex-col justify-between p-12 text-white">
-                    <div className="absolute inset-0 transition-transform duration-700 hover:scale-105">
-                        <img
-                            src={loginBg}
-                            alt="Healthcare Background"
-                            className="w-full h-full object-cover"
-                        />
-                        <div className="absolute inset-0 bg-gradient-to-br from-primary-900/90 to-primary-700/80 backdrop-blur-[2px]"></div>
-                    </div>
-
+                <div className="hidden lg:flex w-1/2 relative flex-col justify-between p-12 bg-gradient-to-br from-primary-700 to-primary-600 text-white">
                     <div className="relative z-10 group">
                         <div className="flex items-center space-x-3 mb-6 transform transition-transform duration-300 group-hover:translate-x-2">
                             <div className="w-10 h-10 bg-white/20 backdrop-blur-md rounded-xl flex items-center justify-center border border-white/30 shadow-lg group-hover:shadow-primary-500/50 transition-shadow duration-300">

@@ -221,35 +221,26 @@ function Register() {
             <div className="w-full max-w-7xl bg-white dark:bg-dark-card rounded-3xl shadow-card dark:shadow-none hover:shadow-2xl hover:shadow-primary-500/10 dark:hover:shadow-glow transform transition-all duration-500 overflow-hidden flex flex-col lg:flex-row min-h-[700px] animate-fade-in z-10">
 
                 {/* Left Side: Image/Info */}
-                <div className="hidden lg:flex w-5/12 relative flex-col justify-between p-12 text-white">
-                    <div className="absolute inset-0 transition-transform duration-700 hover:scale-105">
-                        <img
-                            src={loginBg}
-                            alt="Healthcare Background"
-                            className="w-full h-full object-cover"
-                        />
-                        <div className="absolute inset-0 bg-gradient-to-br from-primary-900/95 to-primary-800/80 backdrop-blur-[1px]"></div>
-                    </div>
-
+                <div className="hidden lg:flex w-5/12 relative flex-col justify-between p-12 bg-gradient-to-br from-primary-700 to-primary-600 text-white">
                     <div className="relative z-10">
                         <div className="flex items-center space-x-3 mb-8">
-                            <div className="w-10 h-10 bg-white/20 backdrop-blur-md rounded-xl flex items-center justify-center border border-white/30">
+                            <div className="w-10 h-10 bg-white/20 backdrop-blur-md rounded-xl flex items-center justify-center border border-white/30 shadow-lg">
                                 <span className="text-2xl">❤️</span>
                             </div>
-                            <span className="text-2xl font-bold tracking-wide">SecureHealth</span>
+                            <span className="text-2xl font-bold tracking-wide text-white">SecureHealth</span>
                         </div>
-                        <h2 className="text-4xl font-bold leading-tight mb-6">Join Our Medical Network</h2>
+                        <h2 className="text-4xl font-bold leading-tight mb-6 text-white">Join Our Medical Network</h2>
                         <ul className="space-y-4 text-primary-100">
                             <li className="flex items-center space-x-3">
-                                <svg className="w-6 h-6 text-secondary-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                <svg className="w-6 h-6 text-white/70" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                                 <span>Seamless Patient Management</span>
                             </li>
                             <li className="flex items-center space-x-3">
-                                <svg className="w-6 h-6 text-secondary-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                <svg className="w-6 h-6 text-white/70" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                                 <span>Advanced Electronic Health Records</span>
                             </li>
                             <li className="flex items-center space-x-3">
-                                <svg className="w-6 h-6 text-secondary-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                <svg className="w-6 h-6 text-white/70" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                                 <span>Secure & Encrypted Data</span>
                             </li>
                         </ul>
