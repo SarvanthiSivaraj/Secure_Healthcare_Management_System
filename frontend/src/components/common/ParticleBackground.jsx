@@ -1,7 +1,7 @@
 import React, { useEffect, useRef } from 'react';
 import { useTheme } from '../../context/ThemeContext';
 
-const ParticleBackground = () => {
+const ParticleBackground = ({ className = "fixed top-0 left-0 w-full h-full pointer-events-none z-0" }) => {
     const canvasRef = useRef(null);
     const { theme } = useTheme();
 
@@ -19,8 +19,8 @@ const ParticleBackground = () => {
         const connectionDistance = 150;
         const mouseDistance = 200;
 
-        let width = canvas.width = window.innerWidth;
-        let height = canvas.height = window.innerHeight;
+        let width = canvas.width = canvas.offsetWidth || window.innerWidth;
+        let height = canvas.height = canvas.offsetHeight || window.innerHeight;
 
         const particles = [];
 
@@ -162,8 +162,8 @@ const ParticleBackground = () => {
         };
 
         const handleResize = () => {
-            width = canvas.width = window.innerWidth;
-            height = canvas.height = window.innerHeight;
+            width = canvas.width = canvas.offsetWidth || window.innerWidth;
+            height = canvas.height = canvas.offsetHeight || window.innerHeight;
             init();
         };
 
@@ -195,7 +195,7 @@ const ParticleBackground = () => {
     return (
         <canvas
             ref={canvasRef}
-            className="fixed top-0 left-0 w-full h-full pointer-events-none z-0"
+            className={className}
         />
     );
 };

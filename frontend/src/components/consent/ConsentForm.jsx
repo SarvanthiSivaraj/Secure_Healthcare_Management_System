@@ -172,22 +172,22 @@ function ConsentForm({ onSuccess, onCancel, initialData }) {
         }
     };
     return (
-        <div className="consent-form-container">
-            <h3>Grant Data Access Consent</h3>
-            <p className="consent-subtitle">
+        <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-gray-100 dark:border-slate-700 p-6 md:p-8 mb-6">
+            <h3 className="text-xl font-bold text-gray-800 dark:text-white m-0 mb-1">Grant Data Access Consent</h3>
+            <p className="text-gray-500 dark:text-gray-400 text-sm mb-6 m-0">
                 Control who can access your medical data and for what purpose
             </p>
-            <form onSubmit={handleSubmit}>
+            <form onSubmit={handleSubmit} className="text-gray-700 dark:text-gray-300">
                 {/* Doctor Selection */}
                 <div className="form-group">
-                    <label htmlFor="recipientUserId">Grant Access To *</label>
+                    <label htmlFor="recipientUserId" className="dark:text-gray-300">Grant Access To *</label>
                     <select
                         id="recipientUserId"
                         name="recipientUserId"
                         value={formData.recipientUserId}
                         onChange={handleChange}
                         required
-                        className="form-select"
+                        className="form-select dark:bg-slate-700 dark:text-white dark:border-slate-600"
                         disabled={!!initialData}
                     >
                         <option value="">Select a doctor...</option>
@@ -201,14 +201,14 @@ function ConsentForm({ onSuccess, onCancel, initialData }) {
                 </div>
                 {/* Data Category */}
                 <div className="form-group">
-                    <label htmlFor="dataCategory">Data Category *</label>
+                    <label htmlFor="dataCategory" className="dark:text-gray-300">Data Category *</label>
                     <select
                         id="dataCategory"
                         name="dataCategory"
                         value={formData.dataCategory}
                         onChange={handleChange}
                         required
-                        className="form-select"
+                        className="form-select dark:bg-slate-700 dark:text-white dark:border-slate-600"
                     >
                         <option value="all_medical_data">All Medical Data</option>
                         <option value="diagnoses">Diagnoses Only</option>
@@ -220,14 +220,14 @@ function ConsentForm({ onSuccess, onCancel, initialData }) {
                 </div>
                 {/* Purpose */}
                 <div className="form-group">
-                    <label htmlFor="purpose">Purpose *</label>
+                    <label htmlFor="purpose" className="dark:text-gray-300">Purpose *</label>
                     <select
                         id="purpose"
                         name="purpose"
                         value={formData.purpose}
                         onChange={handleChange}
                         required
-                        className="form-select"
+                        className="form-select dark:bg-slate-700 dark:text-white dark:border-slate-600"
                     >
                         <option value="treatment">Treatment</option>
                         <option value="consultation">Consultation</option>
@@ -237,14 +237,14 @@ function ConsentForm({ onSuccess, onCancel, initialData }) {
                 </div>
                 {/* Access Level */}
                 <div className="form-group">
-                    <label htmlFor="accessLevel">Access Level *</label>
+                    <label htmlFor="accessLevel" className="dark:text-gray-300">Access Level *</label>
                     <select
                         id="accessLevel"
                         name="accessLevel"
                         value={formData.accessLevel}
                         onChange={handleChange}
                         required
-                        className="form-select"
+                        className="form-select dark:bg-slate-700 dark:text-white dark:border-slate-600"
                     >
                         <option value="read">Read Only</option>
                         <option value="write">Read & Write</option>
@@ -262,8 +262,8 @@ function ConsentForm({ onSuccess, onCancel, initialData }) {
                     />
 
                     <div className="form-group" style={{ flex: 2 }}>
-                        <label>Duration</label>
-                        <div className="duration-container">
+                        <label className="dark:text-gray-300">Duration</label>
+                        <div className="duration-container gap-2">
                             <div className="duration-field">
                                 <input
                                     type="number"
@@ -272,8 +272,9 @@ function ConsentForm({ onSuccess, onCancel, initialData }) {
                                     value={duration.hours || ''}
                                     onChange={handleDurationChange}
                                     min="0"
+                                    className="dark:bg-slate-700 dark:text-white dark:border-slate-600 rounded-md border"
                                 />
-                                <label>Hours</label>
+                                <label className="text-xs text-center dark:text-gray-400 mt-1">Hours</label>
                             </div>
                             <div className="duration-field">
                                 <input
@@ -283,8 +284,9 @@ function ConsentForm({ onSuccess, onCancel, initialData }) {
                                     value={duration.minutes || ''}
                                     onChange={handleDurationChange}
                                     min="0" max="59"
+                                    className="dark:bg-slate-700 dark:text-white dark:border-slate-600 rounded-md border"
                                 />
-                                <label>Mins</label>
+                                <label className="text-xs text-center dark:text-gray-400 mt-1">Mins</label>
                             </div>
                             <div className="duration-field">
                                 <input
@@ -294,11 +296,12 @@ function ConsentForm({ onSuccess, onCancel, initialData }) {
                                     value={duration.seconds || ''}
                                     onChange={handleDurationChange}
                                     min="0" max="59"
+                                    className="dark:bg-slate-700 dark:text-white dark:border-slate-600 rounded-md border"
                                 />
-                                <label>Secs</label>
+                                <label className="text-xs text-center dark:text-gray-400 mt-1">Secs</label>
                             </div>
                         </div>
-                        <small className="text-muted">Set all to 0 for unlimited access.</small>
+                        <small className="text-muted dark:text-gray-400 mt-2 block">Set all to 0 for unlimited access.</small>
                     </div>
                 </div>
 
@@ -316,18 +319,26 @@ function ConsentForm({ onSuccess, onCancel, initialData }) {
                         )
                     )}
                 </div>
-                {error && <div className="error-alert">{error}</div>}
-                <div className="form-actions">
-                    <Button type="button" variant="secondary" onClick={onCancel}>
+                {error && <div className="error-alert bg-red-50 text-red-600 p-3 rounded-lg border border-red-200 mt-4 mb-4">{error}</div>}
+                <div className="form-actions mt-6 flex gap-4">
+                    <button
+                        type="button"
+                        onClick={onCancel}
+                        className="flex-1 bg-white dark:bg-slate-800 hover:bg-gray-50 dark:hover:bg-slate-700 text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-slate-600 font-semibold py-3 px-4 rounded-lg transition-all"
+                    >
                         Cancel
-                    </Button>
-                    <Button type="submit" disabled={loading}>
+                    </button>
+                    <button
+                        type="submit"
+                        disabled={loading}
+                        className="flex-1 bg-gradient-to-r from-teal-500 to-teal-600 hover:from-teal-600 hover:to-teal-700 text-white font-semibold py-3 px-4 rounded-lg shadow-sm transition-all disabled:opacity-50 disabled:cursor-not-allowed transform hover:-translate-y-0.5 active:translate-y-0"
+                    >
                         {loading ? 'Processing...' : (initialData ? 'Update Consent' : 'Grant Consent')}
-                    </Button>
+                    </button>
                 </div>
             </form>
-            <div className="consent-warning">
-                ⚠️ <strong>Important:</strong> You can revoke this consent at any time.
+            <div className="consent-warning mt-6 p-4 bg-yellow-50 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300 rounded-lg text-sm border border-yellow-100 dark:border-yellow-800/50">
+                ⚠️ <strong className="font-bold">Important:</strong> You can revoke this consent at any time.
                 All access will be logged for your review.
             </div>
         </div>
