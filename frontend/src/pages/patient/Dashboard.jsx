@@ -78,20 +78,24 @@ function PatientDashboard() {
             <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
 
                 {/* User Info Bar - Solid white card */}
-                <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-gray-100 dark:border-slate-700 p-6 flex flex-col sm:flex-row justify-between items-center">
-                    <div>
-                        <div className="text-lg font-bold text-gray-800 dark:text-white">
-                            {user?.firstName || 'Patient Name'} {user?.lastName || ''}
+                <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-gray-100 dark:border-slate-700 p-6 flex flex-col">
+                    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center">
+                        <div>
+                            <div className="text-lg font-bold text-gray-800 dark:text-white">
+                                {user?.firstName || 'Patient Name'} {user?.lastName || ''}
+                            </div>
+                            <div className="text-gray-500 text-sm mt-1">
+                                ID: {user?.id || 'MD-2024-789456'}
+                            </div>
                         </div>
-                        <div className="text-gray-500 text-sm mt-1">
-                            ID: {user?.id || 'MD-2024-789456'}
+
+                        <div className="mt-4 sm:mt-0 px-4 py-1.5 rounded-full border border-green-200 dark:border-green-800 bg-green-50 dark:bg-green-900/30 flex items-center space-x-2">
+                            <span className="w-2.5 h-2.5 rounded-full bg-green-500 dark:bg-green-400"></span>
+                            <span className="text-green-700 dark:text-green-400 text-sm font-semibold">Active Patient</span>
                         </div>
                     </div>
 
-                    <div className="mt-4 sm:mt-0 px-4 py-1.5 rounded-full border border-green-200 bg-green-50 flex items-center space-x-2">
-                        <span className="w-2.5 h-2.5 rounded-full bg-green-500"></span>
-                        <span className="text-green-700 text-sm font-semibold">Active Patient</span>
-                    </div>
+                    <PasskeySetupCard />
                 </div>
 
                 {/* Stats row - Teal cards like Doctor Portal */}
@@ -164,14 +168,8 @@ function PatientDashboard() {
                     </div>
                 </div>
 
-                <div className="mt-8">
-                    <PasskeySetupCard />
-                </div>
             </div>
         </div>
-
-            </div >
-        </div >
     );
 }
 
