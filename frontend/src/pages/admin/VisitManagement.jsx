@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useLocation } from 'react-router-dom';
 import { visitApi } from '../../api/visitApi';
 import Button from '../../components/common/Button';
@@ -16,11 +16,7 @@ function VisitManagement() {
     const [nurses, setNurses] = useState([]);
     const [approvalData, setApprovalData] = useState({ doctorId: '', nurseId: '' });
 
-    useEffect(() => {
-        loadVisits();
-    }, [activeTab]);
-
-    const loadVisits = async () => {
+    const loadVisits = useCallback(async () => {
         setLoading(true);
         setError('');
         try {
@@ -58,7 +54,11 @@ function VisitManagement() {
         } finally {
             setLoading(false);
         }
-    };
+    }, [activeTab]);
+
+    useEffect(() => {
+        loadVisits();
+    }, [loadVisits]);
 
     const handleApproveClick = async (visit) => {
         setSelectedVisit(visit);

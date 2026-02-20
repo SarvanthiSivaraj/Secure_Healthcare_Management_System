@@ -75,24 +75,24 @@ function VisitCard({ visit, onAction, showActions = true, userRole = 'patient' }
             </div>
 
             <div className="visit-details grid grid-cols-2 gap-4 my-4 mb-5 pt-4 border-t border-gray-100 dark:border-slate-700">
-                <div className="visit-detail-row flex flex-col">
-                    <span className="detail-label text-xs uppercase tracking-wider text-gray-400 dark:text-gray-500 font-bold mb-1">Date</span>
-                    <span className="detail-value text-sm font-medium text-gray-800 dark:text-gray-200">{formatDate(visitDate)}</span>
+                <div className="vc-detail-row flex flex-col">
+                    <span className="vc-detail-label text-xs uppercase tracking-wider text-gray-400 dark:text-gray-500 font-bold mb-1">Date</span>
+                    <span className="vc-detail-value text-sm font-medium text-gray-800 dark:text-gray-200">{formatDate(visitDate)}</span>
                 </div>
-                <div className="visit-detail-row flex flex-col">
-                    <span className="detail-label text-xs uppercase tracking-wider text-gray-400 dark:text-gray-500 font-bold mb-1">Time</span>
-                    <span className="detail-value text-sm font-medium text-gray-800 dark:text-gray-200">{formatTime(visitDate)}</span>
+                <div className="vc-detail-row flex flex-col">
+                    <span className="vc-detail-label text-xs uppercase tracking-wider text-gray-400 dark:text-gray-500 font-bold mb-1">Time</span>
+                    <span className="vc-detail-value text-sm font-medium text-gray-800 dark:text-gray-200">{formatTime(visitDate)}</span>
                 </div>
                 {visitCode && userRole === 'patient' && (
-                    <div className="visit-detail-row flex flex-col">
-                        <span className="detail-label text-xs uppercase tracking-wider text-gray-400 dark:text-gray-500 font-bold mb-1">Visit Code</span>
-                        <span className="detail-value visit-code font-mono font-bold text-teal-600 bg-teal-50 dark:bg-slate-700 px-2 py-1 flex max-w-fit rounded leading-none">{visitCode}</span>
+                    <div className="vc-detail-row flex flex-col">
+                        <span className="vc-detail-label text-xs uppercase tracking-wider text-gray-400 dark:text-gray-500 font-bold mb-1">Visit Code</span>
+                        <span className="vc-detail-value visit-code font-mono font-bold text-teal-600 bg-teal-50 dark:bg-slate-700 px-2 py-1 flex max-w-fit rounded leading-none">{visitCode}</span>
                     </div>
                 )}
                 {visitType && (
-                    <div className="visit-detail-row flex flex-col">
-                        <span className="detail-label text-xs uppercase tracking-wider text-gray-400 dark:text-gray-500 font-bold mb-1">Type</span>
-                        <span className="detail-value text-sm font-medium text-gray-800 dark:text-gray-200">{visitType}</span>
+                    <div className="vc-detail-row flex flex-col">
+                        <span className="vc-detail-label text-xs uppercase tracking-wider text-gray-400 dark:text-gray-500 font-bold mb-1">Type</span>
+                        <span className="vc-detail-value text-sm font-medium text-gray-800 dark:text-gray-200">{visitType}</span>
                     </div>
                 )}
             </div>
