@@ -42,52 +42,59 @@ function ClinicalNotes() {
     };
 
     return (
-        <div className="clinical-notes-page">
-            <header className="page-header">
-                <div className="header-left">
-                    <h1>Clinical Notes</h1>
-                    <p className="page-subtitle">
-                        Visit: {visitId} | Patient: {patientId}
-                    </p>
+        <div className="min-h-screen bg-gray-50 dark:bg-dark-bg transition-colors duration-300">
+            {/* Header */}
+            <header className="bg-gradient-to-r from-primary-700 to-primary-500 shadow-lg">
+                <div className="max-w-7xl mx-auto px-6 py-5 flex justify-between items-center">
+                    <div className="flex items-center gap-4">
+                        <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center border border-white/30">
+                            <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                            </svg>
+                        </div>
+                        <div>
+                            <h1 className="text-2xl font-bold text-white">Clinical Notes</h1>
+                            <p className="text-primary-100 text-sm">Visit: {visitId} | Patient: {patientId}</p>
+                        </div>
+                    </div>
+                    <button
+                        onClick={() => navigate('/doctor/dashboard')}
+                        className="flex items-center gap-2 px-4 py-2 rounded-xl border border-white/30 text-white text-sm font-medium hover:bg-white/10 transition-all duration-200"
+                    >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7" /></svg>
+                        Back to Dashboard
+                    </button>
                 </div>
-                <button
-                    className="btn btn-secondary"
-                    onClick={() => navigate('/doctor/dashboard')}
-                >
-                    Back to Dashboard
-                </button>
             </header>
 
             {/* Tabs */}
-            <div className="tabs-container">
-                <button
-                    className={`tab ${activeTab === 'notes' ? 'active' : ''}`}
-                    onClick={() => setActiveTab('notes')}
-                >
-                    📝 SOAP Notes
-                </button>
-                <button
-                    className={`tab ${activeTab === 'prescriptions' ? 'active' : ''}`}
-                    onClick={() => setActiveTab('prescriptions')}
-                >
-                    💊 Prescriptions
-                    {prescriptions.length > 0 && (
-                        <span className="tab-badge">{prescriptions.length}</span>
-                    )}
-                </button>
-                <button
-                    className={`tab ${activeTab === 'diagnoses' ? 'active' : ''}`}
-                    onClick={() => setActiveTab('diagnoses')}
-                >
-                    🩺 Diagnoses
-                    {diagnoses.length > 0 && (
-                        <span className="tab-badge">{diagnoses.length}</span>
-                    )}
-                </button>
+            <div className="max-w-7xl mx-auto px-6 pt-6">
+                <div className="flex gap-2 border-b border-gray-200 dark:border-dark-border">
+                    {[
+                        { key: 'notes', label: 'SOAP Notes', icon: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>, badge: null },
+                        { key: 'prescriptions', label: 'Prescriptions', icon: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" /></svg>, badge: prescriptions.length },
+                        { key: 'diagnoses', label: 'Diagnoses', icon: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" /></svg>, badge: diagnoses.length },
+                    ].map(tab => (
+                        <button
+                            key={tab.key}
+                            onClick={() => setActiveTab(tab.key)}
+                            className={`flex items-center gap-2 px-5 py-3 text-sm font-medium border-b-2 -mb-px transition-all duration-200 ${activeTab === tab.key
+                                    ? 'border-primary-500 text-primary-600 dark:text-primary-400'
+                                    : 'border-transparent text-gray-500 dark:text-dark-muted hover:text-gray-700 dark:hover:text-white'
+                                }`}
+                        >
+                            {tab.icon}
+                            {tab.label}
+                            {tab.badge > 0 && (
+                                <span className="ml-1 px-1.5 py-0.5 rounded-full bg-primary-500 text-white text-xs font-bold">{tab.badge}</span>
+                            )}
+                        </button>
+                    ))}
+                </div>
             </div>
 
             {/* Tab Content */}
-            <div className="page-content">
+            <div className="max-w-7xl mx-auto px-6 py-6">
                 {activeTab === 'notes' && (
                     <ClinicalNotesEditor
                         visitId={visitId}

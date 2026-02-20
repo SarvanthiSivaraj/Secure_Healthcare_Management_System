@@ -53,7 +53,17 @@ function EmergencyToggle({ isActive, onToggle }) {
             <div className={`emergency-toggle-container ${isActive ? 'active' : ''}`}>
                 <div className="toggle-content">
                     <div className="toggle-info">
-                        <span className="toggle-icon">{isActive ? '🚨' : '🔓'}</span>
+                        <span className="toggle-icon">
+                            {isActive ? (
+                                <svg className="w-8 h-8 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                                </svg>
+                            ) : (
+                                <svg className="w-8 h-8 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                                </svg>
+                            )}
+                        </span>
                         <div>
                             <h4 className="toggle-title">
                                 {isActive ? 'Emergency Mode Active' : 'Emergency Access'}
@@ -71,9 +81,12 @@ function EmergencyToggle({ isActive, onToggle }) {
                             Deactivate
                         </Button>
                     ) : (
-                        <Button onClick={handleActivate}>
+                        <button
+                            onClick={handleActivate}
+                            className="px-5 py-2 rounded-xl bg-red-600 hover:bg-red-700 active:bg-red-800 text-white font-semibold text-sm transition-all duration-200 shadow-md shadow-red-500/30 hover:shadow-red-500/50"
+                        >
                             Activate Emergency Mode
-                        </Button>
+                        </button>
                     )}
                 </div>
 
@@ -90,7 +103,7 @@ function EmergencyToggle({ isActive, onToggle }) {
                 <div className="modal-overlay" onClick={() => setShowModal(false)}>
                     <div className="modal-content" onClick={(e) => e.stopPropagation()}>
                         <div className="modal-header">
-                            <h3>🚨 Emergency Access Justification</h3>
+                            <h3>Emergency Access Justification</h3>
                             <button className="modal-close" onClick={() => setShowModal(false)}>✕</button>
                         </div>
 
