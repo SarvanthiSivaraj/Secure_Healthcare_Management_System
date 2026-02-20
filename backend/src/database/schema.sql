@@ -37,7 +37,7 @@ CREATE TABLE IF NOT EXISTS users (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     email VARCHAR(255) UNIQUE,
     phone VARCHAR(20) UNIQUE,
-    password_hash VARCHAR(255) NOT NULL,
+    password_hash VARCHAR(255),
     first_name VARCHAR(100),
     last_name VARCHAR(100),
     role_id INTEGER REFERENCES roles(id) NOT NULL,
@@ -227,6 +227,26 @@ CREATE INDEX IF NOT EXISTS idx_sessions_user ON sessions(user_id);
 CREATE INDEX IF NOT EXISTS idx_sessions_token ON sessions(token_hash);
 CREATE INDEX IF NOT EXISTS idx_sessions_expires ON sessions(expires_at);
 CREATE INDEX IF NOT EXISTS idx_sessions_active ON sessions(is_active);
+
+-- ============================================
+-- PASSKEY CREDENTIALS TABLE (WebAuthn)
+-- ============================================
+CREATE TABLE IF NOT EXISTS passkey_credentials (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    user_id UUID REFERENCES users(id) ON DELETE CASCADE NOT NULL,
+    credential_id TEXT UNIQUE NOT NULL,
+    public_key BYTEA NOT NULL,
+    counter BIGINT NOT NULL DEFAULT 0,
+    device_type VARCHAR(32),
+    backed_up BOOLEAN DEFAULT FALSE,
+    transports TEXT[],
+    credential_name VARCHAR(255),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    last_used_at TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_passkey_user_id ON passkey_credentials(user_id);
+CREATE INDEX IF NOT EXISTS idx_passkey_credential_id ON passkey_credentials(credential_id);
 
 -- ============================================
 -- CONSENTS TABLE

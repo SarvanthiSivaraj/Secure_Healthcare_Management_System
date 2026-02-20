@@ -91,6 +91,13 @@ const config = {
         accessDurationMinutes: parseInt(process.env.EMERGENCY_ACCESS_DURATION_MINUTES) || 60,
         notificationDelayHours: parseInt(process.env.EMERGENCY_NOTIFICATION_DELAY_HOURS) || 24,
     },
+
+    // WebAuthn / Passkeys
+    webauthn: {
+        rpName: process.env.WEBAUTHN_RP_NAME || 'SecureHealth',
+        rpID: process.env.WEBAUTHN_RP_ID || 'localhost',
+        origin: process.env.WEBAUTHN_ORIGIN || 'http://localhost:3000',
+    },
 };
 
 // Validate required environment variables

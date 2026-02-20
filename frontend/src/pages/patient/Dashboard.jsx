@@ -5,6 +5,7 @@ import { consentApi } from '../../api/consentApi';
 import { visitApi } from '../../api/visitApi';
 import { emrApi } from '../../api/emrApi';
 import Button from '../../components/common/Button';
+import PasskeySetupCard from '../../components/common/PasskeySetupCard';
 import './Dashboard.css';
 
 
@@ -91,6 +92,7 @@ function PatientDashboard() {
                                 )}
                             </button>
                         </div>
+                        <PasskeySetupCard />
                     </div>
                     <div className="account-status">
                         <span className="status-indicator"></span>

@@ -2,7 +2,7 @@ import React, { useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AuthContext } from '../../context/AuthContext';
 import Button from '../../components/common/Button';
-import GovernancePanel from '../../components/dashboard/GovernancePanel';
+import PasskeySetupCard from '../../components/common/PasskeySetupCard';
 import '../patient/Dashboard.css';
 
 function NurseDashboard() {
@@ -28,6 +28,7 @@ function NurseDashboard() {
                     <div className="user-details">
                         <div className="user-name">{displayName}</div>
                         <div className="user-id">ID: {user?.staffId || 'NURSE-2024-001'}</div>
+                        <PasskeySetupCard />
                     </div>
                     <div className="account-status">
                         <span className="status-indicator"></span>

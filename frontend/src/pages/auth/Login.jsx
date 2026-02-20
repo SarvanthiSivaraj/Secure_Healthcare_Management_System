@@ -2,6 +2,7 @@ import React, { useState, useContext } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { AuthContext } from '../../context/AuthContext';
 import { authApi } from '../../api/authApi';
+import { startAuthentication } from '@simplewebauthn/browser';
 import ThemeToggle from '../../components/common/ThemeToggle';
 import ParticleBackground from '../../components/common/ParticleBackground';
 
@@ -15,12 +16,28 @@ function Login() {
         password: '',
     });
     const [loading, setLoading] = useState(false);
+    const [passkeyLoading, setPasskeyLoading] = useState(false);
     const [error, setError] = useState('');
     const successMessage = location.state?.message;
 
     const handleChange = (e) => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
         setError('');
+    };
+
+    const navigateByRole = (role) => {
+        const r = role?.toUpperCase();
+        switch (r) {
+            case 'PATIENT': navigate('/patient/dashboard'); break;
+            case 'DOCTOR': navigate('/doctor/dashboard'); break;
+            case 'ADMIN':
+            case 'HOSPITAL_ADMIN':
+            case 'SYSTEM_ADMIN': navigate('/admin/dashboard'); break;
+            case 'NURSE': navigate('/nurse/dashboard'); break;
+            case 'LAB_TECHNICIAN': navigate('/lab/dashboard'); break;
+            case 'RADIOLOGIST': navigate('/radiology/dashboard'); break;
+            default: navigate('/staff/dashboard');
+        }
     };
 
     const handleSubmit = async (e) => {
@@ -40,27 +57,56 @@ function Login() {
             }
 
             login(user, accessToken);
-
-            const role = user.role?.toUpperCase();
-            switch (role) {
-                case 'PATIENT': navigate('/patient/dashboard'); break;
-                case 'DOCTOR': navigate('/doctor/dashboard'); break;
-                case 'ADMIN':
-                case 'HOSPITAL_ADMIN':
-                case 'SYSTEM_ADMIN': navigate('/admin/dashboard'); break;
-                case 'NURSE': navigate('/nurse/dashboard'); break;
-                case 'LAB_TECH':
-                case 'LAB_TECHNICIAN': navigate('/lab/dashboard'); break;
-                case 'RECEPTIONIST': navigate('/reception/dashboard'); break;
-                case 'PHARMACIST': navigate('/pharmacy/dashboard'); break;
-                case 'RADIOLOGIST': navigate('/radiology/dashboard'); break;
-                default: navigate('/staff/dashboard');
-            }
+            navigateByRole(user.role);
         } catch (err) {
             const errorMsg = err.response?.data?.message || err.message || 'Login failed';
             setError(errorMsg);
         } finally {
             setLoading(false);
+        }
+    };
+
+    const handlePasskeyLogin = async () => {
+        if (!formData.email) {
+            setError('Please enter your email address first');
+            return;
+        }
+
+        setError('');
+        setPasskeyLoading(true);
+
+        try {
+            // Step 1: Get authentication options from server
+            const optionsRes = await authApi.passkeyLoginOptions(formData.email);
+            if (!optionsRes.success) {
+                throw new Error(optionsRes.message || 'Failed to get passkey options');
+            }
+
+            // Step 2: Trigger browser's WebAuthn prompt (fingerprint, face, PIN, etc.)
+            const credential = await startAuthentication({ optionsJSON: optionsRes.data });
+
+            // Step 3: Verify with server
+            const verifyRes = await authApi.passkeyLoginVerify(formData.email, credential);
+
+            const payload = verifyRes.data || verifyRes;
+            const user = payload.user || payload.data?.user;
+            const accessToken = payload.accessToken || payload.token || payload.data?.accessToken;
+
+            if (!user || !accessToken) {
+                throw new Error('Invalid server response');
+            }
+
+            login(user, accessToken);
+            navigateByRole(user.role);
+        } catch (err) {
+            if (err.name === 'NotAllowedError') {
+                setError('Passkey authentication was cancelled');
+            } else {
+                const errorMsg = err.response?.data?.message || err.message || 'Passkey login failed';
+                setError(errorMsg);
+            }
+        } finally {
+            setPasskeyLoading(false);
         }
     };
 
@@ -181,7 +227,37 @@ function Login() {
                                 ) : 'Sign In'}
                             </button>
 
-                            <div className="relative my-8">
+                            {/* Passkey Divider */}
+                            <div className="relative my-2">
+                                <div className="absolute inset-0 flex items-center">
+                                    <div className="w-full border-t border-gray-200 dark:border-gray-700"></div>
+                                </div>
+                                <div className="relative flex justify-center text-sm">
+                                    <span className="px-4 bg-white dark:bg-dark-card text-gray-500 dark:text-gray-400 font-medium">or</span>
+                                </div>
+                            </div>
+
+                            {/* Passkey Login Button */}
+                            <button
+                                type="button"
+                                onClick={handlePasskeyLogin}
+                                disabled={passkeyLoading}
+                                className={`w-full inline-flex justify-center items-center px-4 py-3.5 border-2 border-primary-200 dark:border-primary-700/50 shadow-sm text-sm font-semibold rounded-xl text-primary-700 dark:text-primary-300 bg-primary-50/50 dark:bg-primary-900/20 hover:bg-primary-100 dark:hover:bg-primary-900/40 hover:border-primary-300 dark:hover:border-primary-600 transition-all duration-300 transform hover:scale-[1.02] ${passkeyLoading ? 'opacity-70 cursor-not-allowed' : ''}`}
+                            >
+                                {passkeyLoading ? (
+                                    <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-primary-600 dark:text-primary-400" fill="none" viewBox="0 0 24 24">
+                                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                    </svg>
+                                ) : (
+                                    <svg className="h-5 w-5 mr-2.5 text-primary-600 dark:text-primary-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                                        <path strokeLinecap="round" strokeLinejoin="round" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
+                                    </svg>
+                                )}
+                                {passkeyLoading ? 'Authenticating...' : 'Sign in with Passkey'}
+                            </button>
+
+                            <div className="relative my-4">
                                 <div className="absolute inset-0 flex items-center">
                                     <div className="w-full border-t border-gray-200 dark:border-gray-700"></div>
                                 </div>
