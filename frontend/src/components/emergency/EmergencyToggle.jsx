@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import ReactDOM from 'react-dom';
 import Button from '../common/Button';
 import './EmergencyToggle.css';
 
@@ -14,8 +15,6 @@ function EmergencyToggle({ isActive, onToggle }) {
     const handleDeactivate = async () => {
         setLoading(true);
         try {
-            // TODO: API call to deactivate emergency mode
-            // await emergencyApi.deactivate();
             console.log('Emergency mode deactivated');
             if (onToggle) onToggle(false);
         } catch (error) {
@@ -34,8 +33,6 @@ function EmergencyToggle({ isActive, onToggle }) {
 
         setLoading(true);
         try {
-            // TODO: API call to activate emergency mode
-            // await emergencyApi.activate(justification);
             console.log('Emergency mode activated:', justification);
             if (onToggle) onToggle(true);
             setShowModal(false);
@@ -48,21 +45,71 @@ function EmergencyToggle({ isActive, onToggle }) {
         }
     };
 
+    const modal = showModal && ReactDOM.createPortal(
+        <div className="modal-overlay" onClick={() => setShowModal(false)}>
+            <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+                <div className="modal-header">
+                    <h3>Emergency Access Justification</h3>
+                    <button className="modal-close" onClick={() => setShowModal(false)}>
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                            <line x1="18" y1="6" x2="6" y2="18" />
+                            <line x1="6" y1="6" x2="18" y2="18" />
+                        </svg>
+                    </button>
+                </div>
+
+                <div className="modal-body">
+                    <div className="warning-notice">
+                        <svg className="warning-icon-svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
+                            <line x1="12" y1="9" x2="12" y2="13" />
+                            <line x1="12" y1="17" x2="12.01" y2="17" />
+                        </svg>
+                        <div>
+                            <strong>Critical Action Required</strong>
+                            <p>Emergency access bypasses consent. Patient will be notified. All actions are logged and auditable.</p>
+                        </div>
+                    </div>
+
+                    <div className="input-group">
+                        <label className="input-label">
+                            Justification <span className="required">*</span>
+                        </label>
+                        <textarea
+                            value={justification}
+                            onChange={(e) => setJustification(e.target.value)}
+                            className="textarea-field"
+                            rows="4"
+                            placeholder="Describe the emergency situation requiring immediate access..."
+                            required
+                        />
+                    </div>
+                </div>
+
+                <div className="modal-footer">
+                    <Button variant="secondary" onClick={() => setShowModal(false)}>
+                        Cancel
+                    </Button>
+                    <Button onClick={handleSubmitJustification} loading={loading}>
+                        Activate Emergency Access
+                    </Button>
+                </div>
+            </div>
+        </div>,
+        document.body
+    );
+
     return (
         <>
             <div className={`emergency-toggle-container ${isActive ? 'active' : ''}`}>
                 <div className="toggle-content">
                     <div className="toggle-info">
                         <span className="toggle-icon">
-                            {isActive ? (
-                                <svg className="w-8 h-8 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                                </svg>
-                            ) : (
-                                <svg className="w-8 h-8 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                                </svg>
-                            )}
+                            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke={isActive ? '#ef4444' : '#f87171'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
+                                <line x1="12" y1="9" x2="12" y2="13" />
+                                <line x1="12" y1="17" x2="12.01" y2="17" />
+                            </svg>
                         </span>
                         <div>
                             <h4 className="toggle-title">
@@ -77,7 +124,7 @@ function EmergencyToggle({ isActive, onToggle }) {
                     </div>
 
                     {isActive ? (
-                        <Button onClick={handleDeactivate} variant="secondary" loading={loading}>
+                        <Button onClick={handleDeactivate} variant="primary" loading={loading}>
                             Deactivate
                         </Button>
                     ) : (
@@ -92,56 +139,16 @@ function EmergencyToggle({ isActive, onToggle }) {
 
                 {isActive && (
                     <div className="emergency-timer">
-                        <span className="timer-icon">⏱️</span>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <circle cx="12" cy="12" r="10" />
+                            <polyline points="12 6 12 12 16 14" />
+                        </svg>
                         <span>Auto-expires in 30 minutes</span>
                     </div>
                 )}
             </div>
 
-            {/* Justification Modal */}
-            {showModal && (
-                <div className="modal-overlay" onClick={() => setShowModal(false)}>
-                    <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-                        <div className="modal-header">
-                            <h3>Emergency Access Justification</h3>
-                            <button className="modal-close" onClick={() => setShowModal(false)}>✕</button>
-                        </div>
-
-                        <div className="modal-body">
-                            <div className="warning-notice">
-                                <span className="warning-icon">⚠️</span>
-                                <div>
-                                    <strong>Critical Action Required</strong>
-                                    <p>Emergency access bypasses consent. Patient will be notified. All actions are logged and auditable.</p>
-                                </div>
-                            </div>
-
-                            <div className="input-group">
-                                <label className="input-label">
-                                    Justification <span className="required">*</span>
-                                </label>
-                                <textarea
-                                    value={justification}
-                                    onChange={(e) => setJustification(e.target.value)}
-                                    className="textarea-field"
-                                    rows="4"
-                                    placeholder="Describe the emergency situation requiring immediate access..."
-                                    required
-                                />
-                            </div>
-                        </div>
-
-                        <div className="modal-footer">
-                            <Button variant="secondary" onClick={() => setShowModal(false)}>
-                                Cancel
-                            </Button>
-                            <Button onClick={handleSubmitJustification} loading={loading}>
-                                Activate Emergency Access
-                            </Button>
-                        </div>
-                    </div>
-                </div>
-            )}
+            {modal}
         </>
     );
 }

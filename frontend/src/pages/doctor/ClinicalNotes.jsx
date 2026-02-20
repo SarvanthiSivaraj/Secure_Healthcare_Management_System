@@ -79,8 +79,8 @@ function ClinicalNotes() {
                             key={tab.key}
                             onClick={() => setActiveTab(tab.key)}
                             className={`flex items-center gap-2 px-5 py-3 text-sm font-medium border-b-2 -mb-px transition-all duration-200 ${activeTab === tab.key
-                                    ? 'border-primary-500 text-primary-600 dark:text-primary-400'
-                                    : 'border-transparent text-gray-500 dark:text-dark-muted hover:text-gray-700 dark:hover:text-white'
+                                ? 'border-primary-500 text-primary-600 dark:text-primary-400'
+                                : 'border-transparent text-gray-500 dark:text-dark-muted hover:text-gray-700 dark:hover:text-white'
                                 }`}
                         >
                             {tab.icon}
@@ -120,7 +120,11 @@ function ClinicalNotes() {
 
                                 {prescriptions.length === 0 ? (
                                     <div className="empty-state">
-                                        <div className="empty-icon">💊</div>
+                                        <div className="empty-icon">
+                                            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#54ACBF" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                                                <path d="M9 12h6m-3-3v6M3 6l3-3 3 3m6 0l3-3 3 3M5 20h14a2 2 0 002-2V7H3v11a2 2 0 002 2z" />
+                                            </svg>
+                                        </div>
                                         <p>No prescriptions added yet</p>
                                         <button
                                             className="btn btn-primary"
@@ -139,7 +143,7 @@ function ClinicalNotes() {
                                                         className="btn-remove"
                                                         onClick={() => handleRemovePrescription(rx.id)}
                                                     >
-                                                        ✕
+                                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>
                                                     </button>
                                                 </div>
                                                 <div className="card-details">
@@ -200,7 +204,11 @@ function ClinicalNotes() {
 
                                 {diagnoses.length === 0 ? (
                                     <div className="empty-state">
-                                        <div className="empty-icon">🩺</div>
+                                        <div className="empty-icon">
+                                            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#54ACBF" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                                                <path d="M22 12h-4l-3 9L9 3l-3 9H2" />
+                                            </svg>
+                                        </div>
                                         <p>No diagnoses added yet</p>
                                         <button
                                             className="btn btn-primary"
@@ -222,7 +230,7 @@ function ClinicalNotes() {
                                                         className="btn-remove"
                                                         onClick={() => handleRemoveDiagnosis(dx.id)}
                                                     >
-                                                        ✕
+                                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>
                                                     </button>
                                                 </div>
                                                 <div className="card-badges">
