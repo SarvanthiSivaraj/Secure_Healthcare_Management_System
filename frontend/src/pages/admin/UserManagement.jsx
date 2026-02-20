@@ -42,16 +42,7 @@ function UserManagement() {
         if (!window.confirm('Are you sure you want to deactivate this user?')) return;
 
         try {
-            const response = await fetch('/api/v1/users/staff/deactivate', {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${localStorage.getItem('token')}`
-                },
-                body: JSON.stringify({ userId })
-            });
-
-            const data = await response.json();
+            const data = await userApi.deactivateStaff(userId);
             if (data.success) {
                 alert('User deactivated successfully');
                 fetchUsers();
@@ -97,8 +88,8 @@ function UserManagement() {
                         <h1>User Management</h1>
                         <p className="header-subtitle">Manage user accounts, roles, and access permissions</p>
                     </div>
-                    <Button onClick={() => navigate('/admin/dashboard')} variant="secondary">
-                        Back to Dashboard
+                    <Button onClick={() => navigate('/admin/dashboard')} variant="secondary" className="back-btn">
+                        ← Back
                     </Button>
                 </div>
             </header>
@@ -201,14 +192,23 @@ function UserManagement() {
                 {/* Stats Summary */}
                 <div className="stats-summary">
                     <div className="stat-box">
+                        <div className="stat-icon">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+                        </div>
                         <div className="stat-value">{filteredUsers.length}</div>
                         <div className="stat-label">Total Users</div>
                     </div>
                     <div className="stat-box">
+                        <div className="stat-icon">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+                        </div>
                         <div className="stat-value">{filteredUsers.filter(u => u.is_active).length}</div>
                         <div className="stat-label">Active</div>
                     </div>
                     <div className="stat-box">
+                        <div className="stat-icon">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>
+                        </div>
                         <div className="stat-value">{filteredUsers.filter(u => !u.is_active).length}</div>
                         <div className="stat-label">Inactive</div>
                     </div>

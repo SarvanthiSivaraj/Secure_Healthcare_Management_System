@@ -65,7 +65,7 @@ class StaffInvitation {
     /**
      * Get all invitations (with optional filters)
      */
-    static async getAll({ status = null, invitedBy = null, limit = 50, offset = 0 } = {}) {
+    static async getAll({ status = null, invitedBy = null, organizationId = null, limit = 50, offset = 0 } = {}) {
         let query = `
             SELECT si.*, 
                    u.first_name || ' ' || u.last_name as inviter_name,
@@ -94,11 +94,24 @@ class StaffInvitation {
             paramCount++;
         }
 
+        if (organizationId) {
+            query += ` AND si.organization_id = $${paramCount}`;
+            values.push(organizationId);
+            paramCount++;
+        }
+
         query += ` ORDER BY si.created_at DESC LIMIT $${paramCount} OFFSET $${paramCount + 1};`;
         values.push(limit, offset);
 
         const result = await db.query(query, values);
-        return result.rows;
+
+        // Logically adjust status to EXPIRED if past due
+        return result.rows.map(invitation => {
+            if (invitation.status === 'pending' && new Date(invitation.expires_at) < new Date()) {
+                return { ...invitation, status: 'EXPIRED' };
+            }
+            return invitation;
+        });
     }
 
     /**
@@ -175,6 +188,30 @@ class StaffInvitation {
     }
 
     /**
+     * Reset invitation for resend (new token, pending status, fresh expiry)
+     */
+    static async resetForResend(id, expiresInDays = 7) {
+        const token = crypto.randomBytes(32).toString('hex');
+        const expiresAt = new Date();
+        expiresAt.setDate(expiresAt.getDate() + expiresInDays);
+
+        const query = `
+            UPDATE staff_invitations
+            SET token = $2,
+                status = 'pending',
+                expires_at = $3,
+                cancelled_at = NULL,
+                cancelled_by = NULL,
+                cancellation_reason = NULL
+            WHERE id = $1
+            RETURNING *;
+        `;
+
+        const result = await db.query(query, [id, token, expiresAt]);
+        return result.rows[0];
+    }
+
+    /**
      * Check if email already has pending invitation
      */
     static async hasPendingInvitation(email) {
@@ -193,21 +230,33 @@ class StaffInvitation {
     /**
      * Get invitation statistics
      */
-    static async getStats(invitedBy = null) {
+    static async getStats(filters = {}) {
+        const { invitedBy, organizationId } = filters;
+
         let query = `
             SELECT 
                 COUNT(*) as total,
                 COUNT(*) FILTER (WHERE status = 'pending' AND expires_at > CURRENT_TIMESTAMP) as pending,
                 COUNT(*) FILTER (WHERE status = 'accepted') as accepted,
-                COUNT(*) FILTER (WHERE status = 'expired') as expired,
+                COUNT(*) FILTER (WHERE status = 'expired' OR (status = 'pending' AND expires_at <= CURRENT_TIMESTAMP)) as expired,
                 COUNT(*) FILTER (WHERE status = 'cancelled') as cancelled
             FROM staff_invitations
+            WHERE 1=1
         `;
 
         const values = [];
+        let paramCount = 1;
+
         if (invitedBy) {
-            query += ' WHERE invited_by = $1';
+            query += ` AND invited_by = $${paramCount}`;
             values.push(invitedBy);
+            paramCount++;
+        }
+
+        if (organizationId) {
+            query += ` AND organization_id = $${paramCount}`;
+            values.push(organizationId);
+            paramCount++;
         }
 
         const result = await db.query(query, values);

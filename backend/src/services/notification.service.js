@@ -5,7 +5,6 @@
 
 const pool = require('../config/db');
 const logger = require('../utils/logger');
-const nodemailer = require('nodemailer');
 
 class NotificationService {
     /**
@@ -104,20 +103,10 @@ class NotificationService {
 
             const userEmail = userResult.rows[0].email;
 
-            // Create transporter
-            const transporter = nodemailer.createTransport({
-                host: process.env.EMAIL_HOST,
-                port: process.env.EMAIL_PORT,
-                secure: process.env.EMAIL_SECURE === 'true',
-                auth: {
-                    user: process.env.EMAIL_USER,
-                    pass: process.env.EMAIL_PASSWORD
-                }
-            });
+            const { sendEmail } = require('../config/mail');
 
             // Send email
-            await transporter.sendMail({
-                from: process.env.EMAIL_FROM,
+            await sendEmail({
                 to: userEmail,
                 subject: notification.title,
                 text: notification.message,

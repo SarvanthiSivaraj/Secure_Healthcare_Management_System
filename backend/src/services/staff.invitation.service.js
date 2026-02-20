@@ -1,29 +1,15 @@
 const StaffInvitation = require('../models/staff_invitation.model');
 const AccountAction = require('../models/account_action.model');
 const logger = require('../utils/logger');
-const nodemailer = require('nodemailer');
+const { sendEmail } = require('../config/mail');
 
 /**
  * Staff Invitation Service
  * Handles email-based staff invitation workflow
  */
 class StaffInvitationService {
-    /**
-     * Send staff invitation email
-     */
     static async sendInvitationEmail(invitation, inviterName) {
         try {
-            // Configure email transporter (using environment variables)
-            const transporter = nodemailer.createTransport({
-                host: process.env.EMAIL_HOST || 'smtp.gmail.com',
-                port: process.env.EMAIL_PORT || 587,
-                secure: process.env.EMAIL_SECURE === 'true',
-                auth: {
-                    user: process.env.EMAIL_USER,
-                    pass: process.env.EMAIL_PASSWORD
-                }
-            });
-
             const invitationUrl = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/staff/invitation/${invitation.token}`;
 
             const mailOptions = {
@@ -50,7 +36,12 @@ class StaffInvitationService {
                 `
             };
 
-            await transporter.sendMail(mailOptions);
+            await sendEmail({
+                to: invitation.email,
+                subject: 'You\'re Invited to Join Our Healthcare Team',
+                html: mailOptions.html,
+                text: `Hi there, ${inviterName} has invited you to join our healthcare management system as a ${invitation.role}. Accept your invitation here: ${invitationUrl}`
+            });
             logger.info(`Invitation email sent to ${invitation.email}`);
         } catch (error) {
             logger.error('Error sending invitation email:', error);
@@ -63,17 +54,6 @@ class StaffInvitationService {
      */
     static async sendWelcomeEmail(user, role) {
         try {
-            // Configure email transporter (using environment variables)
-            const transporter = nodemailer.createTransport({
-                host: process.env.EMAIL_HOST || 'smtp.gmail.com',
-                port: process.env.EMAIL_PORT || 587,
-                secure: process.env.EMAIL_SECURE === 'true',
-                auth: {
-                    user: process.env.EMAIL_USER,
-                    pass: process.env.EMAIL_PASSWORD
-                }
-            });
-
             const loginUrl = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/login`;
 
             const mailOptions = {
@@ -102,7 +82,12 @@ class StaffInvitationService {
                 `
             };
 
-            await transporter.sendMail(mailOptions);
+            await sendEmail({
+                to: user.email,
+                subject: 'Welcome to Secure Healthcare - Account Activated',
+                html: mailOptions.html,
+                text: `Hello ${user.first_name}, Your account has been successfully created and activated. You can now log in at ${loginUrl}`
+            });
             logger.info(`Welcome email sent to ${user.email}`);
         } catch (error) {
             logger.error('Error sending welcome email:', error);
@@ -122,7 +107,7 @@ class StaffInvitationService {
             }
 
             const db = require('../config/db');
-            
+
             // Check if user already exists
             const userCheck = await db.query('SELECT id FROM users WHERE email = $1', [email]);
             let userId;
@@ -136,13 +121,14 @@ class StaffInvitationService {
                 // If they exist, they are likely already shown.
                 // We'll proceed to create invitation, but we won't create a NEW user.
                 userId = userCheck.rows[0].id;
-                // We might want to ensure they are active?
-                await db.query("UPDATE users SET status = 'active' WHERE id = $1", [userId]);
+                // Ensure they are pending if they are not active? Or leave as is?
+                // For invitation flow, they should probably be 'pending' if they were 'active'?
+                // Actually, if they exist, they might be already active. Let's not force status change if they exist.
             } else {
-                // Create new user immediately as ACTIVE
+                // Create new user immediately as PENDING
                 // Generate random password
                 const randomPassword = require('crypto').randomBytes(8).toString('hex');
-                const { hashPassword } = require('../services/encryption.service'); // Need this service
+                const { hashPassword } = require('../services/encryption.service');
                 const passwordHash = await hashPassword(randomPassword);
 
                 // Get role ID
@@ -154,11 +140,11 @@ class StaffInvitationService {
 
                 const userQuery = `
                     INSERT INTO users (email, password_hash, role_id, is_verified, status, first_name, last_name)
-                    VALUES ($1, $2, $3, true, 'active', 'Staff', 'Member')
+                    VALUES ($1, $2, $3, false, 'pending', 'Staff', 'Member')
                     RETURNING id;
                 `;
                 // Default name 'Staff Member' until they accept and update it
-                
+
                 const userResult = await db.query(userQuery, [email, passwordHash, roleId]);
                 userId = userResult.rows[0].id;
             }
@@ -273,10 +259,10 @@ class StaffInvitationService {
                     [invitation.email, passwordHash, userData.firstName, userData.lastName, roleId]
                 );
                 userId = userResult.rows[0].id;
-                
+
                 // Create mapping if needed...
                 if (invitation.organization_id) {
-                     await db.query(
+                    await db.query(
                         `INSERT INTO staff_org_mapping (user_id, organization_id, role_id, status)
                          VALUES ($1, $2, $3, 'active')`,
                         [userId, invitation.organization_id, roleId]
@@ -316,14 +302,21 @@ class StaffInvitationService {
      */
     static async resendInvitation(invitationId, inviterName) {
         try {
-            const invitation = await StaffInvitation.getById(invitationId);
+            let invitation = await StaffInvitation.getById(invitationId);
 
             if (!invitation) {
                 throw new Error('Invitation not found');
             }
 
-            if (invitation.status !== 'pending') {
+            // For expired or cancelled invitations, reset them to pending with a new token
+            const allowedStatuses = ['pending', 'expired', 'cancelled'];
+            if (!allowedStatuses.includes(invitation.status)) {
                 throw new Error(`Cannot resend ${invitation.status} invitation`);
+            }
+
+            // Reset if expired or cancelled
+            if (invitation.status === 'expired' || invitation.status === 'cancelled') {
+                invitation = await StaffInvitation.resetForResend(invitationId);
             }
 
             // Send email again
@@ -380,9 +373,9 @@ class StaffInvitationService {
     /**
      * Get invitation statistics
      */
-    static async getStats(invitedBy = null) {
+    static async getStats(filters = {}) {
         try {
-            return await StaffInvitation.getStats(invitedBy);
+            return await StaffInvitation.getStats(filters);
         } catch (error) {
             logger.error('Error getting invitation stats:', error);
             throw error;

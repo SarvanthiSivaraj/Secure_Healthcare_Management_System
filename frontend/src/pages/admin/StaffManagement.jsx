@@ -131,18 +131,30 @@ function StaffManagement() {
                 {stats && (
                     <div className="stats-overview">
                         <div className="stat-item">
+                            <div className="stat-icon">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="8.5" cy="7" r="4"></circle><line x1="20" y1="8" x2="20" y2="14"></line><line x1="17" y1="11" x2="23" y2="11"></line></svg>
+                            </div>
                             <div className="stat-number">{stats.total || 0}</div>
                             <div className="stat-label">Total Invitations</div>
                         </div>
                         <div className="stat-item">
+                            <div className="stat-icon">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                            </div>
                             <div className="stat-number">{stats.pending || 0}</div>
                             <div className="stat-label">Pending</div>
                         </div>
                         <div className="stat-item">
+                            <div className="stat-icon">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                            </div>
                             <div className="stat-number">{stats.accepted || 0}</div>
                             <div className="stat-label">Accepted</div>
                         </div>
                         <div className="stat-item">
+                            <div className="stat-icon">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>
+                            </div>
                             <div className="stat-number">{stats.expired || 0}</div>
                             <div className="stat-label">Expired</div>
                         </div>
@@ -246,7 +258,7 @@ function StaffManagement() {
                                             </td>
                                             <td>
                                                 <div className="action-buttons">
-                                                    {(invitation.status === 'PENDING' || invitation.status === 'pending') && (
+                                                    {(['PENDING', 'EXPIRED', 'CANCELLED'].includes(invitation.status.toUpperCase())) && (
                                                         <>
                                                             <button
                                                                 onClick={() => handleResend(invitation.id)}
@@ -255,13 +267,15 @@ function StaffManagement() {
                                                             >
                                                                 ↻
                                                             </button>
-                                                            <button
-                                                                onClick={() => handleCancel(invitation.id)}
-                                                                className="btn-action btn-cancel"
-                                                                title="Cancel invitation"
-                                                            >
-                                                                ✕
-                                                            </button>
+                                                            {invitation.status.toUpperCase() === 'PENDING' && (
+                                                                <button
+                                                                    onClick={() => handleCancel(invitation.id)}
+                                                                    className="btn-action btn-cancel"
+                                                                    title="Cancel invitation"
+                                                                >
+                                                                    ✕
+                                                                </button>
+                                                            )}
                                                         </>
                                                     )}
                                                 </div>

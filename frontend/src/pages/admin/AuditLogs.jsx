@@ -105,8 +105,8 @@ function AuditLogs() {
                         <h1>System Audit Logs</h1>
                         <p className="header-subtitle">Comprehensive system activity and security audit trails</p>
                     </div>
-                    <Button onClick={() => navigate('/admin/dashboard')} variant="secondary">
-                        Back to Dashboard
+                    <Button onClick={() => navigate('/admin/dashboard')} variant="secondary" className="back-btn">
+                        ← Back
                     </Button>
                 </div>
             </header>

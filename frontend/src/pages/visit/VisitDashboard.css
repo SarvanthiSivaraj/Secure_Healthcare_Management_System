@@ -32,8 +32,9 @@
 
 .header-subtitle {
     margin: 0;
-    color: rgba(255, 255, 255, 0.9);
+    color: #FFFFFF;
     font-size: 14px;
+    opacity: 1;
 }
 
 .header-actions {
