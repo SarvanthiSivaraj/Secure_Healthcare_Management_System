@@ -4,19 +4,19 @@ import './VisitCard.css';
 
 function VisitCard({ visit, onAction, showActions = true, userRole = 'patient' }) {
     const getStatusBadgeClass = (status) => {
-    const normalized = status?.toLowerCase();
+        const normalized = status?.toLowerCase();
 
-    const statusMap = {
-        pending: 'status-scheduled',
-        approved: 'status-scheduled',
-        checked_in: 'status-checked-in',
-        in_progress: 'status-active',
-        completed: 'status-completed',
-        cancelled: 'status-completed',
+        const statusMap = {
+            pending: 'status-scheduled',
+            approved: 'status-scheduled',
+            checked_in: 'status-checked-in',
+            in_progress: 'status-active',
+            completed: 'status-completed',
+            cancelled: 'status-completed',
+        };
+
+        return statusMap[normalized] || 'status-scheduled';
     };
-
-    return statusMap[normalized] || 'status-scheduled';
-};
 
     const getProp = (obj, camel, snake) => obj && (obj[camel] || obj[snake]);
 
@@ -47,52 +47,52 @@ function VisitCard({ visit, onAction, showActions = true, userRole = 'patient' }
     const visitType = getProp(visit, 'visitType', 'type');
 
     return (
-        <div className="visit-card">
-            <div className="visit-card-header">
+        <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-gray-100 dark:border-slate-700 hover:shadow-md hover:border-teal-200 dark:hover:border-teal-400 transition-all p-5 mb-4">
+            <div className="visit-card-header flex justify-between items-start mb-4">
                 <div className="visit-info">
-                  <h3 className="visit-doctor">
-                    {userRole === 'patient'
-                        ? (
-                            visit.doctorName && visit.doctorName !== 'Unassigned'
-                                ? `Dr. ${visit.doctorName}`
-                                : (visit.doctor_first_name
-                                    ? `Dr. ${visit.doctor_first_name} ${visit.doctor_last_name}`
-                                    : 'Pending Assignment')
-                        )
-                        : (
-                            visit.patientName
+                    <h3 className="visit-doctor font-bold text-gray-900 dark:text-white text-lg m-0">
+                        {userRole === 'patient'
+                            ? (
+                                visit.doctorName && visit.doctorName !== 'Unassigned'
+                                    ? `Dr. ${visit.doctorName}`
+                                    : (visit.doctor_first_name
+                                        ? `Dr. ${visit.doctor_first_name} ${visit.doctor_last_name}`
+                                        : 'Pending Assignment')
+                            )
+                            : (
+                                visit.patientName
                                 || (visit.patient_first_name
                                     ? `${visit.patient_first_name} ${visit.patient_last_name}`
                                     : 'Unknown Patient')
-                        )
-                    }
-                </h3>
-                    <p className="visit-specialization">{visit.specialization || 'General Consultation'}</p>
+                            )
+                        }
+                    </h3>
+                    <p className="visit-specialization text-sm text-gray-500 dark:text-gray-400 mt-1 m-0">{visit.specialization || 'General Consultation'}</p>
                 </div>
                 <span className={`visit-status-badge ${getStatusBadgeClass(visit.status)}`}>
                     {visit.status}
                 </span>
             </div>
 
-            <div className="visit-details">
-                <div className="visit-detail-row">
-                      <span className="detail-label">Date</span>
-                     <span className="detail-value">{formatDate(visitDate)}</span>
-                    </div>
-                    <div className="visit-detail-row">
-                    <span className="detail-label">Time</span>
-                        <span className="detail-value">{formatTime(visitDate)}</span>
+            <div className="visit-details grid grid-cols-2 gap-4 my-4 mb-5 pt-4 border-t border-gray-100 dark:border-slate-700">
+                <div className="visit-detail-row flex flex-col">
+                    <span className="detail-label text-xs uppercase tracking-wider text-gray-400 dark:text-gray-500 font-bold mb-1">Date</span>
+                    <span className="detail-value text-sm font-medium text-gray-800 dark:text-gray-200">{formatDate(visitDate)}</span>
+                </div>
+                <div className="visit-detail-row flex flex-col">
+                    <span className="detail-label text-xs uppercase tracking-wider text-gray-400 dark:text-gray-500 font-bold mb-1">Time</span>
+                    <span className="detail-value text-sm font-medium text-gray-800 dark:text-gray-200">{formatTime(visitDate)}</span>
                 </div>
                 {visitCode && userRole === 'patient' && (
-                    <div className="visit-detail-row">
-                        <span className="detail-label">Visit Code</span>
-                        <span className="detail-value visit-code">{visitCode}</span>
+                    <div className="visit-detail-row flex flex-col">
+                        <span className="detail-label text-xs uppercase tracking-wider text-gray-400 dark:text-gray-500 font-bold mb-1">Visit Code</span>
+                        <span className="detail-value visit-code font-mono font-bold text-teal-600 bg-teal-50 dark:bg-slate-700 px-2 py-1 flex max-w-fit rounded leading-none">{visitCode}</span>
                     </div>
                 )}
                 {visitType && (
-                    <div className="visit-detail-row">
-                        <span className="detail-label">Type</span>
-                        <span className="detail-value">{visitType}</span>
+                    <div className="visit-detail-row flex flex-col">
+                        <span className="detail-label text-xs uppercase tracking-wider text-gray-400 dark:text-gray-500 font-bold mb-1">Type</span>
+                        <span className="detail-value text-sm font-medium text-gray-800 dark:text-gray-200">{visitType}</span>
                     </div>
                 )}
             </div>
@@ -118,14 +118,14 @@ function VisitCard({ visit, onAction, showActions = true, userRole = 'patient' }
                     )}
 
                     {(userRole === 'staff' || userRole === 'doctor') &&
-                    visit.status?.toLowerCase() === 'in_progress' && (
-                        <button
-                            className="btn btn-secondary btn-sm"
-                            onClick={() => onAction('close', visit.id)}
-                        >
-                            Close Visit
-                        </button>
-                    )}
+                        visit.status?.toLowerCase() === 'in_progress' && (
+                            <button
+                                className="btn btn-secondary btn-sm"
+                                onClick={() => onAction('close', visit.id)}
+                            >
+                                Close Visit
+                            </button>
+                        )}
                 </div>
             )}
         </div>

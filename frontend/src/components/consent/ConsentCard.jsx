@@ -98,10 +98,10 @@ function ConsentCard({ consent, onRevoke, onEdit }) {
     }, [consent.endTime]);
 
     return (
-        <div className={`consent-card ${isExpired ? 'inactive' : (isActive ? 'active' : 'inactive')}`}>
+        <div className={`consent-card ${isExpired ? 'inactive' : (isActive ? 'active' : 'inactive')} bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-gray-100 dark:border-slate-700 hover:shadow-md hover:border-teal-200 dark:hover:border-teal-400 transition-all p-5`}>
             <div className="consent-header">
                 <div>
-                    <h4>Dr. {consent.recipientName}</h4>
+                    <h4 className="text-gray-900 dark:text-white font-bold">Dr. {consent.recipientName}</h4>
                     <span className="consent-specialization">{consent.specialization}</span>
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
@@ -109,28 +109,28 @@ function ConsentCard({ consent, onRevoke, onEdit }) {
                         {isExpired ? 'EXPIRED' : consent.status}
                     </span>
                     {isActive && consent.endTime && (
-                        <span style={{ fontSize: '0.8rem', color: '#666', marginTop: '4px' }}>
+                        <span className="text-xs text-gray-500 dark:text-gray-400 mt-1 block text-right">
                             {remainingTime}
                         </span>
                     )}
                 </div>
             </div>
-            <div className="consent-details">
+            <div className="consent-details text-gray-700 dark:text-gray-300">
                 <div className="consent-detail-row">
-                    <span className="detail-label">Data Category:</span>
+                    <span className="detail-label font-medium text-gray-500 dark:text-gray-400">Data Category:</span>
                     <span className="detail-value">{formatCategory(consent.dataCategory)}</span>
                 </div>
                 <div className="consent-detail-row">
-                    <span className="detail-label">Purpose:</span>
+                    <span className="detail-label font-medium text-gray-500 dark:text-gray-400">Purpose:</span>
                     <span className="detail-value">{formatPurpose(consent.purpose)}</span>
                 </div>
                 <div className="consent-detail-row">
-                    <span className="detail-label">Access Level:</span>
+                    <span className="detail-label font-medium text-gray-500 dark:text-gray-400">Access Level:</span>
                     <span className="detail-value">{formatAccess(consent.accessLevel)}</span>
                 </div>
             </div>
-            <div className="consent-card-footer">
-                <div className="consent-dates">
+            <div className="consent-card-footer border-t border-gray-100 dark:border-slate-700 pt-3 mt-3">
+                <div className="consent-dates text-xs text-gray-500 dark:text-gray-400 flex flex-col gap-1">
                     <span>From: {formatDate(consent.startTime)}</span>
                     <span className={isExpired ? 'text-danger' : ''}>
                         To: {formatDate(consent.endTime)}

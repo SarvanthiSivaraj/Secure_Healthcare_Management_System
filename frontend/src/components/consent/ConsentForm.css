@@ -4,12 +4,9 @@
    ======================================== */
 
 .consent-form-container {
-    background: var(--white);
     border-radius: var(--radius-xl);
     padding: 32px;
-    box-shadow: var(--shadow-xl);
     margin-bottom: 32px;
-    border: 2px solid var(--primary-blue-light);
     animation: fadeIn 0.5s ease-out;
 }
 

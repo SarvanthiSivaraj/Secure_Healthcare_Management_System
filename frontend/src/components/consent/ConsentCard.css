@@ -4,8 +4,6 @@
    ======================================== */
 
 .consent-card {
-    background: var(--white);
-    border: 2px solid var(--gray-200);
     border-radius: var(--radius-lg);
     padding: 24px;
     margin-bottom: 20px;
@@ -127,7 +125,7 @@
 }
 
 .consent-detail-row:hover {
-    background: var(--gray-50);
+    background: rgba(255, 255, 255, 0.2);
     margin: 0 -8px;
     padding-left: 8px;
     padding-right: 8px;
