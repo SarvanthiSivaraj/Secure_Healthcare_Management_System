@@ -1,0 +1,517 @@
+/* ========================================
+   RADIOLOGY DASHBOARD — #40828D Theme
+   Matches System Admin / Doctor portal palette
+   ======================================== */
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+* {
+  box-sizing: border-box;
+}
+
+.rad-dashboard-container {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #e8f4f6 0%, #f2f9fa 100%);
+  font-family: 'Inter', sans-serif;
+}
+
+/* ========================================
+   HEADER
+   ======================================== */
+.rad-header {
+  background: linear-gradient(135deg, #2d5f68 0%, #40828D 100%);
+  padding: 20px 40px;
+  box-shadow: 0 4px 16px rgba(64, 130, 141, 0.3);
+}
+
+.rad-header-content {
+  max-width: 1400px;
+  margin: 0 auto;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.rad-header-brand {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.rad-header-icon {
+  background: rgba(255, 255, 255, 0.18);
+  border-radius: 10px;
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.rad-header-icon svg {
+  width: 24px;
+  height: 24px;
+  stroke: #fff;
+  fill: none;
+  stroke-width: 1.8;
+}
+
+.rad-header-brand h1 {
+  margin: 0 0 4px 0;
+  color: #fff;
+  font-size: 26px;
+  font-weight: 700;
+  letter-spacing: -0.4px;
+}
+
+.rad-header-subtitle {
+  margin: 0;
+  color: rgba(255, 255, 255, 0.85);
+  font-size: 13px;
+  font-weight: 400;
+}
+
+.rad-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.rad-theme-btn {
+  background: rgba(255, 255, 255, 0.15);
+  border: none;
+  border-radius: 50%;
+  width: 38px;
+  height: 38px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.rad-theme-btn svg {
+  width: 18px;
+  height: 18px;
+  stroke: #fff;
+  fill: none;
+  stroke-width: 2;
+}
+
+.rad-theme-btn:hover {
+  background: rgba(255, 255, 255, 0.25);
+}
+
+.rad-signout-btn {
+  background: rgba(255, 255, 255, 0.15);
+  border: 1.5px solid rgba(255, 255, 255, 0.4);
+  color: #fff;
+  font-size: 14px;
+  font-weight: 500;
+  padding: 8px 22px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.rad-signout-btn:hover {
+  background: rgba(255, 255, 255, 0.28);
+  border-color: rgba(255, 255, 255, 0.7);
+}
+
+/* ========================================
+   CONTENT AREA
+   ======================================== */
+.rad-content {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 32px 40px;
+}
+
+/* ========================================
+   USER INFO BAR
+   ======================================== */
+.rad-user-bar {
+  background: #fff;
+  border-radius: 14px;
+  padding: 22px 32px;
+  margin-bottom: 28px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-shadow: 0 2px 12px rgba(64, 130, 141, 0.08);
+  border: 1.5px solid #c5e2e6;
+}
+
+.rad-user-name {
+  font-size: 20px;
+  font-weight: 700;
+  color: #2d3748;
+  margin-bottom: 4px;
+}
+
+.rad-user-meta {
+  font-size: 13px;
+  color: #6b7280;
+  font-family: 'Courier New', monospace;
+}
+
+.rad-status-badge {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #ecfdf5;
+  border: 1.5px solid #10b981;
+  border-radius: 8px;
+  padding: 8px 18px;
+}
+
+.rad-status-dot {
+  width: 9px;
+  height: 9px;
+  background: #10b981;
+  border-radius: 50%;
+  box-shadow: 0 0 8px rgba(16, 185, 129, 0.7);
+  animation: rad-pulse 2s ease-in-out infinite;
+}
+
+@keyframes rad-pulse {
+
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+
+  50% {
+    opacity: 0.65;
+    transform: scale(1.15);
+  }
+}
+
+.rad-status-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: #059669;
+}
+
+/* ========================================
+   STAT CARDS
+   ======================================== */
+.rad-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 20px;
+  margin-bottom: 36px;
+}
+
+.rad-stat-card {
+  background: linear-gradient(135deg, #4d9aa5 0%, #40828D 100%);
+  border-radius: 14px;
+  padding: 28px 24px;
+  text-align: center;
+  box-shadow: 0 4px 16px rgba(64, 130, 141, 0.28);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  position: relative;
+  overflow: hidden;
+  cursor: default;
+}
+
+.rad-stat-card::before {
+  content: '';
+  position: absolute;
+  top: -40%;
+  right: -30%;
+  width: 180px;
+  height: 180px;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.14) 0%, transparent 70%);
+}
+
+.rad-stat-card:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 10px 28px rgba(64, 130, 141, 0.38);
+}
+
+.rad-stat-icon {
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+.rad-stat-icon svg {
+  width: 28px;
+  height: 28px;
+  stroke: rgba(255, 255, 255, 0.9);
+  fill: none;
+  stroke-width: 1.8;
+}
+
+.rad-stat-number {
+  font-size: 42px;
+  font-weight: 700;
+  color: #fff;
+  line-height: 1;
+  margin-bottom: 8px;
+  position: relative;
+  text-shadow: 0 2px 6px rgba(0, 0, 0, 0.12);
+}
+
+.rad-stat-label {
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.95);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  position: relative;
+}
+
+/* Priority card gets a warm accent */
+.rad-stat-card.priority {
+  background: linear-gradient(135deg, #e67e3a 0%, #c0551b 100%);
+  box-shadow: 0 4px 16px rgba(230, 126, 58, 0.32);
+}
+
+.rad-stat-card.priority:hover {
+  box-shadow: 0 10px 28px rgba(230, 126, 58, 0.42);
+}
+
+/* ========================================
+   SECTION TITLE
+   ======================================== */
+.rad-section {
+  margin-top: 36px;
+}
+
+.rad-section-title {
+  font-size: 18px;
+  font-weight: 700;
+  color: #2d3748;
+  margin: 0 0 18px 0;
+  letter-spacing: -0.2px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.rad-section-title::before {
+  content: '';
+  width: 5px;
+  height: 22px;
+  background: linear-gradient(180deg, #40828D 0%, #2d5f68 100%);
+  border-radius: 4px;
+  display: block;
+}
+
+/* ========================================
+   NAV / SERVICE CARDS GRID
+   ======================================== */
+.rad-nav-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 20px;
+}
+
+.rad-nav-card {
+  background: #fff;
+  border-radius: 14px;
+  padding: 28px 32px;
+  border: 1.5px solid #e2e8f0;
+  cursor: pointer;
+  transition: all 0.28s ease;
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  gap: 18px;
+}
+
+.rad-nav-card::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 5px;
+  background: linear-gradient(180deg, #40828D 0%, #2d5f68 100%);
+  border-radius: 14px 0 0 14px;
+  transform: scaleY(0);
+  transition: transform 0.28s ease;
+}
+
+.rad-nav-card:hover::before {
+  transform: scaleY(1);
+}
+
+.rad-nav-card:hover {
+  border-color: #40828D;
+  box-shadow: 0 8px 28px rgba(64, 130, 141, 0.15);
+  transform: translateY(-4px);
+  background: linear-gradient(135deg, #fff 0%, #f2f9fa 100%);
+}
+
+.rad-nav-card-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #e8f4f6 0%, #c5e2e6 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: background 0.28s;
+}
+
+.rad-nav-card-icon svg {
+  width: 24px;
+  height: 24px;
+  stroke: #40828D;
+  fill: none;
+  stroke-width: 1.8;
+}
+
+.rad-nav-card:hover .rad-nav-card-icon {
+  background: linear-gradient(135deg, #40828D 0%, #2d5f68 100%);
+}
+
+.rad-nav-card:hover .rad-nav-card-icon svg {
+  stroke: #fff;
+}
+
+.rad-nav-card-body {
+  flex: 1;
+}
+
+.rad-nav-card-body h3 {
+  margin: 0 0 6px 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: #2d3748;
+}
+
+.rad-nav-card:hover .rad-nav-card-body h3 {
+  color: #40828D;
+}
+
+.rad-nav-card-body p {
+  margin: 0;
+  font-size: 13px;
+  color: #6b7280;
+  line-height: 1.5;
+}
+
+.rad-nav-arrow {
+  color: #40828D;
+  font-size: 22px;
+  opacity: 0;
+  transform: translateX(-8px);
+  transition: all 0.28s;
+  font-weight: bold;
+}
+
+.rad-nav-card:hover .rad-nav-arrow {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+/* ========================================
+   ACCESS LOG NOTICE
+   ======================================== */
+.rad-access-notice {
+  background: linear-gradient(135deg, #fff8ec 0%, #fff3dc 100%);
+  border: 1.5px solid #f0c060;
+  border-radius: 12px;
+  padding: 14px 22px;
+  margin-bottom: 28px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 13px;
+  color: #7c5a00;
+}
+
+.rad-access-notice svg {
+  width: 18px;
+  height: 18px;
+  stroke: #b8860b;
+  fill: none;
+  stroke-width: 2;
+  flex-shrink: 0;
+}
+
+/* ========================================
+   LOADING / EMPTY STATES
+   ======================================== */
+.rad-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px;
+  color: #40828D;
+  font-size: 15px;
+  gap: 10px;
+}
+
+.rad-spinner {
+  width: 20px;
+  height: 20px;
+  border: 3px solid #c5e2e6;
+  border-top-color: #40828D;
+  border-radius: 50%;
+  animation: rad-spin 0.8s linear infinite;
+}
+
+@keyframes rad-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* ========================================
+   RESPONSIVE
+   ======================================== */
+@media (max-width: 1100px) {
+  .rad-stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .rad-header {
+    padding: 16px 20px;
+  }
+
+  .rad-content {
+    padding: 20px 16px;
+  }
+
+  .rad-header-brand h1 {
+    font-size: 20px;
+  }
+
+  .rad-stats-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+
+  .rad-nav-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .rad-user-bar {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 14px;
+  }
+}
+
+@media (max-width: 480px) {
+  .rad-stats-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .rad-stat-number {
+    font-size: 36px;
+  }
+}

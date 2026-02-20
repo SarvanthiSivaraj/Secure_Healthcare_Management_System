@@ -10,16 +10,18 @@ function DevLogin() {
 
     const mockLogin = (role) => {
         // Create a mock JWT token (just for development)
+        const nameMap = { PATIENT: 'John', DOCTOR: 'Dr. Smith', ADMIN: 'Admin', STAFF: 'Staff', RADIOLOGIST: 'Dr. Ray' };
         const mockUser = {
             id: '123',
             email: `${role.toLowerCase()}@test.com`,
-            role: role,
-            firstName: role === 'PATIENT' ? 'John' : role === 'DOCTOR' ? 'Dr. Smith' : role === 'ADMIN' ? 'Admin' : 'Staff',
+            role: role.toLowerCase(),
+            firstName: nameMap[role] || role,
             lastName: 'User',
             uniqueHealthId: role === 'PATIENT' ? 'UHI-20260203-123456' : undefined,
             professionalId: role === 'DOCTOR' ? 'DOC-123456' : undefined,
             organizationName: role === 'ADMIN' ? 'City Hospital' : undefined,
             staffRole: role === 'STAFF' ? 'Nurse' : undefined,
+            licenseNumber: role === 'RADIOLOGIST' ? 'RAD-2024-001' : role === 'DOCTOR' ? 'MD-2024-789456' : undefined,
         };
 
         // Create a fake JWT token
@@ -44,6 +46,9 @@ function DevLogin() {
                 break;
             case 'STAFF':
                 navigate('/staff/dashboard');
+                break;
+            case 'RADIOLOGIST':
+                navigate('/radiology/dashboard');
                 break;
             default:
                 navigate('/');
@@ -73,6 +78,10 @@ function DevLogin() {
 
                     <Button onClick={() => mockLogin('STAFF')} variant="primary">
                         Login as Staff
+                    </Button>
+
+                    <Button onClick={() => mockLogin('RADIOLOGIST')} variant="primary">
+                        Login as Radiologist
                     </Button>
                 </div>
 
