@@ -2,6 +2,7 @@ import React, { useContext, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AuthContext } from '../../context/AuthContext';
 import Button from '../../components/common/Button';
+import PasskeySetupCard from '../../components/common/PasskeySetupCard';
 import EmergencyToggle from '../../components/emergency/EmergencyToggle';
 import '../patient/Dashboard.css';
 
@@ -28,6 +29,7 @@ function DoctorDashboard() {
                     <div className="user-details">
                         <div className="user-name">Dr. {user?.firstName || 'Sarah'} {user?.lastName || 'Johnson'}</div>
                         <div className="user-id">License: {user?.licenseNumber || 'MD-2024-789456'}</div>
+                        <PasskeySetupCard />
                     </div>
                     <div className="account-status">
                         <span className="status-indicator"></span>
