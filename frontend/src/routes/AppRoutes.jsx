@@ -21,6 +21,8 @@ import ClinicalNotes from '../pages/doctor/ClinicalNotes';
 import NurseDashboard from '../pages/nurse/Dashboard';
 import LabDashboard from '../pages/lab/Dashboard';
 import RadiologistDashboard from '../pages/radiology/Dashboard';
+import ImagingQueue from '../pages/radiology/ImagingQueue';
+import ReportUpload from '../pages/radiology/ReportUpload';
 import NewVisit from '../pages/patient/NewVisit';
 import VisitManagement from '../pages/admin/VisitManagement';
 import VerifyVisitOTP from '../pages/patient/VerifyVisitOTP';
@@ -173,6 +175,24 @@ function AppRoutes() {
                     element={
                         <ProtectedRoute allowedRoles={['radiologist']}>
                             <RadiologistDashboard />
+                        </ProtectedRoute>
+                    }
+                />
+
+                <Route
+                    path="/radiology/queue"
+                    element={
+                        <ProtectedRoute allowedRoles={['radiologist']}>
+                            <ImagingQueue />
+                        </ProtectedRoute>
+                    }
+                />
+
+                <Route
+                    path="/radiology/upload"
+                    element={
+                        <ProtectedRoute allowedRoles={['radiologist']}>
+                            <ReportUpload />
                         </ProtectedRoute>
                     }
                 />

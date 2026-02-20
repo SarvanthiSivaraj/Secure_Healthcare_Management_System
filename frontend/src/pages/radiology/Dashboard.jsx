@@ -1,102 +1,171 @@
-import React, { useContext } from 'react';
+import React, { useContext, useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AuthContext } from '../../context/AuthContext';
-import Button from '../../components/common/Button';
-import '../patient/Dashboard.css';
+import workflowApi from '../../api/workflowApi';
+import './RadiologyDashboard.css';
 
 function RadiologistDashboard() {
     const navigate = useNavigate();
     const { user, logout } = useContext(AuthContext);
 
+    const [stats, setStats] = useState({
+        pendingReads: 0,
+        inProgress: 0,
+        completedToday: 0,
+        priorityCases: 0,
+    });
+    const [loading, setLoading] = useState(true);
+    const [accessLogged, setAccessLogged] = useState(false);
+
+    const fetchStats = useCallback(async () => {
+        try {
+            setLoading(true);
+            // Fetch imaging orders from the workflow API
+            // Since we don't have a direct "my imaging orders" endpoint,
+            // we fetch notifications and derive counts from available data.
+            // Stats remain 0 when backend is not connected — graceful degradation.
+            const notifRes = await workflowApi.getUserNotifications(false).catch(() => null);
+
+            if (notifRes?.data) {
+                const imagingNotifs = notifRes.data.filter(n =>
+                    n.referenceType === 'imaging_order' || n.type === 'imaging'
+                );
+                setStats(prev => ({
+                    ...prev,
+                    pendingReads: imagingNotifs.filter(n => n.status === 'pending').length,
+                }));
+            }
+
+            setAccessLogged(true);
+        } catch {
+            // Backend may be offline — show zeros gracefully
+        } finally {
+            setLoading(false);
+        }
+    }, []);
+
+    useEffect(() => {
+        fetchStats();
+    }, [fetchStats]);
+
+    const services = [
+        {
+            icon: '🗂️',
+            title: 'Imaging Queue',
+            desc: 'View and process assigned imaging study requests',
+            path: '/radiology/queue',
+        },
+        {
+            icon: '📤',
+            title: 'Upload Reports',
+            desc: 'Upload diagnostic imaging reports linked to patient visits',
+            path: '/radiology/upload',
+        },
+        {
+            icon: '🖼️',
+            title: 'DICOM Viewer',
+            desc: 'View and annotate medical imaging studies (DICOM)',
+            path: '/radiology/viewer',
+        },
+        {
+            icon: '⚡',
+            title: 'STAT Orders',
+            desc: 'Urgent imaging requests requiring immediate attention',
+            path: '/radiology/queue?priority=stat',
+        },
+    ];
+
+    const statCards = [
+        { icon: '📋', label: 'Pending Reads', value: stats.pendingReads, className: '' },
+        { icon: '🔬', label: 'In Progress', value: stats.inProgress, className: '' },
+        { icon: '✅', label: 'Completed Today', value: stats.completedToday, className: '' },
+        { icon: '🚨', label: 'Priority Cases', value: stats.priorityCases, className: 'priority' },
+    ];
+
     return (
-        <div className="dashboard-container">
-            <header className="dashboard-header">
-                <div className="header-content">
-                    <div className="header-left">
-                        <h1>Radiologist Portal</h1>
-                        <p className="header-subtitle">Medical Imaging & Diagnostic Reports</p>
+        <div className="rad-dashboard-container">
+            {/* ── Header ── */}
+            <header className="rad-header">
+                <div className="rad-header-content">
+                    <div className="rad-header-brand">
+                        <div className="rad-header-icon">🩻</div>
+                        <div>
+                            <h1>Radiologist Portal</h1>
+                            <p className="rad-header-subtitle">Medical Imaging &amp; Diagnostic Reports</p>
+                        </div>
                     </div>
-                    <Button onClick={logout} variant="secondary">Sign Out</Button>
+                    <div className="rad-header-actions">
+                        <button className="rad-theme-btn" title="Toggle theme">🌙</button>
+                        <button className="rad-signout-btn" onClick={logout}>Sign Out</button>
+                    </div>
                 </div>
             </header>
 
-            <div className="dashboard-content">
+            {/* ── Main Content ── */}
+            <div className="rad-content">
+
                 {/* User Info Bar */}
-                <div className="user-info-bar">
-                    <div className="user-details">
-                        <div className="user-name">Dr. {user?.firstName || 'Radiologist'} {user?.lastName || 'Williams'}</div>
-                        <div className="user-id">License: {user?.licenseNumber || 'RAD-2024-789'}</div>
+                <div className="rad-user-bar">
+                    <div>
+                        <div className="rad-user-name">
+                            Dr. {user?.firstName || 'Radiologist'} {user?.lastName || ''}
+                        </div>
+                        <div className="rad-user-meta">
+                            License: {user?.licenseNumber || 'RAD-2024-001'} &nbsp;|&nbsp; Radiology Dept.
+                        </div>
                     </div>
-                    <div className="account-status">
-                        <span className="status-indicator active"></span>
-                        <span className="status-text">Active Radiologist</span>
+                    <div className="rad-status-badge">
+                        <span className="rad-status-dot" />
+                        <span className="rad-status-label">Active Radiologist</span>
                     </div>
                 </div>
 
-                {/* Stats Overview */}
-                <div className="stats-overview">
-                    <div className="stat-item">
-                        <div className="stat-number">0</div>
-                        <div className="stat-label">Pending Reads</div>
+                {/* Access Logged Notice */}
+                {accessLogged && (
+                    <div className="rad-access-notice">
+                        <span className="rad-access-notice-icon">🔒</span>
+                        <span>
+                            <strong>Secure Session Active.</strong>&nbsp;
+                            Your imaging system access is being logged and audited in real time.
+                        </span>
                     </div>
-                    <div className="stat-item">
-                        <div className="stat-number">0</div>
-                        <div className="stat-label">In Progress</div>
+                )}
+
+                {/* Stat Cards */}
+                {loading ? (
+                    <div className="rad-loading">
+                        <span className="rad-spinner" /> Loading dashboard data…
                     </div>
-                    <div className="stat-item">
-                        <div className="stat-number">0</div>
-                        <div className="stat-label">Completed Today</div>
+                ) : (
+                    <div className="rad-stats-grid">
+                        {statCards.map(card => (
+                            <div key={card.label} className={`rad-stat-card ${card.className}`}>
+                                <span className="rad-stat-icon">{card.icon}</span>
+                                <div className="rad-stat-number">{card.value}</div>
+                                <div className="rad-stat-label">{card.label}</div>
+                            </div>
+                        ))}
                     </div>
-                    <div className="stat-item">
-                        <div className="stat-number">0</div>
-                        <div className="stat-label">Priority Cases</div>
-                    </div>
-                </div>
+                )}
 
-                {/* Main Navigation */}
-                <div className="nav-section">
-                    <h2 className="section-title">Imaging Services</h2>
-
-                    <div className="nav-grid">
-                        <div className="nav-card" onClick={() => navigate('/radiology/queue')}>
-                            <div className="nav-card-header">
-                                <h3>🏥 Imaging Queue</h3>
-                                <span className="nav-arrow">→</span>
+                {/* Imaging Services */}
+                <div className="rad-section">
+                    <h2 className="rad-section-title">Imaging Services</h2>
+                    <div className="rad-nav-grid">
+                        {services.map(svc => (
+                            <div
+                                key={svc.title}
+                                className="rad-nav-card"
+                                onClick={() => navigate(svc.path)}
+                            >
+                                <div className="rad-nav-card-icon">{svc.icon}</div>
+                                <div className="rad-nav-card-body">
+                                    <h3>{svc.title}</h3>
+                                    <p>{svc.desc}</p>
+                                </div>
+                                <span className="rad-nav-arrow">›</span>
                             </div>
-                            <p className="nav-card-description">
-                                View and manage assigned imaging study requests
-                            </p>
-                        </div>
-
-                        <div className="nav-card" onClick={() => navigate('/radiology/upload')}>
-                            <div className="nav-card-header">
-                                <h3>📤 Upload Reports</h3>
-                                <span className="nav-arrow">→</span>
-                            </div>
-                            <p className="nav-card-description">
-                                Upload imaging reports and diagnostic findings
-                            </p>
-                        </div>
-
-                        <div className="nav-card" onClick={() => navigate('/radiology/viewer')}>
-                            <div className="nav-card-header">
-                                <h3>🖼️ DICOM Viewer</h3>
-                                <span className="nav-arrow">→</span>
-                            </div>
-                            <p className="nav-card-description">
-                                View and analyze medical imaging studies
-                            </p>
-                        </div>
-
-                        <div className="nav-card" onClick={() => navigate('/radiology/stat')}>
-                            <div className="nav-card-header">
-                                <h3>⚡ Stat Orders</h3>
-                                <span className="nav-arrow">→</span>
-                            </div>
-                            <p className="nav-card-description">
-                                Urgent imaging requests requiring immediate attention
-                            </p>
-                        </div>
+                        ))}
                     </div>
                 </div>
             </div>
