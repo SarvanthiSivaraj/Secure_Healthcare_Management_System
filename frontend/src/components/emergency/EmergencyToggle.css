@@ -141,6 +141,9 @@
     font-size: 18px;
     cursor: pointer;
     transition: all var(--transition-base);
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .modal-close:hover {
