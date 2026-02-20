@@ -64,8 +64,14 @@ const seed = async () => {
         const orgRes = await pool.query(
             `INSERT INTO organizations (name, type, license_number, status, email, phone, address, hospital_code, verified)
              VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
-             ON CONFLICT (hospital_code) DO UPDATE 
-             SET name = EXCLUDED.name, status = EXCLUDED.status, verified = EXCLUDED.verified
+             ON CONFLICT (license_number) DO UPDATE 
+             SET name = EXCLUDED.name,
+                 status = EXCLUDED.status,
+                 email = EXCLUDED.email,
+                 phone = EXCLUDED.phone,
+                 address = EXCLUDED.address,
+                 hospital_code = EXCLUDED.hospital_code,
+                 verified = EXCLUDED.verified
              RETURNING id`,
             ['General Hospital', 'hospital', 'ORG-001', 'active', 'info@generalhospital.com', '555-0123', '123 Health St', '100001', true]
         );

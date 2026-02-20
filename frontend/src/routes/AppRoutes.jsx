@@ -21,6 +21,8 @@ import ClinicalNotes from '../pages/doctor/ClinicalNotes';
 import NurseDashboard from '../pages/nurse/Dashboard';
 import LabDashboard from '../pages/lab/Dashboard';
 import RadiologistDashboard from '../pages/radiology/Dashboard';
+import ReceptionDashboard from '../pages/reception/Dashboard';
+import PharmacyDashboard from '../pages/pharmacy/Dashboard';
 import NewVisit from '../pages/patient/NewVisit';
 import VisitManagement from '../pages/admin/VisitManagement';
 import VerifyVisitOTP from '../pages/patient/VerifyVisitOTP';
@@ -164,6 +166,24 @@ function AppRoutes() {
                     element={
                         <ProtectedRoute allowedRoles={['lab_tech', 'lab_technician']}>
                             <LabDashboard />
+                        </ProtectedRoute>
+                    }
+                />
+
+                <Route
+                    path="/reception/dashboard"
+                    element={
+                        <ProtectedRoute allowedRoles={['receptionist']}>
+                            <ReceptionDashboard />
+                        </ProtectedRoute>
+                    }
+                />
+
+                <Route
+                    path="/pharmacy/dashboard"
+                    element={
+                        <ProtectedRoute allowedRoles={['pharmacist']}>
+                            <PharmacyDashboard />
                         </ProtectedRoute>
                     }
                 />

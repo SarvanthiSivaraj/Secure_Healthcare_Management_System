@@ -14,7 +14,21 @@ function DevLogin() {
             id: '123',
             email: `${role.toLowerCase()}@test.com`,
             role: role,
-            firstName: role === 'PATIENT' ? 'John' : role === 'DOCTOR' ? 'Dr. Smith' : role === 'ADMIN' ? 'Admin' : 'Staff',
+            firstName: role === 'PATIENT'
+                ? 'John'
+                : role === 'DOCTOR'
+                    ? 'Dr. Smith'
+                    : role === 'ADMIN'
+                        ? 'Admin'
+                        : role === 'NURSE'
+                            ? 'Nurse'
+                            : role === 'LAB_TECHNICIAN'
+                                ? 'Lab'
+                                : role === 'RECEPTIONIST'
+                                    ? 'Reception'
+                                    : role === 'PHARMACIST'
+                                        ? 'Pharmacy'
+                                        : 'Staff',
             lastName: 'User',
             uniqueHealthId: role === 'PATIENT' ? 'UHI-20260203-123456' : undefined,
             professionalId: role === 'DOCTOR' ? 'DOC-123456' : undefined,
@@ -45,6 +59,18 @@ function DevLogin() {
             case 'STAFF':
                 navigate('/staff/dashboard');
                 break;
+            case 'NURSE':
+                navigate('/nurse/dashboard');
+                break;
+            case 'LAB_TECHNICIAN':
+                navigate('/lab/dashboard');
+                break;
+            case 'RECEPTIONIST':
+                navigate('/reception/dashboard');
+                break;
+            case 'PHARMACIST':
+                navigate('/pharmacy/dashboard');
+                break;
             default:
                 navigate('/');
         }
@@ -73,6 +99,22 @@ function DevLogin() {
 
                     <Button onClick={() => mockLogin('STAFF')} variant="primary">
                         Login as Staff
+                    </Button>
+
+                    <Button onClick={() => mockLogin('NURSE')} variant="primary">
+                        Login as Nurse
+                    </Button>
+
+                    <Button onClick={() => mockLogin('LAB_TECHNICIAN')} variant="primary">
+                        Login as Lab Technician
+                    </Button>
+
+                    <Button onClick={() => mockLogin('RECEPTIONIST')} variant="primary">
+                        Login as Receptionist
+                    </Button>
+
+                    <Button onClick={() => mockLogin('PHARMACIST')} variant="primary">
+                        Login as Pharmacist
                     </Button>
                 </div>
 

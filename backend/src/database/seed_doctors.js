@@ -28,9 +28,13 @@ const seedDoctors = async () => {
             const orgRes = await pool.query(
                 `INSERT INTO organizations (name, type, license_number, status, verified, hospital_code)
                      VALUES ($1, $2, $3, $4, $5, $6)
-                     ON CONFLICT (license_number) DO UPDATE SET name = EXCLUDED.name
+                     ON CONFLICT (license_number) DO UPDATE SET
+                         name = EXCLUDED.name,
+                         status = EXCLUDED.status,
+                         verified = EXCLUDED.verified,
+                         hospital_code = EXCLUDED.hospital_code
                      RETURNING id`,
-                ['General Hospital', 'hospital', 'ORG-1001', 'active', true, '10001']
+                ['General Hospital', 'hospital', 'ORG-001', 'active', true, '100001']
             );
             orgId = orgRes.rows[0].id;
         } catch (err) {

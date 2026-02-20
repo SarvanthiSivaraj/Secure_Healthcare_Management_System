@@ -389,3 +389,162 @@
         font-size: 13px;
     }
 }
+
+.dashboard-section {
+    margin-top: 24px;
+}
+
+.dashboard-section-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px;
+}
+
+.dashboard-panel {
+    background: linear-gradient(135deg, #FFFFFF 0%, #F0F9FF 100%);
+    border: 2px solid #BFDBFE;
+    border-radius: 12px;
+    padding: 20px;
+}
+
+.panel-title {
+    margin: 0 0 12px 0;
+    color: #0066CC;
+    font-size: 17px;
+    font-weight: 600;
+}
+
+.data-list {
+    margin: 0;
+    padding-left: 18px;
+    color: #334155;
+    line-height: 1.6;
+    font-size: 14px;
+}
+
+.data-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+}
+
+.data-table th,
+.data-table td {
+    border-bottom: 1px solid #DBEAFE;
+    padding: 10px 8px;
+    text-align: left;
+    color: #334155;
+}
+
+.data-table th {
+    color: #0066CC;
+    font-weight: 600;
+}
+
+.pill-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.status-pill {
+    border: 1px solid #93C5FD;
+    border-radius: 999px;
+    padding: 6px 10px;
+    font-size: 12px;
+    color: #0052A3;
+    background: #EFF6FF;
+}
+
+.readonly-note {
+    margin-top: 12px;
+    color: #64748b;
+    font-size: 12px;
+}
+
+.governance-section {
+    margin-top: 24px;
+}
+
+.governance-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px;
+}
+
+.governance-card {
+    background: linear-gradient(135deg, #FFFFFF 0%, #F0F9FF 100%);
+    border: 2px solid #BFDBFE;
+    border-radius: 12px;
+    padding: 20px;
+}
+
+.governance-card h3 {
+    margin: 0 0 10px 0;
+    color: #0066CC;
+    font-size: 16px;
+}
+
+.governance-list {
+    margin: 0;
+    padding-left: 18px;
+    color: #334155;
+    line-height: 1.6;
+    font-size: 14px;
+}
+
+.governance-banner {
+    margin: 0;
+    font-size: 14px;
+    color: #0052A3;
+    background: #EFF6FF;
+    border: 1px solid #93C5FD;
+    border-radius: 8px;
+    padding: 10px;
+}
+
+.breakglass-panel {
+    margin-top: 20px;
+    background: #FFFFFF;
+    border: 2px solid #BFDBFE;
+    border-radius: 12px;
+    padding: 20px;
+}
+
+.breakglass-panel h3 {
+    margin: 0 0 12px 0;
+    color: #0066CC;
+}
+
+.breakglass-controls {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.breakglass-input {
+    flex: 1;
+    min-width: 260px;
+    border: 1px solid #BFDBFE;
+    border-radius: 8px;
+    padding: 10px;
+    font-size: 14px;
+}
+
+.breakglass-banner {
+    background: #FEE2E2;
+    border: 1px solid #EF4444;
+    color: #991B1B;
+    border-radius: 8px;
+    padding: 10px;
+    margin-bottom: 12px;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+@media (max-width: 768px) {
+    .dashboard-section-grid,
+    .governance-grid {
+        grid-template-columns: 1fr;
+    }
+}
