@@ -1,5 +1,5 @@
 /* ========================================
-   IMAGING QUEUE — Teal Theme
+   IMAGING QUEUE — #40828D Theme
    ======================================== */
 
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
@@ -10,15 +10,15 @@
 
 .iq-container {
     min-height: 100vh;
-    background: linear-gradient(135deg, #e6f7f6 0%, #f0fdfc 100%);
+    background: linear-gradient(135deg, #e8f4f6 0%, #f2f9fa 100%);
     font-family: 'Inter', sans-serif;
 }
 
 /* Header */
 .iq-header {
-    background: linear-gradient(135deg, #0D7377 0%, #14A085 100%);
+    background: linear-gradient(135deg, #2d5f68 0%, #40828D 100%);
     padding: 18px 40px;
-    box-shadow: 0 4px 16px rgba(13, 115, 119, 0.3);
+    box-shadow: 0 4px 16px rgba(64, 130, 141, 0.3);
 }
 
 .iq-header-content {
@@ -100,6 +100,15 @@
     color: #7c5a00;
 }
 
+.iq-access-notice svg {
+    width: 16px;
+    height: 16px;
+    stroke: #b8860b;
+    fill: none;
+    stroke-width: 2;
+    flex-shrink: 0;
+}
+
 /* Filter Bar */
 .iq-filter-bar {
     display: flex;
@@ -111,8 +120,8 @@
 
 .iq-filter-btn {
     background: #fff;
-    border: 1.5px solid #b2e8e4;
-    color: #0D7377;
+    border: 1.5px solid #c5e2e6;
+    color: #40828D;
     font-size: 13px;
     font-weight: 500;
     padding: 8px 18px;
@@ -125,12 +134,12 @@
 }
 
 .iq-filter-btn:hover {
-    border-color: #14A085;
-    background: #f0fdfc;
+    border-color: #40828D;
+    background: #f2f9fa;
 }
 
 .iq-filter-btn.active {
-    background: linear-gradient(135deg, #14A085, #0D7377);
+    background: linear-gradient(135deg, #40828D, #2d5f68);
     border-color: transparent;
     color: #fff;
 }
@@ -153,8 +162,8 @@
 
 .iq-refresh-btn {
     background: #fff;
-    border: 1.5px solid #b2e8e4;
-    color: #0D7377;
+    border: 1.5px solid #c5e2e6;
+    color: #40828D;
     font-size: 13px;
     padding: 8px 16px;
     border-radius: 8px;
@@ -163,8 +172,8 @@
 }
 
 .iq-refresh-btn:hover {
-    border-color: #14A085;
-    background: #f0fdfc;
+    border-color: #40828D;
+    background: #f2f9fa;
 }
 
 /* Error Banner */
@@ -185,15 +194,15 @@
     justify-content: center;
     padding: 60px 0;
     gap: 12px;
-    color: #14A085;
+    color: #40828D;
     font-size: 15px;
 }
 
 .iq-spinner {
     width: 20px;
     height: 20px;
-    border: 3px solid #b2e8e4;
-    border-top-color: #14A085;
+    border: 3px solid #c5e2e6;
+    border-top-color: #40828D;
     border-radius: 50%;
     animation: iq-spin 0.8s linear infinite;
 }
@@ -236,7 +245,7 @@
 
 .iq-order-card {
     background: #fff;
-    border: 1.5px solid #b2e8e4;
+    border: 1.5px solid #e2e8f0;
     border-radius: 14px;
     padding: 20px 28px;
     display: flex;
@@ -244,12 +253,12 @@
     align-items: center;
     gap: 16px;
     transition: all 0.25s;
-    box-shadow: 0 2px 8px rgba(13, 115, 119, 0.06);
+    box-shadow: 0 2px 8px rgba(64, 130, 141, 0.06);
 }
 
 .iq-order-card:hover {
-    border-color: #14A085;
-    box-shadow: 0 6px 20px rgba(13, 115, 119, 0.14);
+    border-color: #40828D;
+    box-shadow: 0 6px 20px rgba(64, 130, 141, 0.14);
     transform: translateY(-2px);
 }
 
@@ -264,12 +273,19 @@
     width: 52px;
     height: 52px;
     border-radius: 12px;
-    background: linear-gradient(135deg, #d1faf5, #b2ece4);
+    background: linear-gradient(135deg, #e8f4f6, #c5e2e6);
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 24px;
     flex-shrink: 0;
+}
+
+.iq-imaging-icon svg {
+    width: 24px;
+    height: 24px;
+    stroke: #40828D;
+    fill: none;
+    stroke-width: 1.8;
 }
 
 .iq-order-patient {
@@ -281,7 +297,7 @@
 
 .iq-order-type {
     font-size: 14px;
-    color: #0D7377;
+    color: #40828D;
     font-weight: 600;
     margin-bottom: 4px;
 }
@@ -343,9 +359,9 @@
 }
 
 .iq-status-badge.in_progress {
-    background: #d1faf5;
-    color: #0D7377;
-    border: 1.5px solid #32E0C4;
+    background: #e8f4f6;
+    color: #2d5f68;
+    border: 1.5px solid #40828D;
 }
 
 .iq-status-badge.completed {
@@ -362,7 +378,7 @@
 
 /* Action Button */
 .iq-action-btn {
-    background: linear-gradient(135deg, #14A085, #0D7377);
+    background: linear-gradient(135deg, #40828D, #2d5f68);
     color: #fff;
     border: none;
     border-radius: 8px;
@@ -376,7 +392,7 @@
 
 .iq-action-btn:hover {
     transform: translateY(-2px);
-    box-shadow: 0 4px 14px rgba(13, 115, 119, 0.35);
+    box-shadow: 0 4px 14px rgba(64, 130, 141, 0.35);
 }
 
 .iq-completed-label {

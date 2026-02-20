@@ -6,6 +6,30 @@ import './ReportUpload.css';
 
 const IMAGING_TYPES = ['X-Ray', 'CT Scan', 'MRI', 'Ultrasound', 'PET Scan', 'Mammogram', 'DICOM', 'Other'];
 
+/* ── SVG Icons ── */
+const IconShield = () => (
+    <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+    </svg>
+);
+const IconUploadCloud = () => (
+    <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+        <polyline points="16 16 12 12 8 16" /><line x1="12" y1="12" x2="12" y2="21" />
+        <path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3" />
+    </svg>
+);
+const IconFileText = () => (
+    <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+        <polyline points="14 2 14 8 20 8" /><line x1="16" y1="13" x2="8" y2="13" /><line x1="16" y1="17" x2="8" y2="17" /><polyline points="10 9 9 9 8 9" />
+    </svg>
+);
+const IconUpload = () => (
+    <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="17 8 12 3 7 8" /><line x1="12" y1="3" x2="12" y2="15" />
+    </svg>
+);
+
 function ReportUpload() {
     const navigate = useNavigate();
     const [searchParams] = useSearchParams();
@@ -33,7 +57,7 @@ function ReportUpload() {
     const [file, setFile] = useState(null);
     const [dragOver, setDragOver] = useState(false);
     const [submitting, setSubmitting] = useState(false);
-    const [result, setResult] = useState(null); // { success, message }
+    const [result, setResult] = useState(null);
     const [errors, setErrors] = useState({});
 
     const handleChange = (e) => {
@@ -44,7 +68,6 @@ function ReportUpload() {
 
     const handleFile = (f) => {
         if (!f) return;
-        const allowedTypes = ['application/pdf', 'image/jpeg', 'image/png', 'image/dicom', 'application/dicom'];
         const maxSize = 20 * 1024 * 1024; // 20 MB
         if (f.size > maxSize) {
             setErrors(prev => ({ ...prev, file: 'File size must be under 20 MB.' }));
@@ -98,7 +121,6 @@ function ReportUpload() {
             await emrApi.uploadImagingReport(formData);
 
             setResult({ success: true, message: 'Imaging report uploaded successfully. Access has been logged.' });
-            // Reset form
             setForm(prev => ({ ...prev, findings: '', impression: '', radiologistNotes: '', bodyPart: '' }));
             setFile(null);
         } catch (err) {
@@ -119,7 +141,7 @@ function ReportUpload() {
                             ← Back to Queue
                         </button>
                         <div>
-                            <h1>📤 Upload Imaging Report</h1>
+                            <h1>Upload Imaging Report</h1>
                             <p className="ru-header-sub">Reports are securely stored and linked to the patient visit</p>
                         </div>
                     </div>
@@ -130,7 +152,7 @@ function ReportUpload() {
             <div className="ru-content">
                 {/* Access Notice */}
                 <div className="ru-access-notice">
-                    <span>🔒</span>
+                    <IconShield />
                     <span>
                         <strong>Secure Upload:</strong> This report will be cryptographically linked to the patient visit
                         and your radiologist ID. Uploads are immutable and fully audited.
@@ -140,7 +162,7 @@ function ReportUpload() {
                 {/* Success / Error Result */}
                 {result && (
                     <div className={`ru-result-banner ${result.success ? 'success' : 'error'}`}>
-                        {result.success ? '✅' : '❌'} {result.message}
+                        {result.success ? '✓' : '✕'} {result.message}
                         {result.success && (
                             <button className="ru-go-queue-btn" onClick={() => navigate('/radiology/queue')}>
                                 Back to Queue →
@@ -152,124 +174,60 @@ function ReportUpload() {
                 <form className="ru-form" onSubmit={handleSubmit} noValidate>
                     {/* Two-column grid */}
                     <div className="ru-form-grid">
-                        {/* Visit ID */}
                         <div className="ru-field">
                             <label className="ru-label">Visit ID <span className="ru-req">*</span></label>
-                            <input
-                                className={`ru-input ${errors.visitId ? 'error' : ''}`}
-                                name="visitId"
-                                value={form.visitId}
-                                onChange={handleChange}
-                                placeholder="e.g. VST-001"
-                            />
+                            <input className={`ru-input ${errors.visitId ? 'error' : ''}`} name="visitId" value={form.visitId} onChange={handleChange} placeholder="e.g. VST-001" />
                             {errors.visitId && <span className="ru-field-error">{errors.visitId}</span>}
                         </div>
 
-                        {/* Order ID */}
                         <div className="ru-field">
                             <label className="ru-label">Imaging Order ID</label>
-                            <input
-                                className="ru-input"
-                                name="orderId"
-                                value={form.orderId}
-                                onChange={handleChange}
-                                placeholder="Auto-filled from queue"
-                            />
+                            <input className="ru-input" name="orderId" value={form.orderId} onChange={handleChange} placeholder="Auto-filled from queue" />
                         </div>
 
-                        {/* Patient Name */}
                         <div className="ru-field">
                             <label className="ru-label">Patient Name</label>
-                            <input
-                                className="ru-input"
-                                name="patientName"
-                                value={form.patientName}
-                                onChange={handleChange}
-                                placeholder="Auto-filled from queue"
-                            />
+                            <input className="ru-input" name="patientName" value={form.patientName} onChange={handleChange} placeholder="Auto-filled from queue" />
                         </div>
 
-                        {/* Study Date */}
                         <div className="ru-field">
                             <label className="ru-label">Study Date</label>
-                            <input
-                                className="ru-input"
-                                type="date"
-                                name="studyDate"
-                                value={form.studyDate}
-                                onChange={handleChange}
-                            />
+                            <input className="ru-input" type="date" name="studyDate" value={form.studyDate} onChange={handleChange} />
                         </div>
 
-                        {/* Imaging Type */}
                         <div className="ru-field">
                             <label className="ru-label">Imaging Type <span className="ru-req">*</span></label>
-                            <select
-                                className={`ru-select ${errors.imagingType ? 'error' : ''}`}
-                                name="imagingType"
-                                value={form.imagingType}
-                                onChange={handleChange}
-                            >
+                            <select className={`ru-select ${errors.imagingType ? 'error' : ''}`} name="imagingType" value={form.imagingType} onChange={handleChange}>
                                 <option value="">— Select type —</option>
-                                {IMAGING_TYPES.map(t => (
-                                    <option key={t} value={t}>{t}</option>
-                                ))}
+                                {IMAGING_TYPES.map(t => (<option key={t} value={t}>{t}</option>))}
                             </select>
                             {errors.imagingType && <span className="ru-field-error">{errors.imagingType}</span>}
                         </div>
 
-                        {/* Body Part */}
                         <div className="ru-field">
                             <label className="ru-label">Body Part / Region</label>
-                            <input
-                                className="ru-input"
-                                name="bodyPart"
-                                value={form.bodyPart}
-                                onChange={handleChange}
-                                placeholder="e.g. Chest, Brain, Abdomen"
-                            />
+                            <input className="ru-input" name="bodyPart" value={form.bodyPart} onChange={handleChange} placeholder="e.g. Chest, Brain, Abdomen" />
                         </div>
                     </div>
 
                     {/* Findings */}
                     <div className="ru-field ru-field-full">
                         <label className="ru-label">Findings <span className="ru-req">*</span></label>
-                        <textarea
-                            className={`ru-textarea ${errors.findings ? 'error' : ''}`}
-                            name="findings"
-                            value={form.findings}
-                            onChange={handleChange}
-                            rows={4}
-                            placeholder="Describe the radiological findings in detail…"
-                        />
+                        <textarea className={`ru-textarea ${errors.findings ? 'error' : ''}`} name="findings" value={form.findings} onChange={handleChange} rows={4} placeholder="Describe the radiological findings in detail…" />
                         {errors.findings && <span className="ru-field-error">{errors.findings}</span>}
                     </div>
 
                     {/* Impression */}
                     <div className="ru-field ru-field-full">
                         <label className="ru-label">Impression <span className="ru-req">*</span></label>
-                        <textarea
-                            className={`ru-textarea ${errors.impression ? 'error' : ''}`}
-                            name="impression"
-                            value={form.impression}
-                            onChange={handleChange}
-                            rows={3}
-                            placeholder="Clinical impression / diagnosis summary…"
-                        />
+                        <textarea className={`ru-textarea ${errors.impression ? 'error' : ''}`} name="impression" value={form.impression} onChange={handleChange} rows={3} placeholder="Clinical impression / diagnosis summary…" />
                         {errors.impression && <span className="ru-field-error">{errors.impression}</span>}
                     </div>
 
                     {/* Radiologist Notes */}
                     <div className="ru-field ru-field-full">
                         <label className="ru-label">Additional Notes</label>
-                        <textarea
-                            className="ru-textarea"
-                            name="radiologistNotes"
-                            value={form.radiologistNotes}
-                            onChange={handleChange}
-                            rows={2}
-                            placeholder="Optional: follow-up recommendations, technical notes…"
-                        />
+                        <textarea className="ru-textarea" name="radiologistNotes" value={form.radiologistNotes} onChange={handleChange} rows={2} placeholder="Optional: follow-up recommendations, technical notes…" />
                     </div>
 
                     {/* File Upload */}
@@ -282,29 +240,19 @@ function ReportUpload() {
                             onDrop={handleDrop}
                             onClick={() => fileInputRef.current?.click()}
                         >
-                            <input
-                                ref={fileInputRef}
-                                type="file"
-                                accept=".pdf,.jpg,.jpeg,.png,.dcm"
-                                style={{ display: 'none' }}
-                                onChange={(e) => handleFile(e.target.files[0])}
-                            />
+                            <input ref={fileInputRef} type="file" accept=".pdf,.jpg,.jpeg,.png,.dcm" style={{ display: 'none' }} onChange={(e) => handleFile(e.target.files[0])} />
                             {file ? (
                                 <div className="ru-file-info">
-                                    <span className="ru-file-icon">📄</span>
+                                    <span className="ru-file-icon"><IconFileText /></span>
                                     <div>
                                         <div className="ru-file-name">{file.name}</div>
                                         <div className="ru-file-size">{(file.size / 1024 / 1024).toFixed(2)} MB</div>
                                     </div>
-                                    <button
-                                        type="button"
-                                        className="ru-remove-file"
-                                        onClick={(e) => { e.stopPropagation(); setFile(null); }}
-                                    >✕</button>
+                                    <button type="button" className="ru-remove-file" onClick={(e) => { e.stopPropagation(); setFile(null); }}>✕</button>
                                 </div>
                             ) : (
                                 <div className="ru-dropzone-placeholder">
-                                    <span className="ru-upload-icon">🩻</span>
+                                    <span className="ru-upload-icon"><IconUploadCloud /></span>
                                     <strong>Drag &amp; drop or click to upload</strong>
                                     <span>Supports PDF, JPEG, PNG, DICOM (.dcm) — max 20 MB</span>
                                 </div>
@@ -315,23 +263,9 @@ function ReportUpload() {
 
                     {/* Submit */}
                     <div className="ru-actions">
-                        <button
-                            type="button"
-                            className="ru-cancel-btn"
-                            onClick={() => navigate('/radiology/queue')}
-                        >
-                            Cancel
-                        </button>
-                        <button
-                            type="submit"
-                            className="ru-submit-btn"
-                            disabled={submitting}
-                        >
-                            {submitting ? (
-                                <><span className="ru-btn-spinner" /> Uploading…</>
-                            ) : (
-                                '📤 Submit Report'
-                            )}
+                        <button type="button" className="ru-cancel-btn" onClick={() => navigate('/radiology/queue')}>Cancel</button>
+                        <button type="submit" className="ru-submit-btn" disabled={submitting}>
+                            {submitting ? (<><span className="ru-btn-spinner" /> Uploading…</>) : 'Submit Report'}
                         </button>
                     </div>
                 </form>

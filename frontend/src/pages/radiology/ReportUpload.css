@@ -1,5 +1,5 @@
 /* ========================================
-   REPORT UPLOAD — Teal Theme
+   REPORT UPLOAD — #40828D Theme
    ======================================== */
 
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
@@ -10,15 +10,15 @@
 
 .ru-container {
     min-height: 100vh;
-    background: linear-gradient(135deg, #e6f7f6 0%, #f0fdfc 100%);
+    background: linear-gradient(135deg, #e8f4f6 0%, #f2f9fa 100%);
     font-family: 'Inter', sans-serif;
 }
 
 /* Header */
 .ru-header {
-    background: linear-gradient(135deg, #0D7377 0%, #14A085 100%);
+    background: linear-gradient(135deg, #2d5f68 0%, #40828D 100%);
     padding: 18px 40px;
-    box-shadow: 0 4px 16px rgba(13, 115, 119, 0.3);
+    box-shadow: 0 4px 16px rgba(64, 130, 141, 0.3);
 }
 
 .ru-header-content {
@@ -101,6 +101,16 @@
     line-height: 1.5;
 }
 
+.ru-access-notice svg {
+    width: 18px;
+    height: 18px;
+    stroke: #b8860b;
+    fill: none;
+    stroke-width: 2;
+    flex-shrink: 0;
+    margin-top: 2px;
+}
+
 /* Result Banner */
 .ru-result-banner {
     border-radius: 12px;
@@ -148,8 +158,8 @@
     background: #fff;
     border-radius: 16px;
     padding: 36px 40px;
-    box-shadow: 0 4px 24px rgba(13, 115, 119, 0.1);
-    border: 1.5px solid #b2e8e4;
+    box-shadow: 0 4px 24px rgba(64, 130, 141, 0.1);
+    border: 1.5px solid #e2e8f0;
 }
 
 .ru-form-grid {
@@ -194,8 +204,8 @@
 
 .ru-input:focus,
 .ru-select:focus {
-    border-color: #14A085;
-    box-shadow: 0 0 0 3px rgba(20, 160, 133, 0.12);
+    border-color: #40828D;
+    box-shadow: 0 0 0 3px rgba(64, 130, 141, 0.12);
 }
 
 .ru-input.error,
@@ -216,8 +226,8 @@
 }
 
 .ru-textarea:focus {
-    border-color: #14A085;
-    box-shadow: 0 0 0 3px rgba(20, 160, 133, 0.12);
+    border-color: #40828D;
+    box-shadow: 0 0 0 3px rgba(64, 130, 141, 0.12);
 }
 
 .ru-textarea.error {
@@ -232,12 +242,12 @@
 
 /* Drop Zone */
 .ru-dropzone {
-    border: 2px dashed #b2e8e4;
+    border: 2px dashed #c5e2e6;
     border-radius: 12px;
     padding: 36px 24px;
     cursor: pointer;
     transition: all 0.25s;
-    background: #f9fffe;
+    background: #fafffe;
     text-align: center;
     min-height: 140px;
     display: flex;
@@ -246,19 +256,19 @@
 }
 
 .ru-dropzone:hover {
-    border-color: #14A085;
-    background: #f0fdfc;
+    border-color: #40828D;
+    background: #f2f9fa;
 }
 
 .ru-dropzone.drag-over {
-    border-color: #0D7377;
-    background: #d1faf5;
-    box-shadow: 0 0 0 4px rgba(13, 115, 119, 0.12);
+    border-color: #2d5f68;
+    background: #e8f4f6;
+    box-shadow: 0 0 0 4px rgba(64, 130, 141, 0.12);
 }
 
 .ru-dropzone.has-file {
-    border-color: #14A085;
-    background: #f0fdfc;
+    border-color: #40828D;
+    background: #f2f9fa;
     border-style: solid;
 }
 
@@ -276,13 +286,22 @@
 }
 
 .ru-upload-icon {
-    font-size: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     margin-bottom: 4px;
-    display: block;
+}
+
+.ru-upload-icon svg {
+    width: 40px;
+    height: 40px;
+    stroke: #40828D;
+    fill: none;
+    stroke-width: 1.5;
 }
 
 .ru-dropzone-placeholder strong {
-    color: #0D7377;
+    color: #40828D;
     font-size: 15px;
 }
 
@@ -295,7 +314,17 @@
 }
 
 .ru-file-icon {
-    font-size: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.ru-file-icon svg {
+    width: 36px;
+    height: 36px;
+    stroke: #40828D;
+    fill: none;
+    stroke-width: 1.5;
 }
 
 .ru-file-name {
@@ -359,7 +388,7 @@
 }
 
 .ru-submit-btn {
-    background: linear-gradient(135deg, #14A085, #0D7377);
+    background: linear-gradient(135deg, #40828D, #2d5f68);
     color: #fff;
     border: none;
     font-size: 14px;
@@ -371,12 +400,12 @@
     align-items: center;
     gap: 8px;
     transition: all 0.2s;
-    box-shadow: 0 2px 10px rgba(13, 115, 119, 0.25);
+    box-shadow: 0 2px 10px rgba(64, 130, 141, 0.25);
 }
 
 .ru-submit-btn:hover:not(:disabled) {
     transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(13, 115, 119, 0.38);
+    box-shadow: 0 6px 20px rgba(64, 130, 141, 0.38);
 }
 
 .ru-submit-btn:disabled {
