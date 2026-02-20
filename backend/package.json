@@ -24,6 +24,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@simplewebauthn/server": "^13.2.2",
     "axios": "^1.13.4",
     "bcrypt": "^5.1.1",
     "cors": "^2.8.5",

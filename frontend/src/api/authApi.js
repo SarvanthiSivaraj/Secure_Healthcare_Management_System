@@ -41,6 +41,32 @@ export const authApi = {
         const response = await apiClient.get('/auth/verify');
         return response.data;
     },
+
+    // ---- Passkey (WebAuthn) APIs ----
+
+    // Generate passkey registration options (requires auth)
+    passkeyRegisterOptions: async () => {
+        const response = await apiClient.post('/auth/passkey/register/options');
+        return response.data;
+    },
+
+    // Verify passkey registration (requires auth)
+    passkeyRegisterVerify: async (credential, credentialName) => {
+        const response = await apiClient.post('/auth/passkey/register/verify', { credential, credentialName });
+        return response.data;
+    },
+
+    // Generate passkey login options (public)
+    passkeyLoginOptions: async (email) => {
+        const response = await apiClient.post('/auth/passkey/login/options', { email });
+        return response.data;
+    },
+
+    // Verify passkey login (public)
+    passkeyLoginVerify: async (email, credential) => {
+        const response = await apiClient.post('/auth/passkey/login/verify', { email, credential });
+        return response.data;
+    },
 };
 
 export default apiClient;

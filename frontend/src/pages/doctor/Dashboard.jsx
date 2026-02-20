@@ -1,6 +1,7 @@
 import React, { useContext, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AuthContext } from '../../context/AuthContext';
+import PasskeySetupCard from '../../components/common/PasskeySetupCard';
 import EmergencyToggle from '../../components/emergency/EmergencyToggle';
 import ThemeToggle from '../../components/common/ThemeToggle';
 
@@ -113,6 +114,7 @@ function DoctorDashboard() {
                         <p className="text-sm text-gray-500 dark:text-dark-muted font-mono mt-1">
                             License: {user?.licenseNumber || 'MD-2024-789456'}
                         </p>
+                        <PasskeySetupCard />
                     </div>
                     <div className="flex items-center gap-2 px-4 py-2 bg-primary-50 dark:bg-primary-900/20 border border-primary-200 dark:border-primary-700 rounded-xl">
                         <span className="w-2.5 h-2.5 rounded-full bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.6)] animate-pulse"></span>

@@ -8,6 +8,7 @@ const logger = require('./utils/logger');
 
 // Import routes
 const authRoutes = require('./modules/auth/auth.routes');
+const passkeyRoutes = require('./modules/auth/passkey.routes');
 const userRoutes = require('./modules/users/user.routes');
 const consentRoutes = require('./modules/consent/consent.routes');
 const emrRoutes = require('./modules/emr/emr.routes');
@@ -63,6 +64,7 @@ app.use('/api', apiLimiter);
 
 // Mount routes (Versioned)
 app.use(`${API_PREFIX}/auth`, authRoutes);
+app.use(`${API_PREFIX}/auth/passkey`, passkeyRoutes);
 app.use(`${API_PREFIX}/users`, userRoutes);
 app.use(`${API_PREFIX}/consent`, consentRoutes);
 app.use(`${API_PREFIX}/emr`, emrRoutes);
@@ -72,6 +74,7 @@ app.use(`${API_PREFIX}/admin`, require('./modules/admin/admin.routes'));
 
 // Mount routes (Legacy /api support for Frontend)
 app.use('/api/auth', authRoutes);
+app.use('/api/auth/passkey', passkeyRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/consent', consentRoutes);
 app.use('/api/emr', emrRoutes);
