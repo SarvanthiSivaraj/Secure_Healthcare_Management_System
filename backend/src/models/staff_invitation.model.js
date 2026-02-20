@@ -188,6 +188,30 @@ class StaffInvitation {
     }
 
     /**
+     * Reset invitation for resend (new token, pending status, fresh expiry)
+     */
+    static async resetForResend(id, expiresInDays = 7) {
+        const token = crypto.randomBytes(32).toString('hex');
+        const expiresAt = new Date();
+        expiresAt.setDate(expiresAt.getDate() + expiresInDays);
+
+        const query = `
+            UPDATE staff_invitations
+            SET token = $2,
+                status = 'pending',
+                expires_at = $3,
+                cancelled_at = NULL,
+                cancelled_by = NULL,
+                cancellation_reason = NULL
+            WHERE id = $1
+            RETURNING *;
+        `;
+
+        const result = await db.query(query, [id, token, expiresAt]);
+        return result.rows[0];
+    }
+
+    /**
      * Check if email already has pending invitation
      */
     static async hasPendingInvitation(email) {

@@ -1,7 +1,7 @@
 const StaffInvitationService = require('../../services/staff.invitation.service');
 const AccountManagementService = require('../../services/account.management.service');
 const asyncHandler = require('../../utils/asyncHandler');
-const bcrypt = require('bcrypt');
+
 
 /**
  * Staff Management Controller
@@ -27,22 +27,29 @@ class StaffController {
         const db = require('../../config/db'); // Import db for query
 
         if (!targetOrgId) {
-            // If not provided, try to get from requester's staff mapping
-            const requesterOrg = await db.query(
-                'SELECT organization_id FROM staff_org_mapping WHERE user_id = $1 AND status = \'active\'',
+            // First, check if requester is an admin of an organization
+            const adminOrg = await db.query(
+                'SELECT id FROM organizations WHERE admin_user_id = $1 LIMIT 1',
                 [req.user.id]
             );
 
-            if (requesterOrg.rows.length > 0) {
-                targetOrgId = requesterOrg.rows[0].organization_id;
+            if (adminOrg.rows.length > 0) {
+                targetOrgId = adminOrg.rows[0].id;
             } else {
-                // If requester has no org (e.g. System Admin) and didn't provide one
-                // For System Admin, we might allow creating invitations without org?
-                // But staff usually needs an org. Let's make it required if not inferred.
-                return res.status(400).json({
-                    success: false,
-                    message: 'Organization ID is required (could not be inferred from your account)'
-                });
+                // Otherwise try to get from requester's staff mapping
+                const requesterOrg = await db.query(
+                    'SELECT organization_id FROM staff_org_mapping WHERE user_id = $1 AND status = \'active\' LIMIT 1',
+                    [req.user.id]
+                );
+
+                if (requesterOrg.rows.length > 0) {
+                    targetOrgId = requesterOrg.rows[0].organization_id;
+                } else {
+                    return res.status(400).json({
+                        success: false,
+                        message: 'Organization ID is required (could not be inferred from your account)'
+                    });
+                }
             }
         }
 
@@ -138,13 +145,11 @@ class StaffController {
             });
         }
 
-        // Hash password
-        const hashedPassword = await bcrypt.hash(password, 10);
-
+        // Pass plain password to service - it handles hashing internally
         const user = await StaffInvitationService.acceptInvitation(token, {
             firstName,
             lastName,
-            password: hashedPassword
+            password
         });
 
         // Remove password from response
