@@ -58,7 +58,7 @@ function PasskeySetupCard() {
                     cursor: 'pointer',
                     fontSize: '13px',
                     fontWeight: '500',
-                    color: '#4f6bed',
+                    color: '#54ACBF',
                     padding: '4px 0',
                     width: '100%',
                 }}
@@ -88,15 +88,27 @@ function PasskeySetupCard() {
                     </p>
 
                     {/* Auth method icons row */}
-                    <div style={{ display: 'flex', gap: '12px', marginBottom: '12px' }}>
+                    <div style={{ display: 'flex', gap: '16px', marginBottom: '12px' }}>
                         {[
-                            { icon: '👆', label: 'Fingerprint' },
-                            { icon: '😊', label: 'Face' },
-                            { icon: '🔢', label: 'PIN' },
-                            { icon: '🔑', label: 'Key' },
+                            {
+                                label: 'Fingerprint',
+                                icon: <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#54ACBF" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M12 11c0 3.517-1.009 6.799-2.753 9.571m-3.44-2.04l.054-.09A13.916 13.916 0 008 11a4 4 0 118 0c0 1.017-.07 2.019-.203 3m-2.118 6.844A21.88 21.88 0 0015.171 17m3.839 1.132c.645-2.266.99-4.659.99-7.132A8 8 0 008 4.07M3 15.364c.64-1.319 1-2.8 1-4.364 0-1.457.39-2.823 1.07-4" /></svg>
+                            },
+                            {
+                                label: 'Face',
+                                icon: <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#54ACBF" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><path d="M8 14s1.5 2 4 2 4-2 4-2" /><line x1="9" y1="9" x2="9.01" y2="9" /><line x1="15" y1="9" x2="15.01" y2="9" /></svg>
+                            },
+                            {
+                                label: 'PIN',
+                                icon: <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#54ACBF" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2" /><path d="M7 11V7a5 5 0 0110 0v4" /></svg>
+                            },
+                            {
+                                label: 'Key',
+                                icon: <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#54ACBF" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 11-7.778 7.778 5.5 5.5 0 017.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4" /></svg>
+                            },
                         ].map(m => (
                             <span key={m.label} style={{ fontSize: '11px', color: '#475569', textAlign: 'center' }}>
-                                <span style={{ fontSize: '16px', display: 'block' }}>{m.icon}</span>
+                                <span style={{ display: 'flex', justifyContent: 'center', marginBottom: '3px' }}>{m.icon}</span>
                                 {m.label}
                             </span>
                         ))}
@@ -104,13 +116,15 @@ function PasskeySetupCard() {
 
                     {/* Status */}
                     {status === 'success' && (
-                        <div style={{ padding: '8px 10px', borderRadius: '6px', background: '#f0fdf4', border: '1px solid #bbf7d0', color: '#166534', fontSize: '12px', marginBottom: '8px' }}>
-                            ✅ {message}
+                        <div style={{ padding: '8px 10px', borderRadius: '6px', background: '#f0fdf4', border: '1px solid #bbf7d0', color: '#166534', fontSize: '12px', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#166534" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>
+                            {message}
                         </div>
                     )}
                     {status === 'error' && (
-                        <div style={{ padding: '8px 10px', borderRadius: '6px', background: '#fef2f2', border: '1px solid #fecaca', color: '#991b1b', fontSize: '12px', marginBottom: '8px' }}>
-                            ⚠️ {message}
+                        <div style={{ padding: '8px 10px', borderRadius: '6px', background: '#fef2f2', border: '1px solid #fecaca', color: '#991b1b', fontSize: '12px', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#991b1b" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" /><line x1="12" y1="9" x2="12" y2="13" /><line x1="12" y1="17" x2="12.01" y2="17" /></svg>
+                            {message}
                         </div>
                     )}
 
@@ -126,7 +140,7 @@ function PasskeySetupCard() {
                                 padding: '7px 14px',
                                 borderRadius: '8px',
                                 border: 'none',
-                                background: 'linear-gradient(135deg, #4f6bed, #3b5de5)',
+                                background: 'linear-gradient(135deg, #54ACBF, #3d8fa0)',
                                 color: 'white',
                                 fontSize: '12px',
                                 fontWeight: '600',

@@ -145,4 +145,8 @@ router.post(
     asyncHandler(authController.logout)
 );
 
+// ---- Passkey (WebAuthn) Routes ----
+const passkeyRoutes = require('./passkey.routes');
+router.use('/passkey', passkeyRoutes);
+
 module.exports = router;
