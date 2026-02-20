@@ -20,9 +20,9 @@
    ======================================== */
 :root {
     /* Primary Colors - Medical Blues */
-    --primary-blue: #0066CC;
-    --primary-blue-dark: #004C99;
-    --primary-blue-light: #3399FF;
+    --primary-blue: #3c23d7;
+    --primary-blue-dark: #28178f;
+    --primary-blue-light: #6366f1;
     --primary-teal: #00A896;
     --primary-teal-dark: #008577;
 
@@ -51,9 +51,9 @@
     --gray-900: #0F172A;
 
     /* Gradients */
-    --gradient-primary: linear-gradient(135deg, #0066CC 0%, #00A896 100%);
-    --gradient-secondary: linear-gradient(135deg, #3399FF 0%, #00C48C 100%);
-    --gradient-subtle: linear-gradient(135deg, #E6F2FF 0%, #E8F5F3 100%);
+    --gradient-primary: linear-gradient(135deg, #3c23d7 0%, #00A896 100%);
+    --gradient-secondary: linear-gradient(135deg, #6366f1 0%, #00C48C 100%);
+    --gradient-subtle: linear-gradient(135deg, #ede9fe 0%, #E8F5F3 100%);
 
     /* Shadows */
     --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);

@@ -13,8 +13,8 @@ const ParticleBackground = () => {
         // Configuration based on theme
         const isDark = theme === 'dark';
         // Increased opacity for better visibility
-        const particleColor = isDark ? 'rgba(139, 92, 246, 0.8)' : 'rgba(14, 165, 233, 0.8)';
-        const lineColor = isDark ? 'rgba(139, 92, 246, 0.2)' : 'rgba(14, 165, 233, 0.2)';
+        const particleColor = isDark ? 'rgba(99, 102, 241, 0.8)' : 'rgba(60, 35, 215, 0.8)';
+        const lineColor = isDark ? 'rgba(99, 102, 241, 0.2)' : 'rgba(60, 35, 215, 0.2)';
         const particleCount = 100; // Slightly reduced count for bigger particles
         const connectionDistance = 150;
         const mouseDistance = 200;
