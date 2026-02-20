@@ -2,6 +2,7 @@ import React, { useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AuthContext } from '../../context/AuthContext';
 import Button from '../../components/common/Button';
+import PasskeySetupCard from '../../components/common/PasskeySetupCard';
 import '../patient/Dashboard.css';
 
 function RadiologistDashboard() {
@@ -26,6 +27,7 @@ function RadiologistDashboard() {
                     <div className="user-details">
                         <div className="user-name">Dr. {user?.firstName || 'Radiologist'} {user?.lastName || 'Williams'}</div>
                         <div className="user-id">License: {user?.licenseNumber || 'RAD-2024-789'}</div>
+                        <PasskeySetupCard />
                     </div>
                     <div className="account-status">
                         <span className="status-indicator active"></span>

@@ -2,6 +2,7 @@ import React, { useContext, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AuthContext } from '../../context/AuthContext';
 import Button from '../../components/common/Button';
+import PasskeySetupCard from '../../components/common/PasskeySetupCard';
 import '../patient/Dashboard.css';
 
 function NurseDashboard() {
@@ -27,6 +28,7 @@ function NurseDashboard() {
                     <div className="user-details">
                         <div className="user-name">{user?.firstName || 'Nurse'} {user?.lastName || 'Smith'}</div>
                         <div className="user-id">ID: {user?.staffId || 'NURSE-2024-001'}</div>
+                        <PasskeySetupCard />
                     </div>
                     <div className="account-status">
                         <span className={`status-indicator ${shiftStatus === 'ON_DUTY' ? 'active' : ''}`}></span>
