@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback, useContext } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { AuthContext } from '../../context/AuthContext';
-import workflowApi from '../../api/workflowApi';
+import { emrApi } from '../../api/emrApi';
 import './ImagingQueue.css';
 
 const STATUS_FILTERS = ['all', 'pending', 'in_progress', 'completed'];
@@ -67,27 +67,28 @@ function ImagingQueue() {
         setLoading(true);
         setError(null);
         try {
-            const result = await workflowApi.getUserNotifications(false).catch(() => null);
+            const result = await emrApi.getMyImagingOrders(
+                activeFilter !== 'all' ? { status: activeFilter } : {}
+            );
 
             if (result?.data && Array.isArray(result.data) && result.data.length > 0) {
-                const imagingNotifs = result.data.filter(n =>
-                    n.referenceType === 'imaging_order' || n.type === 'imaging'
-                );
-                if (imagingNotifs.length > 0) {
-                    setOrders(imagingNotifs.map((n, idx) => ({
-                        id: n.referenceId || `img-${idx}`,
-                        visitId: n.metadata?.visitId || 'N/A',
-                        patientName: n.metadata?.patientName || 'Patient',
-                        imagingType: n.metadata?.imagingType || 'General',
-                        bodyPart: n.metadata?.bodyPart || '—',
-                        priority: n.metadata?.priority || 'routine',
-                        status: n.metadata?.status || 'pending',
-                        orderedBy: n.metadata?.orderedBy || 'Physician',
-                        orderedAt: n.createdAt || n.timestamp,
-                    })));
-                    return;
-                }
+                setOrders(result.data.map((row) => ({
+                    id: row.id,
+                    visitId: row.visit_id || 'N/A',
+                    patientName: row.patient_first_name
+                        ? `${row.patient_first_name} ${row.patient_last_name}`
+                        : 'Patient',
+                    imagingType: row.imaging_type || 'General',
+                    bodyPart: row.body_part || '—',
+                    priority: row.priority || 'routine',
+                    status: row.status || 'ordered',
+                    orderedBy: row.ordered_by_name || 'Physician',
+                    orderedAt: row.created_at,
+                })));
+                return;
             }
+
+            // Backend returned empty — show demo data
             setOrders(getDemoOrders());
         } catch {
             setOrders(getDemoOrders());
@@ -95,7 +96,7 @@ function ImagingQueue() {
         } finally {
             setLoading(false);
         }
-    }, []);
+    }, [activeFilter]);
 
     useEffect(() => {
         fetchOrders();

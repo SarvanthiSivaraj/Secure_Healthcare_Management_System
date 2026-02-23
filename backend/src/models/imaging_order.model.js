@@ -191,6 +191,71 @@ class ImagingOrderModel {
             throw error;
         }
     }
+
+    /**
+     * Get all imaging orders for radiology department (radiologist queue)
+     * @param {Object} options - Query options
+     * @param {String} options.status - Filter by status (optional)
+     * @param {Number} options.limit - Max results (default 100)
+     * @param {Number} options.offset - Offset for pagination (default 0)
+     * @returns {Promise<Array>} Imaging orders with patient and doctor info
+     */
+    static async getAllRadiologyOrders(options = {}) {
+        try {
+            const { status, limit = 100, offset = 0 } = options;
+
+            let query = `
+                SELECT 
+                    io.*,
+                    v.patient_id,
+                    p.first_name AS patient_first_name,
+                    p.last_name AS patient_last_name,
+                    u.first_name || ' ' || u.last_name AS ordered_by_name,
+                    ir.findings AS report_findings,
+                    ir.id AS report_id
+                FROM imaging_orders io
+                INNER JOIN visits v ON io.visit_id = v.id
+                INNER JOIN users p ON v.patient_id = p.id
+                LEFT JOIN users u ON io.ordered_by = u.id
+                LEFT JOIN imaging_reports ir ON io.imaging_report_id = ir.id
+                WHERE io.routed_to_department LIKE 'Radiology%'
+            `;
+
+            const params = [];
+            let paramIndex = 1;
+
+            if (status) {
+                query += ` AND io.status = $${paramIndex}`;
+                params.push(status);
+                paramIndex++;
+            }
+
+            query += `
+                ORDER BY 
+                    CASE io.priority
+                        WHEN 'stat' THEN 1
+                        WHEN 'urgent' THEN 2
+                        WHEN 'routine' THEN 3
+                        ELSE 4
+                    END,
+                    io.created_at DESC
+                LIMIT $${paramIndex} OFFSET $${paramIndex + 1}
+            `;
+            params.push(limit, offset);
+
+            const result = await pool.query(query, params);
+
+            logger.info('Fetched radiology orders', {
+                count: result.rows.length,
+                status: status || 'all'
+            });
+
+            return result.rows;
+        } catch (error) {
+            logger.error('Failed to get radiology orders:', error);
+            throw error;
+        }
+    }
 }
 
 module.exports = ImagingOrderModel;

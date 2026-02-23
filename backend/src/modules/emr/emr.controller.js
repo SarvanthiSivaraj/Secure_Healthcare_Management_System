@@ -546,6 +546,8 @@ class EmrController {
 
     /**
      * Upload imaging report
+     * Accepts either recordId directly, or visitId (auto-resolves to recordId).
+     * If orderId is provided, the imaging order is marked as completed.
      */
     static async uploadImagingReport(req, res) {
         try {
@@ -556,8 +558,10 @@ class EmrController {
                 });
             }
 
-            const {
+            let {
                 recordId,
+                visitId,
+                orderId,
                 imagingType,
                 bodyPart,
                 findings,
@@ -568,12 +572,46 @@ class EmrController {
                 studyDate
             } = req.body;
 
-            // Get patient ID from record
-            const record = await MedicalRecordModel.findById(recordId);
+            // Resolve recordId from visitId if not provided directly
+            let record = null;
+            if (recordId) {
+                record = await MedicalRecordModel.findById(recordId);
+            } else if (visitId) {
+                // Look up the most recent medical record for this visit
+                const records = await MedicalRecordModel.findByVisitId
+                    ? await MedicalRecordModel.findByVisitId(visitId)
+                    : null;
+
+                if (records && records.length > 0) {
+                    record = records[0];
+                    recordId = record.id;
+                } else {
+                    // Auto-create a medical record for this visit so the report can be stored
+                    try {
+                        record = await MedicalRecordModel.create({
+                            visitId,
+                            patientId: null, // Will be resolved from the visit inside the model
+                            type: 'imaging',
+                            title: `Imaging Report - ${imagingType || 'General'}`,
+                            description: `Auto-created for imaging report upload`,
+                            createdBy: req.user.id,
+                            immutableFlag: true
+                        });
+                        recordId = record.id;
+                    } catch (createErr) {
+                        console.warn('Auto-create medical record failed:', createErr.message);
+                        return res.status(400).json({
+                            success: false,
+                            message: 'Could not resolve medical record. Please provide a valid recordId or visitId.'
+                        });
+                    }
+                }
+            }
+
             if (!record) {
                 return res.status(404).json({
                     success: false,
-                    message: 'Medical record not found'
+                    message: 'Medical record not found. Provide a valid recordId or visitId.'
                 });
             }
 
@@ -613,10 +651,22 @@ class EmrController {
                 impression,
                 radiologistNotes,
                 orderedBy: req.user.id,
-                performedBy,
-                reportedBy,
+                performedBy: performedBy || req.user.id,
+                reportedBy: reportedBy || req.user.id,
                 studyDate
             });
+
+            // If an orderId was provided, mark the imaging order as completed
+            if (orderId) {
+                try {
+                    await ImagingOrderModel.updateStatus(orderId, 'completed', {
+                        imagingReportId: imagingReport.id
+                    });
+                } catch (orderErr) {
+                    console.warn('Failed to update imaging order status:', orderErr.message);
+                    // Non-fatal — the report was still uploaded successfully
+                }
+            }
 
             res.status(201).json({
                 success: true,
@@ -680,6 +730,32 @@ class EmrController {
             });
         } catch (error) {
             console.error('Get imaging orders error:', error);
+            res.status(500).json({
+                success: false,
+                message: 'Failed to retrieve imaging orders'
+            });
+        }
+    }
+    /**
+     * Get all imaging orders for the radiologist queue
+     * Returns orders routed to Radiology departments, with patient/doctor info
+     */
+    static async getMyImagingOrders(req, res) {
+        try {
+            const { status, limit, offset } = req.query;
+
+            const orders = await ImagingOrderModel.getAllRadiologyOrders({
+                status,
+                limit: parseInt(limit) || 100,
+                offset: parseInt(offset) || 0
+            });
+
+            res.json({
+                success: true,
+                data: orders
+            });
+        } catch (error) {
+            console.error('Get radiologist imaging orders error:', error);
             res.status(500).json({
                 success: false,
                 message: 'Failed to retrieve imaging orders'
