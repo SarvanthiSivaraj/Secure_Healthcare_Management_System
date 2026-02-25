@@ -16,6 +16,7 @@ const auditRoutes = require('./modules/audit/audit.routes');
 
 // Phase 1: Staff Management routes
 const staffRoutes = require('./modules/staff/staff.routes');
+const nurseRoutes = require('./modules/nurse/nurse.routes');
 const doctorVerificationRoutes = require('./modules/doctors/doctor.verification.routes');
 
 
@@ -64,6 +65,7 @@ app.use('/api', apiLimiter);
 // Mount routes (Versioned)
 app.use(`${API_PREFIX}/auth`, authRoutes);
 app.use(`${API_PREFIX}/users`, userRoutes);
+app.use(`${API_PREFIX}/nurse`, nurseRoutes);
 app.use(`${API_PREFIX}/consent`, consentRoutes);
 app.use(`${API_PREFIX}/emr`, emrRoutes);
 app.use(`${API_PREFIX}/visits`, require('./modules/visit/visit.routes'));
@@ -83,6 +85,7 @@ app.use('/api/users', userRoutes);
 // Phase 1: Staff Management routes
 app.use(`${API_PREFIX}/staff`, staffRoutes);
 app.use('/api/staff', staffRoutes);
+app.use('/api/nurse', nurseRoutes);
 app.use('/api/doctors/verification', doctorVerificationRoutes);
 app.use('/api/visits', require('./modules/visit/visit.routes'));
 

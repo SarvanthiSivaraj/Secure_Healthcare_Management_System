@@ -337,10 +337,6 @@ function ConsentForm({ onSuccess, onCancel, initialData }) {
                     </button>
                 </div>
             </form>
-            <div className="consent-warning mt-6 p-4 bg-yellow-50 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300 rounded-lg text-sm border border-yellow-100 dark:border-yellow-800/50">
-                ⚠️ <strong className="font-bold">Important:</strong> You can revoke this consent at any time.
-                All access will be logged for your review.
-            </div>
         </div>
     );
 }

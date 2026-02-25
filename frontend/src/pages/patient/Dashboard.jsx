@@ -4,7 +4,6 @@ import { AuthContext } from '../../context/AuthContext';
 import { consentApi } from '../../api/consentApi';
 import { visitApi } from '../../api/visitApi';
 import { emrApi } from '../../api/emrApi';
-import PasskeySetupCard from '../../components/common/PasskeySetupCard';
 import './Dashboard.css';
 
 // Remove image imports and replace with inline SVGs for cleaner Doctor Portal match
@@ -101,8 +100,8 @@ function PatientDashboard() {
                         </div>
                     </div>
 
-                    <PasskeySetupCard />
                 </div>
+
 
                 {/* Stats row - Teal cards like Doctor Portal */}
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -175,7 +174,7 @@ function PatientDashboard() {
                 </div>
 
             </div>
-        </div>
+        </div >
     );
 }
 

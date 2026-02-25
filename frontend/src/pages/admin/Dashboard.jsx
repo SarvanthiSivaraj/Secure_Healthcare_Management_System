@@ -2,7 +2,6 @@ import React, { useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AuthContext } from '../../context/AuthContext';
 import Button from '../../components/common/Button';
-import PasskeySetupCard from '../../components/common/PasskeySetupCard';
 import './AdminDashboard.css';
 
 function AdminDashboard() {
@@ -27,7 +26,6 @@ function AdminDashboard() {
                     <div className="user-details">
                         <div className="user-name">{user?.firstName || 'Admin'} {user?.lastName || 'User'}</div>
                         <div className="user-id">Role: System Administrator</div>
-                        <PasskeySetupCard />
                     </div>
                     <div className="account-status">
                         <span className="status-indicator"></span>

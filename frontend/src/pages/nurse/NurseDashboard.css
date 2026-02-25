@@ -1,0 +1,340 @@
+/* ============================================================
+   Nurse Portal Dashboard — Professional Medical Aesthetic
+   Consistent Branding: #326773 → #438a99 → #54acbf
+   ============================================================ */
+
+.nurse-container {
+    min-height: 100vh;
+    background-color: #f8fafc;
+    font-family: 'Inter', 'Segoe UI', system-ui, -apple-system, sans-serif;
+    color: #1e293b;
+}
+
+/* ── Header ── */
+.nurse-header {
+    background: linear-gradient(135deg, #326773 0%, #438a99 70%, #54acbf 100%);
+    padding: 0 4%;
+    height: 80px;
+    box-shadow: 0 4px 12px rgba(50, 103, 115, 0.15);
+    color: white;
+    display: flex;
+    align-items: center;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+}
+
+.nurse-header-inner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
+.nurse-header-left {
+    display: flex;
+    align-items: center;
+    gap: 1.25rem;
+}
+
+.nurse-header-icon {
+    width: 44px;
+    height: 44px;
+    background: rgba(255, 255, 255, 0.15);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(4px);
+}
+
+.nurse-header-icon svg {
+    width: 24px;
+    height: 24px;
+    color: white;
+}
+
+.nurse-header-text h1 {
+    margin: 0;
+    font-size: 1.5rem;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+}
+
+.nurse-header-text p {
+    margin: 0;
+    font-size: 0.85rem;
+    opacity: 0.9;
+    font-weight: 500;
+}
+
+.nurse-header-right {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.nurse-header-btn {
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: white;
+    padding: 0.6rem 1.2rem;
+    border-radius: 8px;
+    font-size: 0.875rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.nurse-header-btn:hover {
+    background: rgba(255, 255, 255, 0.2);
+    border-color: rgba(255, 255, 255, 0.3);
+    transform: translateY(-1px);
+}
+
+.nurse-header-btn.profile-btn {
+    padding: 0.5rem;
+    width: 40px;
+    height: 40px;
+    justify-content: center;
+}
+
+.nurse-header-btn.signout-btn {
+    background: white;
+    color: #326773;
+}
+
+.nurse-header-btn.signout-btn:hover {
+    background: #f1f5f9;
+    color: #2a5661;
+}
+
+/* ── Main Content ── */
+.nurse-content {
+    max-width: 1200px;
+    margin: 2.5rem auto;
+    padding: 0 4%;
+}
+
+/* ── Info Card ── */
+.nurse-info-card {
+    background: white;
+    border-radius: 16px;
+    padding: 2rem;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+    border: 1px solid #e2e8f0;
+    margin-bottom: 2rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.nurse-user-info h2 {
+    margin: 0 0 0.5rem;
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #0f172a;
+}
+
+.nurse-user-info p {
+    margin: 0;
+    color: #64748b;
+    font-size: 0.95rem;
+    font-weight: 500;
+}
+
+.nurse-status-badge {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    background: #f0fdf4;
+    color: #166534;
+    padding: 0.5rem 1rem;
+    border-radius: 9999px;
+    font-size: 0.875rem;
+    font-weight: 600;
+    border: 1px solid #dcfce7;
+}
+
+.status-dot {
+    width: 8px;
+    height: 8px;
+    background: #22c55e;
+    border-radius: 50%;
+    box-shadow: 0 0 0 4px rgba(34, 197, 94, 0.1);
+}
+
+/* ── Stats ── */
+.nurse-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 3rem;
+}
+
+.nurse-stat-box {
+    background: linear-gradient(135deg, #54acbf 0%, #438a99 100%);
+    border-radius: 20px;
+    padding: 2rem 1.5rem;
+    color: white;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 10px 15px -3px rgba(50, 103, 115, 0.15);
+}
+
+.nurse-stat-box:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 20px 25px -5px rgba(50, 103, 115, 0.25);
+}
+
+.nurse-stat-icon {
+    margin-bottom: 1.25rem;
+    background: rgba(255, 255, 255, 0.2);
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.nurse-stat-icon svg {
+    width: 24px;
+    height: 24px;
+}
+
+.nurse-stat-value {
+    font-size: 2.5rem;
+    font-weight: 800;
+    margin-bottom: 0.25rem;
+    line-height: 1;
+}
+
+.nurse-stat-label {
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    opacity: 0.9;
+}
+
+/* ── Services Section ── */
+.nurse-section-header {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 1.5rem;
+}
+
+.nurse-section-header::before {
+    content: '';
+    display: block;
+    width: 4px;
+    height: 24px;
+    background: #326773;
+    border-radius: 2px;
+}
+
+.nurse-section-header h3 {
+    margin: 0;
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: #0f172a;
+}
+
+.nurse-services-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+    gap: 1.5rem;
+}
+
+.nurse-service-card {
+    background: white;
+    border-radius: 16px;
+    padding: 1.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border: 1px solid #e2e8f0;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.nurse-service-card:hover {
+    border-color: #54acbf;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05);
+    background: #fcfdfe;
+}
+
+.nurse-service-main {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+}
+
+.nurse-service-icon-wrapper {
+    width: 56px;
+    height: 56px;
+    background: #f0fdfa;
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #326773;
+    transition: all 0.2s;
+}
+
+.nurse-service-card:hover .nurse-service-icon-wrapper {
+    background: #326773;
+    color: white;
+}
+
+.nurse-service-info h4 {
+    margin: 0 0 0.25rem;
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: #1e293b;
+}
+
+.nurse-service-info p {
+    margin: 0;
+    font-size: 0.875rem;
+    color: #64748b;
+    line-height: 1.5;
+}
+
+.nurse-service-arrow {
+    color: #cbd5e1;
+    transition: transform 0.2s;
+}
+
+.nurse-service-card:hover .nurse-service-arrow {
+    color: #326773;
+    transform: translateX(4px);
+}
+
+/* ── Responsive ── */
+@media (max-width: 768px) {
+    .nurse-services-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .nurse-header-text p {
+        display: none;
+    }
+
+    .nurse-info-card {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1.5rem;
+    }
+}
