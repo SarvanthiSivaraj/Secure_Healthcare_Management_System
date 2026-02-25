@@ -8,6 +8,7 @@ const ParticleBackground = ({ className = "fixed top-0 left-0 w-full h-full poin
     useEffect(() => {
         const canvas = canvasRef.current;
         const ctx = canvas.getContext('2d');
+        if (!ctx) return; // Exit if context is not available (e.g. in tests)
         let animationFrameId;
 
         // Configuration based on theme
@@ -191,6 +192,10 @@ const ParticleBackground = ({ className = "fixed top-0 left-0 w-full h-full poin
             cancelAnimationFrame(animationFrameId);
         };
     }, [theme]);
+
+    if (process.env.NODE_ENV === 'test') {
+        return null;
+    }
 
     return (
         <canvas

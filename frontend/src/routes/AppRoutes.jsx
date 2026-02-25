@@ -1,5 +1,5 @@
 import React from 'react';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { Routes, Route, Navigate } from 'react-router-dom';
 import Login from '../pages/auth/Login';
 import Register from '../pages/auth/Register';
 import DevLogin from '../pages/auth/DevLogin';
@@ -38,302 +38,300 @@ import Profile from '../pages/common/Profile';
 
 function AppRoutes() {
     return (
-        <BrowserRouter>
-            <Routes>
-                {/* Public Routes */}
-                <Route path="/login" element={<Login />} />
-                <Route path="/dev-login" element={<DevLogin />} />
-                <Route path="/register" element={<Register />} />
-                <Route path="/staff/invitation/:token" element={<AcceptInvitation />} />
+        <Routes>
+            {/* Public Routes */}
+            <Route path="/login" element={<Login />} />
+            <Route path="/dev-login" element={<DevLogin />} />
+            <Route path="/register" element={<Register />} />
+            <Route path="/staff/invitation/:token" element={<AcceptInvitation />} />
 
-                {/* Protected Routes */}
-                <Route
-                    path="/patient/dashboard"
-                    element={
-                        <ProtectedRoute allowedRoles={['patient']}>
-                            <PatientDashboard />
-                        </ProtectedRoute>
-                    }
-                />
+            {/* Protected Routes */}
+            <Route
+                path="/patient/dashboard"
+                element={
+                    <ProtectedRoute allowedRoles={['patient']}>
+                        <PatientDashboard />
+                    </ProtectedRoute>
+                }
+            />
 
-                <Route
-                    path="/doctor/dashboard"
-                    element={
-                        <ProtectedRoute allowedRoles={['doctor']}>
-                            <DoctorDashboard />
-                        </ProtectedRoute>
-                    }
-                />
-                <Route
-                    path="/patient/consent"
-                    element={
-                        <ProtectedRoute allowedRoles={['patient']}>
-                            <Consent />
-                        </ProtectedRoute>
-                    }
-                />
+            <Route
+                path="/doctor/dashboard"
+                element={
+                    <ProtectedRoute allowedRoles={['doctor']}>
+                        <DoctorDashboard />
+                    </ProtectedRoute>
+                }
+            />
+            <Route
+                path="/patient/consent"
+                element={
+                    <ProtectedRoute allowedRoles={['patient']}>
+                        <Consent />
+                    </ProtectedRoute>
+                }
+            />
 
-                <Route
-                    path="/patient/visits"
-                    element={
-                        <ProtectedRoute allowedRoles={['patient']}>
-                            <Visits />
-                        </ProtectedRoute>
-                    }
-                />
+            <Route
+                path="/patient/visits"
+                element={
+                    <ProtectedRoute allowedRoles={['patient']}>
+                        <Visits />
+                    </ProtectedRoute>
+                }
+            />
 
-                <Route
-                    path="/patient/medical-records-view"
-                    element={
-                        <ProtectedRoute allowedRoles={['patient']}>
-                            <MedicalRecordsView />
-                        </ProtectedRoute>
-                    }
-                />
+            <Route
+                path="/patient/medical-records-view"
+                element={
+                    <ProtectedRoute allowedRoles={['patient']}>
+                        <MedicalRecordsView />
+                    </ProtectedRoute>
+                }
+            />
 
-                <Route
-                    path="/staff/visit-queue"
-                    element={
-                        <ProtectedRoute allowedRoles={['staff']}>
-                            <VisitQueue />
-                        </ProtectedRoute>
-                    }
-                />
+            <Route
+                path="/staff/visit-queue"
+                element={
+                    <ProtectedRoute allowedRoles={['staff']}>
+                        <VisitQueue />
+                    </ProtectedRoute>
+                }
+            />
 
-                <Route
-                    path="/doctor/patients"
-                    element={
-                        <ProtectedRoute allowedRoles={['doctor']}>
-                            <PatientRecords />
-                        </ProtectedRoute>
-                    }
-                />
+            <Route
+                path="/doctor/patients"
+                element={
+                    <ProtectedRoute allowedRoles={['doctor']}>
+                        <PatientRecords />
+                    </ProtectedRoute>
+                }
+            />
 
-                <Route
-                    path="/doctor/patients/:id/records"
-                    element={
-                        <ProtectedRoute allowedRoles={['doctor']}>
-                            <PatientMedicalRecords />
-                        </ProtectedRoute>
-                    }
-                />
+            <Route
+                path="/doctor/patients/:id/records"
+                element={
+                    <ProtectedRoute allowedRoles={['doctor']}>
+                        <PatientMedicalRecords />
+                    </ProtectedRoute>
+                }
+            />
 
-                <Route
-                    path="/doctor/consent"
-                    element={
-                        <ProtectedRoute allowedRoles={['doctor']}>
-                            <ConsentRequests />
-                        </ProtectedRoute>
-                    }
-                />
+            <Route
+                path="/doctor/consent"
+                element={
+                    <ProtectedRoute allowedRoles={['doctor']}>
+                        <ConsentRequests />
+                    </ProtectedRoute>
+                }
+            />
 
-                <Route
-                    path="/doctor/notes"
-                    element={
-                        <ProtectedRoute allowedRoles={['doctor']}>
-                            <ClinicalNotes />
-                        </ProtectedRoute>
-                    }
-                />
+            <Route
+                path="/doctor/notes"
+                element={
+                    <ProtectedRoute allowedRoles={['doctor']}>
+                        <ClinicalNotes />
+                    </ProtectedRoute>
+                }
+            />
 
-                <Route
-                    path="/doctor/active-visits"
-                    element={
-                        <ProtectedRoute allowedRoles={['doctor']}>
-                            <ActiveVisits />
-                        </ProtectedRoute>
-                    }
-                />
+            <Route
+                path="/doctor/active-visits"
+                element={
+                    <ProtectedRoute allowedRoles={['doctor']}>
+                        <ActiveVisits />
+                    </ProtectedRoute>
+                }
+            />
 
-                <Route
-                    path="/patient/medical-records"
-                    element={
-                        <ProtectedRoute allowedRoles={['patient']}>
-                            <MedicalRecords />
-                        </ProtectedRoute>
-                    }
-                />
+            <Route
+                path="/patient/medical-records"
+                element={
+                    <ProtectedRoute allowedRoles={['patient']}>
+                        <MedicalRecords />
+                    </ProtectedRoute>
+                }
+            />
 
-                <Route
-                    path="/nurse/dashboard"
-                    element={
-                        <ProtectedRoute allowedRoles={['nurse']}>
-                            <NurseDashboard />
-                        </ProtectedRoute>
-                    }
-                />
+            <Route
+                path="/nurse/dashboard"
+                element={
+                    <ProtectedRoute allowedRoles={['nurse']}>
+                        <NurseDashboard />
+                    </ProtectedRoute>
+                }
+            />
 
-                <Route
-                    path="/lab/dashboard"
-                    element={
-                        <ProtectedRoute allowedRoles={['lab_tech', 'lab_technician']}>
-                            <LabDashboard />
-                        </ProtectedRoute>
-                    }
-                />
+            <Route
+                path="/lab/dashboard"
+                element={
+                    <ProtectedRoute allowedRoles={['lab_tech', 'lab_technician']}>
+                        <LabDashboard />
+                    </ProtectedRoute>
+                }
+            />
 
-                <Route
-                    path="/radiology/dashboard"
-                    element={
-                        <ProtectedRoute allowedRoles={['radiologist']}>
-                            <RadiologistDashboard />
-                        </ProtectedRoute>
-                    }
-                />
+            <Route
+                path="/radiology/dashboard"
+                element={
+                    <ProtectedRoute allowedRoles={['radiologist']}>
+                        <RadiologistDashboard />
+                    </ProtectedRoute>
+                }
+            />
 
-                <Route
-                    path="/radiology/queue"
-                    element={
-                        <ProtectedRoute allowedRoles={['radiologist']}>
-                            <ImagingQueue />
-                        </ProtectedRoute>
-                    }
-                />
+            <Route
+                path="/radiology/queue"
+                element={
+                    <ProtectedRoute allowedRoles={['radiologist']}>
+                        <ImagingQueue />
+                    </ProtectedRoute>
+                }
+            />
 
-                <Route
-                    path="/radiology/upload"
-                    element={
-                        <ProtectedRoute allowedRoles={['radiologist']}>
-                            <ReportUpload />
-                        </ProtectedRoute>
-                    }
-                />
+            <Route
+                path="/radiology/upload"
+                element={
+                    <ProtectedRoute allowedRoles={['radiologist']}>
+                        <ReportUpload />
+                    </ProtectedRoute>
+                }
+            />
 
-                <Route
-                    path="/admin/dashboard"
-                    element={
-                        <ProtectedRoute allowedRoles={['admin', 'hospital_admin', 'system_admin']}>
-                            <HospitalAdminDashboard />
-                        </ProtectedRoute>
-                    }
-                />
+            <Route
+                path="/admin/dashboard"
+                element={
+                    <ProtectedRoute allowedRoles={['admin', 'hospital_admin', 'system_admin']}>
+                        <HospitalAdminDashboard />
+                    </ProtectedRoute>
+                }
+            />
 
-                <Route
-                    path="/patient/visits/new"
-                    element={
-                        <ProtectedRoute allowedRoles={['patient']}>
-                            <NewVisit />
-                        </ProtectedRoute>
-                    }
-                />
+            <Route
+                path="/patient/visits/new"
+                element={
+                    <ProtectedRoute allowedRoles={['patient']}>
+                        <NewVisit />
+                    </ProtectedRoute>
+                }
+            />
 
-                <Route
-                    path="/patient/visits/verify-otp"
-                    element={
-                        <ProtectedRoute allowedRoles={['patient']}>
-                            <VerifyVisitOTP />
-                        </ProtectedRoute>
-                    }
-                />
+            <Route
+                path="/patient/visits/verify-otp"
+                element={
+                    <ProtectedRoute allowedRoles={['patient']}>
+                        <VerifyVisitOTP />
+                    </ProtectedRoute>
+                }
+            />
 
-                <Route
-                    path="/patient/audit-trail"
-                    element={
-                        <ProtectedRoute allowedRoles={['patient']}>
-                            <AuditTrail />
-                        </ProtectedRoute>
-                    }
-                />
+            <Route
+                path="/patient/audit-trail"
+                element={
+                    <ProtectedRoute allowedRoles={['patient']}>
+                        <AuditTrail />
+                    </ProtectedRoute>
+                }
+            />
 
-                <Route
-                    path="/admin/visits"
-                    element={
-                        <ProtectedRoute allowedRoles={['admin', 'hospital_admin', 'system_admin']}>
-                            <VisitManagement />
-                        </ProtectedRoute>
-                    }
-                />
+            <Route
+                path="/admin/visits"
+                element={
+                    <ProtectedRoute allowedRoles={['admin', 'hospital_admin', 'system_admin']}>
+                        <VisitManagement />
+                    </ProtectedRoute>
+                }
+            />
 
-                <Route
-                    path="/admin/staff"
-                    element={
-                        <ProtectedRoute allowedRoles={['admin', 'hospital_admin', 'system_admin']}>
-                            <StaffManagement />
-                        </ProtectedRoute>
-                    }
-                />
+            <Route
+                path="/admin/staff"
+                element={
+                    <ProtectedRoute allowedRoles={['admin', 'hospital_admin', 'system_admin']}>
+                        <StaffManagement />
+                    </ProtectedRoute>
+                }
+            />
 
-                <Route
-                    path="/admin/users"
-                    element={
-                        <ProtectedRoute allowedRoles={['admin', 'hospital_admin', 'system_admin']}>
-                            <UserManagement />
-                        </ProtectedRoute>
-                    }
-                />
+            <Route
+                path="/admin/users"
+                element={
+                    <ProtectedRoute allowedRoles={['admin', 'hospital_admin', 'system_admin']}>
+                        <UserManagement />
+                    </ProtectedRoute>
+                }
+            />
 
-                <Route
-                    path="/admin/audit-logs"
-                    element={
-                        <ProtectedRoute allowedRoles={['admin', 'hospital_admin', 'system_admin']}>
-                            <AuditLogs />
-                        </ProtectedRoute>
-                    }
-                />
+            <Route
+                path="/admin/audit-logs"
+                element={
+                    <ProtectedRoute allowedRoles={['admin', 'hospital_admin', 'system_admin']}>
+                        <AuditLogs />
+                    </ProtectedRoute>
+                }
+            />
 
-                <Route
-                    path="/admin/doctor-registration"
-                    element={
-                        <ProtectedRoute allowedRoles={['admin', 'hospital_admin', 'system_admin']}>
-                            <DoctorRegistration />
-                        </ProtectedRoute>
-                    }
-                />
+            <Route
+                path="/admin/doctor-registration"
+                element={
+                    <ProtectedRoute allowedRoles={['admin', 'hospital_admin', 'system_admin']}>
+                        <DoctorRegistration />
+                    </ProtectedRoute>
+                }
+            />
 
-                <Route
-                    path="/admin/doctor-verification"
-                    element={
-                        <ProtectedRoute allowedRoles={['admin', 'hospital_admin', 'system_admin']}>
-                            <DoctorVerification />
-                        </ProtectedRoute>
-                    }
-                />
+            <Route
+                path="/admin/doctor-verification"
+                element={
+                    <ProtectedRoute allowedRoles={['admin', 'hospital_admin', 'system_admin']}>
+                        <DoctorVerification />
+                    </ProtectedRoute>
+                }
+            />
 
-                <Route
-                    path="/staff/dashboard"
-                    element={
-                        <ProtectedRoute allowedRoles={[
-                            'staff',
-                            'nurse',
-                            'receptionist',
-                            'pharmacist',
-                            'insurance_provider',
-                            'researcher',
-                            'compliance_officer',
-                            'admin',
-                            'hospital_admin',
-                            'system_admin'
-                        ]}>
-                            <StaffDashboard />
-                        </ProtectedRoute>
-                    }
-                />
+            <Route
+                path="/staff/dashboard"
+                element={
+                    <ProtectedRoute allowedRoles={[
+                        'staff',
+                        'nurse',
+                        'receptionist',
+                        'pharmacist',
+                        'insurance_provider',
+                        'researcher',
+                        'compliance_officer',
+                        'admin',
+                        'hospital_admin',
+                        'system_admin'
+                    ]}>
+                        <StaffDashboard />
+                    </ProtectedRoute>
+                }
+            />
 
 
-                <Route
-                    path="/staff/workflow"
-                    element={
-                        <ProtectedRoute allowedRoles={[
-                            'staff', 'nurse', 'doctor', 'admin', 'hospital_admin', 'system_admin'
-                        ]}>
-                            <WorkflowDashboard />
-                        </ProtectedRoute>
-                    }
-                />
+            <Route
+                path="/staff/workflow"
+                element={
+                    <ProtectedRoute allowedRoles={[
+                        'staff', 'nurse', 'doctor', 'admin', 'hospital_admin', 'system_admin'
+                    ]}>
+                        <WorkflowDashboard />
+                    </ProtectedRoute>
+                }
+            />
 
-                <Route
-                    path="/profile"
-                    element={
-                        <ProtectedRoute allowedRoles={['patient', 'doctor', 'staff', 'nurse', 'lab_tech', 'lab_technician', 'radiologist', 'admin', 'hospital_admin', 'system_admin']}>
-                            <Profile />
-                        </ProtectedRoute>
-                    }
-                />
+            <Route
+                path="/profile"
+                element={
+                    <ProtectedRoute allowedRoles={['patient', 'doctor', 'staff', 'nurse', 'lab_tech', 'lab_technician', 'radiologist', 'admin', 'hospital_admin', 'system_admin']}>
+                        <Profile />
+                    </ProtectedRoute>
+                }
+            />
 
-                {/* Default redirect */}
-                <Route path="/" element={<Navigate to="/login" replace />} />
-            </Routes>
-        </BrowserRouter>
+            {/* Default redirect */}
+            <Route path="/" element={<Navigate to="/login" replace />} />
+        </Routes>
     );
 }
 export default AppRoutes;
