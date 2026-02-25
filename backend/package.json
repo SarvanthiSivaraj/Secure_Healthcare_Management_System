@@ -9,7 +9,7 @@
     "db:migrate": "node src/database/migrate.js",
     "db:seed": "node src/database/seed.js",
     "db:setup:all": "node src/database/setup_full_db.js",
-    "test": "vitest run --coverage",
+    "test": "vitest run",
     "test:integration": "jest --testPathPattern=tests/integration",
     "test:vitest": "vitest run",
     "test:vitest:watch": "vitest"
@@ -43,7 +43,6 @@
     "winston": "^3.11.0"
   },
   "devDependencies": {
-    "@vitest/coverage-v8": "^4.0.18",
     "jest": "^29.7.0",
     "nodemon": "^3.0.2",
     "supertest": "^6.3.3",
