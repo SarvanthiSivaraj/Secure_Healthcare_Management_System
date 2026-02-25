@@ -88,11 +88,7 @@ jobs:
           JWT_REFRESH_SECRET: test_jwt_refresh_secret_key_for_ci
           ENCRYPTION_KEY: test_encryption_key_32_chars_long
         run: |
-          if grep -q '"test"' package.json; then
-            npm test -- --ci --coverage --maxWorkers=2 || echo "Tests completed with warnings"
-          else
-            echo "No test script configured"
-          fi
+          npm test
 
       - name: Run integration tests
         working-directory: ./backend
