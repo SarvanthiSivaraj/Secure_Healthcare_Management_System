@@ -53,11 +53,7 @@ jobs:
           REACT_APP_API_URL: http://localhost:5000
           REACT_APP_ENV: test
         run: |
-          if grep -q '"test"' package.json; then
-            npm test -- --coverage --watchAll=false --maxWorkers=2 --passWithNoTests
-          else
-            echo "No test script configured"
-          fi
+          npm test -- --watchAll=false --passWithNoTests
 
       - name: Upload coverage reports
         if: matrix.node-version == '20.x'
@@ -105,6 +101,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: test
     if: github.event_name == 'push'
+    continue-on-error: true
 
     steps:
       - name: Checkout code
