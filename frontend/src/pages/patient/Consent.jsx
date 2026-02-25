@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import Button from '../../components/common/Button';
 import ConsentForm from '../../components/consent/ConsentForm';
 import ConsentCard from '../../components/consent/ConsentCard';
 import { consentApi } from '../../api/consentApi';

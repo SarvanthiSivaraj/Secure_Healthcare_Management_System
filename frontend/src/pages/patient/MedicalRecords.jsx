@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
-import Button from '../../components/common/Button';
 import { AuthContext } from '../../context/AuthContext';
 import { emrApi } from '../../api/emrApi';
 import '../patient/Dashboard.css'; // Shared dashboard theme

@@ -5,7 +5,6 @@ import { authApi } from '../../api/authApi';
 import { startAuthentication } from '@simplewebauthn/browser';
 import ThemeToggle from '../../components/common/ThemeToggle';
 import ParticleBackground from '../../components/common/ParticleBackground';
-import loginBg from '../../assets/images/login-bg.png';
 
 function Login() {
     const navigate = useNavigate();

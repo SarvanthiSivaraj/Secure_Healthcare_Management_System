@@ -4,7 +4,6 @@ import { authApi } from '../../api/authApi';
 import { startRegistration } from '@simplewebauthn/browser';
 import ThemeToggle from '../../components/common/ThemeToggle';
 import ParticleBackground from '../../components/common/ParticleBackground';
-import loginBg from '../../assets/images/login-bg.png';
 
 // Reusable Components matching Login.jsx styles
 const FormInput = ({ label, type = 'text', name, value, onChange, placeholder, required, icon }) => (
@@ -94,7 +93,6 @@ function Register() {
     const [doctorData, setDoctorData] = useState({ regId: '', email: '', phone: '', password: '', confirmPassword: '', degreeCertificate: null, medicalRegCertificate: null });
     const [hospitalData, setHospitalData] = useState({ organizationName: '', organizationType: 'hospital', licenseNumber: '', licenseDocument: null, email: '', phone: '', password: '', confirmPassword: '', address: '', city: '', state: '', country: '', postalCode: '' });
     const [otp, setOtp] = useState('');
-    const [userId, setUserId] = useState(null);
 
     // Handlers (same as before)
     const handlePatientChange = (e) => setPatientData({ ...patientData, [e.target.name]: e.target.value });
@@ -119,7 +117,6 @@ function Register() {
         setLoading(true);
         try {
             const res = await authApi.registerPatient(patientData);
-            setUserId(res.data.userId);
             setStep(2);
             setSuccessMsg(res.message);
         } catch (err) { setError(err.response?.data?.message || 'Registration failed'); } finally { setLoading(false); }
@@ -136,7 +133,6 @@ function Register() {
         Object.keys(doctorData).forEach(key => formData.append(key, doctorData[key]));
         try {
             const res = await authApi.registerDoctor(formData);
-            setUserId(res.data.userId);
             setStep(2);
             setSuccessMsg(res.message);
         } catch (err) { setError(err.response?.data?.message || 'Registration failed'); } finally { setLoading(false); }
@@ -153,7 +149,6 @@ function Register() {
         Object.keys(hospitalData).forEach(key => formData.append(key, hospitalData[key]));
         try {
             const res = await authApi.registerOrganization(formData);
-            setUserId(res.data.userId);
             setStep(2);
             setSuccessMsg(res.message);
         } catch (err) { setError(err.response?.data?.message || 'Registration failed'); } finally { setLoading(false); }

@@ -4,7 +4,6 @@ import { useNavigate } from 'react-router-dom';
 import { visitApi } from '../../api/visitApi';
 import VisitCard from '../../components/visit/VisitCard';
 import CheckInForm from '../../components/visit/CheckInForm';
-import Button from '../../components/common/Button';
 import '../patient/Dashboard.css'; // Shared dashboard theme
 import './Visits.css';
 

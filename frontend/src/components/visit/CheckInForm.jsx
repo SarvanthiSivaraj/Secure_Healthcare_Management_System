@@ -1,6 +1,5 @@
 // CheckInForm Component - Patient visit check-in
 import React, { useState } from 'react';
-import Button from '../common/Button';
 import './CheckInForm.css';
 
 function CheckInForm({ onCheckIn }) {

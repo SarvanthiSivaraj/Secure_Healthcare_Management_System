@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import auditApi from '../../api/auditApi';
-import Button from '../../components/common/Button';
 import '../patient/Dashboard.css'; // Shared dashboard theme
 
 function AuditTrail() {
