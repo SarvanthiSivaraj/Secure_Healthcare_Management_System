@@ -51,7 +51,12 @@ CREATE TABLE IF NOT EXISTS visits (
 CREATE INDEX IF NOT EXISTS idx_visits_patient ON visits(patient_id);
 CREATE INDEX IF NOT EXISTS idx_visits_org ON visits(organization_id);
 CREATE INDEX IF NOT EXISTS idx_visits_status ON visits(status);
-CREATE INDEX IF NOT EXISTS idx_visits_doctor ON visits(assigned_doctor_id);
+DO $$
+BEGIN
+    IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='visits' AND column_name='assigned_doctor_id') THEN
+        CREATE INDEX IF NOT EXISTS idx_visits_doctor ON visits(assigned_doctor_id);
+    END IF;
+END $$;
 
 -- 6. Trigger for updated_at
 DROP TRIGGER IF EXISTS update_visits_updated_at ON visits;

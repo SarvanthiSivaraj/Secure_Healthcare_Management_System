@@ -61,5 +61,6 @@ CREATE TABLE IF NOT EXISTS verification_documents (
 CREATE INDEX IF NOT EXISTS idx_verification_docs_user ON verification_documents(user_id);
 
 -- Triggers for updated_at
+DROP TRIGGER IF EXISTS update_staff_invitations_updated_at ON staff_invitations;
 CREATE TRIGGER update_staff_invitations_updated_at BEFORE UPDATE ON staff_invitations
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();

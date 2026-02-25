@@ -9,6 +9,7 @@ const pool = new Pool({
     database: config.database.name,
     user: config.database.user,
     password: config.database.password,
+    ssl: config.database.host && !config.database.host.includes('localhost') ? { rejectUnauthorized: false } : false,
 });
 
 const seed = async () => {

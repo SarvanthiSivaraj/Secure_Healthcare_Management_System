@@ -2,6 +2,8 @@ const { Pool } = require('pg');
 const logger = require('../utils/logger');
 
 // Database configuration from environment variables
+const isSupabase = process.env.DB_HOST && !process.env.DB_HOST.includes('localhost');
+
 const pool = new Pool({
     host: process.env.DB_HOST || 'localhost',
     port: process.env.DB_PORT || 5432,
@@ -10,7 +12,8 @@ const pool = new Pool({
     password: String(process.env.DB_PASSWORD || ''),
     max: 20, // Maximum number of clients in the pool
     idleTimeoutMillis: 30000,
-    connectionTimeoutMillis: 2000,
+    connectionTimeoutMillis: 10000,
+    ssl: isSupabase ? { rejectUnauthorized: false } : false,
 });
 
 // Force UTC for timestamp parsing to avoid local timezone conversions

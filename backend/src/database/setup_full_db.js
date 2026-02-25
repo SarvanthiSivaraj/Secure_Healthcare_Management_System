@@ -3,12 +3,15 @@ const fs = require('fs');
 const path = require('path');
 require('dotenv').config();
 
+const isSupabase = process.env.DB_HOST && !process.env.DB_HOST.includes('localhost');
+
 const config = {
     host: process.env.DB_HOST || 'localhost',
     port: parseInt(process.env.DB_PORT) || 5432,
     database: process.env.DB_NAME || 'healthcare_db',
     user: process.env.DB_USER || 'postgres',
     password: process.env.DB_PASSWORD,
+    ssl: isSupabase ? { rejectUnauthorized: false } : false,
 };
 
 const runQuery = async (client, query, description) => {

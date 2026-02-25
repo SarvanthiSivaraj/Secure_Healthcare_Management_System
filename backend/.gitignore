@@ -34,3 +34,13 @@ Thumbs.db
 # Build
 dist/
 build/
+
+# Debug & temp scripts (one-off scripts used during development)
+debug_*.js
+check_*.js
+fix_*.js
+test_*.js
+verify_*.js
+*.txt
+seed_error.log
+startup_error.log
