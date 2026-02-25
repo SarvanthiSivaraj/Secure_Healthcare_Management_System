@@ -3,6 +3,7 @@ const router = express.Router();
 const EmrController = require('./emr.controller');
 const { authenticate } = require('../../middleware/auth.middleware');
 const { auditLog } = require('../../middleware/audit.middleware');
+const { requireRole } = require('../../middleware/rbac.middleware');
 const { uploadSingle, handleUploadError } = require('../../middleware/file.upload.middleware');
 
 // ==================== Medical Records ====================
@@ -106,9 +107,24 @@ router.post(
 router.post(
     '/imaging-reports',
     authenticate,
+    requireRole(['radiologist', 'doctor']),
+    auditLog('upload_imaging_report', 'imaging_report'),
     uploadSingle,
     handleUploadError,
     EmrController.uploadImagingReport
+);
+
+/**
+ * @route   GET /api/emr/my-imaging-orders
+ * @desc    Get all imaging orders routed to Radiology (for radiologist queue)
+ * @access  Private (Radiologist, Doctor)
+ */
+router.get(
+    '/my-imaging-orders',
+    authenticate,
+    requireRole(['radiologist', 'doctor']),
+    auditLog('view_imaging_queue', 'imaging_order'),
+    EmrController.getMyImagingOrders
 );
 
 // ==================== Orders (Lab & Imaging) ====================

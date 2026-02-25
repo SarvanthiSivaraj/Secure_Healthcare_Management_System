@@ -94,6 +94,12 @@ export const emrApi = {
         });
         return response.data;
     },
+
+    // Radiologist Queue
+    getMyImagingOrders: async (params = {}) => {
+        const response = await apiClient.get('/emr/my-imaging-orders', { params });
+        return response.data;
+    },
 };
 
 
