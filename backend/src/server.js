@@ -20,10 +20,10 @@ const startServer = async () => {
 
         // Start server
         const server = app.listen(PORT, () => {
-            logger.info(`🚀 Healthcare API Server started on port ${PORT}`);
-            logger.info(`📝 Environment: ${config.nodeEnv}`);
-            logger.info(`🔗 API Base URL: http://localhost:${PORT}/api/${config.apiVersion}`);
-            logger.info(`💚 Health Check: http://localhost:${PORT}/health`);
+            logger.info(` Healthcare API Server started on port ${PORT}`);
+            logger.info(` Environment: ${config.nodeEnv}`);
+            logger.info(` API Base URL: http://localhost:${PORT}/api/${config.apiVersion}`);
+            logger.info(` Health Check: http://localhost:${PORT}/health`);
 
             // Initialize background jobs
             // initializeSessionJobs();
