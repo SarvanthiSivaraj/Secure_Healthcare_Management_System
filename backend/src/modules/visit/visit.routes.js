@@ -11,6 +11,7 @@ router.get('/staff/:role', authenticate, authorize(['hospital_admin', 'system_ad
 // Patient routes
 router.post('/request', authenticate, authorize(['patient']), auditLog('create_visit', 'visit'), VisitController.requestVisit);
 router.post('/:id/verify-otp', authenticate, authorize(['patient']), auditLog('verify_visit_otp', 'visit'), VisitController.verifyVisitOTP);
+router.get('/:id/queue-status', authenticate, authorize(['patient']), VisitController.getQueueStatus);
 
 // Staff/Admin routes
 router.get('/hospital', authenticate, authorize(['hospital_admin', 'system_admin', 'doctor', 'nurse', 'receptionist']), VisitController.getHospitalVisits);

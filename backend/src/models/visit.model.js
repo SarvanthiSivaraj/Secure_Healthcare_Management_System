@@ -13,24 +13,33 @@ class VisitModel {
             reason,
             symptoms,
             type,
-            priority
+            priority,
+            doctorId // newly extracted
         } = visitData;
+
+        const combinedSymptoms = reason && symptoms
+            ? `Reason: ${reason} | Symptoms: ${symptoms}`
+            : (reason || symptoms || null);
+
+        // Generate a random 8-character alphanumeric visit code
+        const visitCode = 'V-' + Math.random().toString(36).substring(2, 8).toUpperCase() + Math.floor(Math.random() * 10);
 
         const query = `
             INSERT INTO visits (
-                patient_id, organization_id, reason, symptoms, type, priority, status
+                patient_id, organization_id, symptoms, type, priority, status, assigned_doctor_id, visit_code
             )
-            VALUES ($1, $2, $3, $4, $5, $6, 'pending')
+            VALUES ($1, $2, $3, $4, $5, 'pending', $6, $7)
             RETURNING *
         `;
 
         const values = [
             patientId,
             organizationId,
-            reason || null,
-            symptoms || null,
+            combinedSymptoms,
             type || 'walk_in',
-            priority || 'normal'
+            priority || 'normal',
+            doctorId || null,
+            visitCode
         ];
         const result = await pool.query(query, values);
         return result.rows[0];
@@ -385,11 +394,11 @@ class VisitModel {
      * @returns {Promise<Array>}
      */
     static async findByAssignedStaff(staffId, role) {
-        let column = '';
+        let roleColumn = '';
         if (role === 'doctor') {
-            column = 'assigned_doctor_id';
+            roleColumn = 'assigned_doctor_id';
         } else if (role === 'nurse') {
-            column = 'assigned_nurse_id';
+            roleColumn = 'assigned_nurse_id';
         } else {
             throw new Error('Invalid role for visit assignment');
         }
@@ -403,9 +412,9 @@ class VisitModel {
             FROM visits v
             LEFT JOIN users p ON v.patient_id = p.id
             LEFT JOIN patient_profiles pp ON v.patient_id = pp.user_id
-            WHERE v.${column} = $1
-            AND v.status NOT IN('completed', 'cancelled')
-            ORDER BY v.created_at ASC
+            WHERE v.${roleColumn} = $1
+            AND v.status IN ('pending', 'approved', 'checked_in', 'in_progress')
+            ORDER BY v.status DESC, v.created_at ASC
             `;
         const result = await pool.query(query, [staffId]);
         return result.rows;
@@ -430,7 +439,7 @@ class VisitModel {
         `;
 
         const result = await pool.query(query, [status, visitId]);
-        
+
         return result.rows[0];
     }
 
@@ -460,6 +469,67 @@ class VisitModel {
 
         const result = await pool.query(query, [visitId]);
         return result.rows;
+    }
+
+    /**
+     * Get the queue position for a specific visit belonging to a doctor
+     * @param {string} visitId 
+     * @param {string} doctorId 
+     * @returns {Promise<Object>} Object containing queue position and ETA
+     */
+    static async getQueuePosition(visitId, doctorId) {
+        try {
+            // First get the visit's creation time
+            const visitResult = await pool.query(
+                'SELECT created_at, status FROM visits WHERE id = $1 AND assigned_doctor_id = $2',
+                [visitId, doctorId]
+            );
+
+            if (visitResult.rows.length === 0) {
+                return null;
+            }
+
+            const visit = visitResult.rows[0];
+
+            if (['completed', 'cancelled', 'closed'].includes(visit.status)) {
+                return { position: 0, total: 0, status: visit.status };
+            }
+
+            // Count how many active/pending visits the doctor has that were created BEFORE this visit
+            // These patients are "ahead" in the queue
+            const aheadResult = await pool.query(`
+                SELECT COUNT(*) as count 
+                FROM visits 
+                WHERE assigned_doctor_id = $1 
+                AND status IN ('pending', 'approved', 'checked_in', 'in_progress')
+                AND created_at <= $2
+            `, [doctorId, visit.created_at]);
+
+            // Count total active/pending visits for the doctor to give "X of Y"
+            const totalResult = await pool.query(`
+                SELECT COUNT(*) as count 
+                FROM visits 
+                WHERE assigned_doctor_id = $1 
+                AND status IN ('pending', 'approved', 'checked_in', 'in_progress')
+            `, [doctorId]);
+
+            const position = parseInt(aheadResult.rows[0].count, 10);
+            const total = parseInt(totalResult.rows[0].count, 10);
+
+            return {
+                position,
+                total,
+                status: visit.status,
+                // Simple ETA: 15 mins per patient ahead
+                eta_minutes: (position - 1) * 15
+            };
+        } catch (error) {
+            // Assuming 'logger' is defined elsewhere or will be handled by a global error handler
+            // If not, this would cause a ReferenceError.
+            // For this task, I'm inserting the code as provided.
+            console.error('Error calculating queue position:', error); // Changed logger.error to console.error for standalone execution
+            throw error;
+        }
     }
 
     /**
