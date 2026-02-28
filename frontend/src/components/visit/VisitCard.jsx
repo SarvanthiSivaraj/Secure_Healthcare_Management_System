@@ -43,7 +43,7 @@ function VisitCard({ visit, onAction, showActions = true, userRole = 'patient' }
     };
 
     const visitDate = getVisitDate();
-    const visitCode = getProp(visit, 'visitCode', 'visit_code');
+    const visitCode = getProp(visit, 'otpCode', 'otp_code');
     const visitType = getProp(visit, 'visitType', 'type');
 
     return (
@@ -83,12 +83,7 @@ function VisitCard({ visit, onAction, showActions = true, userRole = 'patient' }
                     <span className="vc-detail-label text-xs uppercase tracking-wider text-gray-400 dark:text-gray-500 font-bold mb-1">Time</span>
                     <span className="vc-detail-value text-sm font-medium text-gray-800 dark:text-gray-200">{formatTime(visitDate)}</span>
                 </div>
-                {visitCode && userRole === 'patient' && (
-                    <div className="vc-detail-row flex flex-col">
-                        <span className="vc-detail-label text-xs uppercase tracking-wider text-gray-400 dark:text-gray-500 font-bold mb-1">Visit Code</span>
-                        <span className="vc-detail-value visit-code font-mono font-bold text-teal-600 bg-teal-50 dark:bg-slate-700 px-2 py-1 flex max-w-fit rounded leading-none">{visitCode}</span>
-                    </div>
-                )}
+
                 {visitType && (
                     <div className="vc-detail-row flex flex-col">
                         <span className="vc-detail-label text-xs uppercase tracking-wider text-gray-400 dark:text-gray-500 font-bold mb-1">Type</span>

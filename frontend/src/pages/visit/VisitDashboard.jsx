@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import VisitLifecycle from '../../components/visit/VisitLifecycle';
-import Button from '../../components/common/Button';
 import LabRequestForm from '../../components/clinical/LabRequestForm';
 import ImagingRequestForm from '../../components/clinical/ImagingRequestForm';
 import PrescriptionForm from '../../components/clinical/PrescriptionForm';
@@ -12,6 +11,7 @@ import './VisitDashboard.css';
 
 function VisitDashboard() {
     const { visitId } = useParams();
+    const navigate = useNavigate();
     const { user } = useAuth();
     const [visit, setVisit] = useState(null);
     const [loading, setLoading] = useState(true);
@@ -26,25 +26,16 @@ function VisitDashboard() {
     const loadVisitDetails = async () => {
         setLoading(true);
         try {
-            // Fetch visit details
-            // Note: Currently visitApi doesn't have a direct getVisitDetails by ID for all roles.
-            // We might need to rely on getHospitalVisits or add a specific endpoint.
-            // For now, let's assume we can fetch it or filter from list if API is limited.
-            // Ideally: const data = await visitApi.getVisitDetails(visitId);
-
-            // Temporary workaround if specific ID endpoint is missing:
             const visits = await visitApi.getHospitalVisits();
             const foundVisit = visits.data ? visits.data.find(v => v.id === visitId) : null;
 
             if (foundVisit) {
-                // Fetch related medical records (Lab, Imaging, Prescriptions)
                 const [labOrders, imagingOrders, prescriptions] = await Promise.all([
                     emrApi.getVisitLabOrders(visitId).catch(() => []),
                     emrApi.getVisitImagingOrders(visitId).catch(() => []),
                     emrApi.getVisitPrescriptions(visitId).catch(() => [])
                 ]);
 
-                // Construct the visit object with real data
                 setVisit({
                     ...foundVisit,
                     patientName: `${foundVisit.patient_first_name} ${foundVisit.patient_last_name}`,
@@ -92,89 +83,108 @@ function VisitDashboard() {
         alert('Request submitted successfully');
     };
 
-    if (loading) return <div className="loading">Loading visit details...</div>;
-    if (error) return <div className="error">{error}</div>;
-    if (!visit) return <div className="error">Visit not found</div>;
+    const toggleDarkMode = () => {
+        document.documentElement.classList.toggle('dark');
+    };
+
+    if (loading) return (
+        <div className="patient-dashboard-wrapper bg-[var(--background-light)] dark:bg-[var(--background-dark)] flex items-center justify-center p-8">
+            <div className="glass-panel rounded-3xl p-8 text-slate-600 dark:text-slate-300">Loading visit details...</div>
+        </div>
+    );
+    if (error) return (
+        <div className="patient-dashboard-wrapper bg-[var(--background-light)] dark:bg-[var(--background-dark)] flex items-center justify-center p-8">
+            <div className="glass-panel border-rose-500/50 rounded-3xl p-8 text-rose-500">{error}</div>
+        </div>
+    );
+    if (!visit) return (
+        <div className="patient-dashboard-wrapper bg-[var(--background-light)] dark:bg-[var(--background-dark)] flex items-center justify-center p-8">
+            <div className="glass-panel border-rose-500/50 rounded-3xl p-8 text-rose-500">Visit not found</div>
+        </div>
+    );
 
     return (
-        <div className="visit-dashboard">
-            <div className="dashboard-header">
-                <div className="header-content">
-                    <h2>Visit Dashboard</h2>
-                    <p className="header-subtitle">Managing Visit: {visitId}</p>
-                </div>
-                <div className="header-actions">
-                    <Button variant="secondary">Print Summary</Button>
-                    {visit?.status === 'active' && (
-                        <Button variant="danger" onClick={handleCloseVisit}>End Visit</Button>
-                    )}
-                </div>
-            </div>
-
-            <div className="dashboard-content">
-                {/* Patient Info Card */}
-                <div className="patient-info-card">
-                    <div className="info-row">
-                        <div className="info-group">
-                            <span className="info-label">Patient</span>
-                            <span className="info-value">{visit.patientName}</span>
+        <div className="patient-dashboard-wrapper bg-[var(--background-light)] dark:bg-[var(--background-dark)] text-slate-800 dark:text-slate-100 p-4 lg:p-8">
+            <div className="max-w-[1440px] mx-auto glass-panel rounded-3xl min-h-[90vh] shadow-2xl flex overflow-hidden">
+                {/* Left Sidebar */}
+                <aside className="w-64 border-r border-white/20 dark:border-slate-800/50 p-6 flex flex-col">
+                    <div className="flex items-center gap-3 mb-10 px-2">
+                        <div className="w-8 h-8 bg-indigo-500 rounded-lg flex items-center justify-center text-white">
+                            <span className="material-symbols-outlined text-sm">assignment_ind</span>
                         </div>
-                        <div className="info-group">
-                            <span className="info-label">Status</span>
-                            <span className="status-badge">{visit.status}</span>
-                        </div>
-                        <div className="info-group">
-                            <span className="info-label">Reason</span>
-                            <span className="info-value">{visit.reason}</span>
-                        </div>
+                        <h1 className="text-xl font-bold tracking-tight text-slate-800 dark:text-white">Visit Mgt</h1>
                     </div>
-                </div>
+                    <nav className="space-y-2 flex-grow">
+                        <button
+                            className={`w-full flex items-center gap-3 px-4 py-3 transition rounded-xl font-medium ${activeTab === 'overview' ? 'sidebar-item-active text-slate-800 dark:text-slate-800' : 'text-slate-500 dark:text-slate-400 hover:bg-white/50 dark:hover:bg-white/5'}`}
+                            onClick={() => setActiveTab('overview')}
+                        >
+                            <span className="material-symbols-outlined text-[20px]">grid_view</span>
+                            Overview
+                        </button>
+                        <button
+                            className={`w-full flex items-center gap-3 px-4 py-3 transition rounded-xl font-medium ${activeTab === 'requests' ? 'sidebar-item-active text-slate-800 dark:text-slate-800' : 'text-slate-500 dark:text-slate-400 hover:bg-white/50 dark:hover:bg-white/5'}`}
+                            onClick={() => setActiveTab('requests')}
+                        >
+                            <span className="material-symbols-outlined text-[20px]">assignment</span>
+                            Requests
+                        </button>
+                    </nav>
+                    <div className="space-y-2 mt-auto pt-6 border-t border-white/20 dark:border-slate-800/50">
+                        <button onClick={() => navigate(-1)} className="w-full flex items-center gap-3 px-4 py-3 text-slate-500 dark:text-slate-400 hover:bg-white/50 dark:hover:bg-white/5 transition rounded-xl">
+                            <span className="material-symbols-outlined text-[20px]">arrow_back</span>
+                            Back
+                        </button>
+                    </div>
+                </aside>
 
-                {/* Dashboard Tabs */}
-                <div className="dashboard-tabs">
-                    <button
-                        className={`tab ${activeTab === 'overview' ? 'active' : ''}`}
-                        onClick={() => setActiveTab('overview')}
-                    >
-                        Overview
-                    </button>
-                    <button
-                        className={`tab ${activeTab === 'requests' ? 'active' : ''}`}
-                        onClick={() => setActiveTab('requests')}
-                    >
-                        Requests
-                    </button>
-                    {/* Add other tabs as needed */}
-                </div>
-
-                {/* Tab Content */}
-                <div className="tab-content">
-                    {activeTab === 'overview' && (
-                        <div className="overview-tab">
-                            <VisitLifecycle currentStatus={visit.status} timestamps={{}} />
-                        </div>
-                    )}
-
-                    {activeTab === 'requests' && (
-                        <div className="requests-tab">
-                            <div className="request-actions">
-                                <Button onClick={() => setShowLabModal(true)}>+ Lab Request</Button>
-                                <Button onClick={() => setShowImagingModal(true)}>+ Imaging Request</Button>
-                                <Button onClick={() => setShowPrescriptionModal(true)}>+ Prescription</Button>
+                {/* Main Content */}
+                <main className="flex-grow p-8 overflow-y-auto">
+                    <header className="mb-10">
+                        <div className="flex items-center justify-between mb-8">
+                            <div>
+                                <h2 className="text-3xl font-bold text-slate-900 dark:text-white">Visit Dashboard</h2>
+                                <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">Managing Visit: {visitId}</p>
                             </div>
+                            <div className="flex items-center gap-3 glass-card px-4 py-2 rounded-2xl">
+                                <div className={`w-8 h-8 rounded-full flex items-center justify-center ${visit?.status?.toLowerCase() === 'active' ? 'bg-emerald-100 dark:bg-emerald-900/30' : 'bg-slate-100 dark:bg-slate-800/30'}`}>
+                                    <div className={`w-2 h-2 rounded-full ${visit?.status?.toLowerCase() === 'active' ? 'bg-emerald-500' : 'bg-slate-500'}`}></div>
+                                </div>
+                                <span className="text-sm font-semibold text-slate-800 dark:text-slate-100 uppercase tracking-wider">{visit?.status || 'Unknown'}</span>
+                            </div>
+                        </div>
+                    </header>
 
-                            <div className="requests-lists">
+                    <div className="content-area">
+                        {activeTab === 'overview' && (
+                            <div className="glass-card rounded-3xl p-6">
+                                <h4 className="text-xl font-semibold mb-6 text-slate-800 dark:text-slate-100">Lifecycle</h4>
+                                <VisitLifecycle currentStatus={visit.status} timestamps={{}} />
+                            </div>
+                        )}
+
+                        {activeTab === 'requests' && (
+                            <div className="space-y-6">
+                                <h4 className="text-xl font-semibold text-slate-800 dark:text-slate-100">Requests &amp; Orders</h4>
+
                                 {visit.labOrders && visit.labOrders.length > 0 && (
-                                    <div className="request-section">
-                                        <h4>Lab Orders</h4>
-                                        <div className="orders-list">
+                                    <div className="glass-card rounded-3xl p-6">
+                                        <div className="flex items-center gap-3 mb-6 border-b border-indigo-100 dark:border-indigo-900/30 pb-4">
+                                            <div className="w-10 h-10 rounded-xl bg-indigo-50 dark:bg-indigo-900/30 flex items-center justify-center text-indigo-600 dark:text-indigo-400">
+                                                <span className="material-symbols-outlined text-xl">science</span>
+                                            </div>
+                                            <h5 className="font-bold text-lg text-slate-800 dark:text-slate-100">Lab Orders</h5>
+                                        </div>
+                                        <div className="space-y-4">
                                             {visit.labOrders.map(order => (
-                                                <div key={order.id} className="order-item">
-                                                    <div className="order-details">
-                                                        <span className="order-name">{order.test_name}</span>
-                                                        <span className="order-info">{order.priority} • {new Date(order.created_at).toLocaleDateString()}</span>
+                                                <div key={order.id} className="flex justify-between items-center bg-white/50 dark:bg-slate-800/50 p-4 rounded-2xl border border-white/50 dark:border-slate-700/50">
+                                                    <div>
+                                                        <span className="font-bold text-slate-800 dark:text-slate-100 block mb-1">{order.test_name}</span>
+                                                        <span className="text-xs text-slate-500 dark:text-slate-400 capitalize">{order.priority} • {new Date(order.created_at).toLocaleDateString()}</span>
                                                     </div>
-                                                    <span className={`status-badge status-${order.status}`}>{order.status}</span>
+                                                    <span className={`px-3 py-1 text-[10px] font-bold uppercase rounded-lg ${order.status === 'completed' ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400' : 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'}`}>
+                                                        {order.status}
+                                                    </span>
                                                 </div>
                                             ))}
                                         </div>
@@ -182,16 +192,23 @@ function VisitDashboard() {
                                 )}
 
                                 {visit.imagingOrders && visit.imagingOrders.length > 0 && (
-                                    <div className="request-section">
-                                        <h4>Imaging Orders</h4>
-                                        <div className="orders-list">
+                                    <div className="glass-card rounded-3xl p-6">
+                                        <div className="flex items-center gap-3 mb-6 border-b border-teal-100 dark:border-teal-900/30 pb-4">
+                                            <div className="w-10 h-10 rounded-xl bg-teal-50 dark:bg-teal-900/30 flex items-center justify-center text-teal-600 dark:text-teal-400">
+                                                <span className="material-symbols-outlined text-xl">radiology</span>
+                                            </div>
+                                            <h5 className="font-bold text-lg text-slate-800 dark:text-slate-100">Imaging Orders</h5>
+                                        </div>
+                                        <div className="space-y-4">
                                             {visit.imagingOrders.map(order => (
-                                                <div key={order.id} className="order-item">
-                                                    <div className="order-details">
-                                                        <span className="order-name">{order.imaging_type} - {order.body_part}</span>
-                                                        <span className="order-info">{order.priority} • {new Date(order.created_at).toLocaleDateString()}</span>
+                                                <div key={order.id} className="flex justify-between items-center bg-white/50 dark:bg-slate-800/50 p-4 rounded-2xl border border-white/50 dark:border-slate-700/50">
+                                                    <div>
+                                                        <span className="font-bold text-slate-800 dark:text-slate-100 block mb-1">{order.imaging_type} - {order.body_part}</span>
+                                                        <span className="text-xs text-slate-500 dark:text-slate-400 capitalize">{order.priority} • {new Date(order.created_at).toLocaleDateString()}</span>
                                                     </div>
-                                                    <span className={`status-badge status-${order.status}`}>{order.status}</span>
+                                                    <span className={`px-3 py-1 text-[10px] font-bold uppercase rounded-lg ${order.status === 'completed' ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400' : 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'}`}>
+                                                        {order.status}
+                                                    </span>
                                                 </div>
                                             ))}
                                         </div>
@@ -199,16 +216,23 @@ function VisitDashboard() {
                                 )}
 
                                 {visit.prescriptions && visit.prescriptions.length > 0 && (
-                                    <div className="request-section">
-                                        <h4>Prescriptions</h4>
-                                        <div className="orders-list">
+                                    <div className="glass-card rounded-3xl p-6">
+                                        <div className="flex items-center gap-3 mb-6 border-b border-rose-100 dark:border-rose-900/30 pb-4">
+                                            <div className="w-10 h-10 rounded-xl bg-rose-50 dark:bg-rose-900/30 flex items-center justify-center text-rose-600 dark:text-rose-400">
+                                                <span className="material-symbols-outlined text-xl">prescriptions</span>
+                                            </div>
+                                            <h5 className="font-bold text-lg text-slate-800 dark:text-slate-100">Prescriptions</h5>
+                                        </div>
+                                        <div className="space-y-4">
                                             {visit.prescriptions.map(rx => (
-                                                <div key={rx.id} className="order-item">
-                                                    <div className="order-details">
-                                                        <span className="order-name">{rx.medication} {rx.dosage}</span>
-                                                        <span className="order-info">{rx.frequency} • {rx.route}</span>
+                                                <div key={rx.id} className="flex justify-between items-center bg-white/50 dark:bg-slate-800/50 p-4 rounded-2xl border border-white/50 dark:border-slate-700/50">
+                                                    <div>
+                                                        <span className="font-bold text-slate-800 dark:text-slate-100 block mb-1">{rx.medication} {rx.dosage}</span>
+                                                        <span className="text-xs text-slate-500 dark:text-slate-400 capitalize">{rx.frequency} • {rx.route}</span>
                                                     </div>
-                                                    <span className={`status-badge status-${rx.status}`}>{rx.status}</span>
+                                                    <span className={`px-3 py-1 text-[10px] font-bold uppercase rounded-lg ${rx.status === 'active' ? 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400' : 'bg-slate-100 text-slate-700 dark:bg-slate-800/30 dark:text-slate-400'}`}>
+                                                        {rx.status}
+                                                    </span>
                                                 </div>
                                             ))}
                                         </div>
@@ -216,18 +240,73 @@ function VisitDashboard() {
                                 )}
 
                                 {(!visit.labOrders?.length && !visit.imagingOrders?.length && !visit.prescriptions?.length) && (
-                                    <p className="no-data">No active requests or prescriptions.</p>
+                                    <div className="glass-card rounded-3xl p-8 text-center">
+                                        <span className="material-symbols-outlined text-4xl text-slate-300 dark:text-slate-600 mb-2">folder_open</span>
+                                        <p className="text-slate-500 dark:text-slate-400">No active requests or prescriptions.</p>
+                                    </div>
                                 )}
                             </div>
+                        )}
+                    </div>
+                </main>
+
+                {/* Right Sidebar */}
+                <aside className="w-80 border-l border-white/20 dark:border-slate-800/50 p-6 glass-panel flex flex-col">
+                    <h3 className="text-xl font-bold mb-6 text-slate-800 dark:text-slate-100">Patient Details</h3>
+                    <div className="bg-white/80 dark:bg-slate-800/80 rounded-2xl p-4 shadow-sm mb-8 border border-white/50 dark:border-slate-700/50 text-slate-800 dark:text-slate-100">
+                        <p className="text-xs text-slate-500 dark:text-slate-400 mb-1 uppercase tracking-wider font-semibold">Name</p>
+                        <p className="font-bold text-lg mb-4 text-slate-900 dark:text-white">{visit?.patientName}</p>
+                        <p className="text-xs text-slate-500 dark:text-slate-400 mb-1 uppercase tracking-wider font-semibold">Reason</p>
+                        <p className="font-medium text-slate-800 dark:text-slate-200">{visit?.reason || 'Not specified'}</p>
+                    </div>
+
+                    <h3 className="text-xl font-bold mb-4 text-slate-800 dark:text-slate-100">Actions</h3>
+                    <div className="grid grid-cols-2 gap-3 mb-10">
+                        <div className="glass-card rounded-2xl p-4 flex flex-col items-center gap-2 cursor-pointer hover:bg-white dark:hover:bg-white/10 transition text-center" onClick={() => setShowLabModal(true)}>
+                            <span className="material-symbols-outlined text-indigo-500 text-2xl">science</span>
+                            <span className="text-[10px] font-bold text-slate-600 dark:text-slate-300 uppercase leading-tight mt-1">Lab Request</span>
                         </div>
-                    )}
-                </div>
+                        <div className="glass-card rounded-2xl p-4 flex flex-col items-center gap-2 cursor-pointer hover:bg-white dark:hover:bg-white/10 transition text-center" onClick={() => setShowImagingModal(true)}>
+                            <span className="material-symbols-outlined text-teal-500 text-2xl">radiology</span>
+                            <span className="text-[10px] font-bold text-slate-600 dark:text-slate-300 uppercase leading-tight mt-1">Imaging Req</span>
+                        </div>
+                        <div className="glass-card rounded-2xl p-4 flex flex-col items-center gap-2 cursor-pointer hover:bg-white dark:hover:bg-white/10 transition text-center" onClick={() => setShowPrescriptionModal(true)}>
+                            <span className="material-symbols-outlined text-rose-500 text-2xl">prescriptions</span>
+                            <span className="text-[10px] font-bold text-slate-600 dark:text-slate-300 uppercase leading-tight mt-1">Prescription</span>
+                        </div>
+                        <div className="glass-card rounded-2xl p-4 flex flex-col items-center gap-2 cursor-pointer hover:bg-white dark:hover:bg-white/10 transition text-center" onClick={() => window.print()}>
+                            <span className="material-symbols-outlined text-slate-500 text-2xl">print</span>
+                            <span className="text-[10px] font-bold text-slate-600 dark:text-slate-300 uppercase leading-tight mt-1">Print Summary</span>
+                        </div>
+                    </div>
+
+                    <div className="mt-auto space-y-3">
+                        {visit?.status?.toLowerCase() === 'active' && (
+                            <button onClick={handleCloseVisit} className="w-full flex items-center justify-center gap-2 py-3 rounded-2xl bg-rose-500 hover:bg-rose-600 text-white font-bold transition shadow-lg shadow-rose-500/30">
+                                <span className="material-symbols-outlined text-lg">cancel</span>
+                                End Visit
+                            </button>
+                        )}
+                        <button onClick={toggleDarkMode} className="w-full p-3 rounded-2xl glass-card hover:bg-white dark:hover:bg-slate-700 transition flex justify-center items-center gap-2 text-sm font-medium text-slate-800 dark:text-slate-100">
+                            <span className="material-symbols-outlined text-indigo-500 dark:hidden">dark_mode</span>
+                            <span className="material-symbols-outlined text-amber-400 hidden dark:block">light_mode</span>
+                            <span className="dark:hidden">Dark Mode</span>
+                            <span className="hidden dark:block">Light Mode</span>
+                        </button>
+                    </div>
+                </aside>
             </div>
 
             {/* Modals */}
             {showLabModal && (
-                <div className="modal-overlay">
-                    <div className="modal-content">
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+                    <div className="bg-white dark:bg-slate-800 rounded-3xl p-6 w-full max-w-lg max-h-[90vh] overflow-y-auto">
+                        <div className="flex justify-between items-center mb-6">
+                            <h3 className="text-xl font-bold text-slate-900 dark:text-white">New Lab Request</h3>
+                            <button onClick={() => setShowLabModal(false)} className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200">
+                                <span className="material-symbols-outlined">close</span>
+                            </button>
+                        </div>
                         <LabRequestForm
                             visitId={visitId}
                             patientId={visit.patientId}
@@ -239,8 +318,14 @@ function VisitDashboard() {
             )}
 
             {showImagingModal && (
-                <div className="modal-overlay">
-                    <div className="modal-content">
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+                    <div className="bg-white dark:bg-slate-800 rounded-3xl p-6 w-full max-w-lg max-h-[90vh] overflow-y-auto">
+                        <div className="flex justify-between items-center mb-6">
+                            <h3 className="text-xl font-bold text-slate-900 dark:text-white">New Imaging Request</h3>
+                            <button onClick={() => setShowImagingModal(false)} className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200">
+                                <span className="material-symbols-outlined">close</span>
+                            </button>
+                        </div>
                         <ImagingRequestForm
                             visitId={visitId}
                             patientId={visit.patientId}
@@ -252,8 +337,14 @@ function VisitDashboard() {
             )}
 
             {showPrescriptionModal && (
-                <div className="modal-overlay">
-                    <div className="modal-content">
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+                    <div className="bg-white dark:bg-slate-800 rounded-3xl p-6 w-full max-w-lg max-h-[90vh] overflow-y-auto">
+                        <div className="flex justify-between items-center mb-6">
+                            <h3 className="text-xl font-bold text-slate-900 dark:text-white">New Prescription</h3>
+                            <button onClick={() => setShowPrescriptionModal(false)} className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200">
+                                <span className="material-symbols-outlined">close</span>
+                            </button>
+                        </div>
                         <PrescriptionForm
                             onAdd={async (data) => {
                                 try {
@@ -273,4 +364,3 @@ function VisitDashboard() {
 }
 
 export default VisitDashboard;
-

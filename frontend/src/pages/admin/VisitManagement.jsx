@@ -91,15 +91,10 @@ function VisitManagement() {
     };
 
     const handleApproveVisit = async () => {
-        if (!approvalData.doctorId) {
-            alert('Please select a doctor');
-            return;
-        }
-
         try {
             const response = await visitApi.approveVisit(
                 selectedVisit.id,
-                approvalData.doctorId,
+                null, // backend picks up existing doctor
                 approvalData.nurseId || null
             );
             // Close modal and show success with code
@@ -199,7 +194,6 @@ function VisitManagement() {
                                 <div key={visit.id} className="visit-card">
                                     <div className="visit-card-header">
                                         <div className="visit-info">
-                                            <h3>Visit Code: {visit.visit_code}</h3>
                                             {getStatusBadge(visit.status)}
                                         </div>
                                         <span className="visit-time">{formatDate(visit.created_at)}</span>
@@ -209,11 +203,6 @@ function VisitManagement() {
                                         <div className="visit-detail">
                                             <strong>Patient:</strong> {visit.patient_first_name} {visit.patient_last_name}
                                         </div>
-                                        {visit.otp_code && (
-                                            <div className="visit-detail">
-                                                <strong>Visit Code:</strong> <span className="code-highlight">{visit.otp_code}</span>
-                                            </div>
-                                        )}
                                         <div className="visit-detail">
                                             <strong>Reason:</strong> {visit.reason}
                                         </div>
@@ -279,17 +268,8 @@ function VisitManagement() {
                                 </div>
 
                                 <div className="form-group">
-                                    <label>Assign Doctor *</label>
-                                    <select
-                                        value={approvalData.doctorId}
-                                        onChange={(e) => setApprovalData({ ...approvalData, doctorId: e.target.value })}
-                                        required
-                                    >
-                                        <option value="">Select a doctor</option>
-                                        {doctors.map(doc => (
-                                            <option key={doc.id} value={doc.id}>{doc.name}</option>
-                                        ))}
-                                    </select>
+                                    <label>Assigned Doctor</label>
+                                    <p>Dr. {selectedVisit?.doctor_first_name} {selectedVisit?.doctor_last_name}</p>
                                 </div>
 
                                 <div className="form-group">
