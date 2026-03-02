@@ -1,0 +1,102 @@
+[
+  {
+    "column_name": "id",
+    "is_nullable": "NO",
+    "column_default": "uuid_generate_v4()"
+  },
+  {
+    "column_name": "patient_id",
+    "is_nullable": "NO",
+    "column_default": null
+  },
+  {
+    "column_name": "organization_id",
+    "is_nullable": "NO",
+    "column_default": null
+  },
+  {
+    "column_name": "status",
+    "is_nullable": "YES",
+    "column_default": "'scheduled'::character varying"
+  },
+  {
+    "column_name": "visit_code",
+    "is_nullable": "NO",
+    "column_default": null
+  },
+  {
+    "column_name": "visit_type",
+    "is_nullable": "YES",
+    "column_default": "'consultation'::character varying"
+  },
+  {
+    "column_name": "chief_complaint",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "column_name": "check_in_time",
+    "is_nullable": "YES",
+    "column_default": "CURRENT_TIMESTAMP"
+  },
+  {
+    "column_name": "check_out_time",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "column_name": "created_at",
+    "is_nullable": "YES",
+    "column_default": "CURRENT_TIMESTAMP"
+  },
+  {
+    "column_name": "updated_at",
+    "is_nullable": "YES",
+    "column_default": "CURRENT_TIMESTAMP"
+  },
+  {
+    "column_name": "otp_code",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "column_name": "otp_expires_at",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "column_name": "otp_verified",
+    "is_nullable": "YES",
+    "column_default": "false"
+  },
+  {
+    "column_name": "access_level",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "column_name": "assigned_doctor_id",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "column_name": "assigned_nurse_id",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "column_name": "type",
+    "is_nullable": "YES",
+    "column_default": "'walk_in'::character varying"
+  },
+  {
+    "column_name": "priority",
+    "is_nullable": "YES",
+    "column_default": "'normal'::character varying"
+  },
+  {
+    "column_name": "symptoms",
+    "is_nullable": "YES",
+    "column_default": null
+  }
+]

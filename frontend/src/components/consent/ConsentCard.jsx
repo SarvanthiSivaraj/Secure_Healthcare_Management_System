@@ -98,68 +98,71 @@ function ConsentCard({ consent, onRevoke, onEdit }) {
     }, [consent.endTime]);
 
     return (
-        <div className={`consent-card ${isExpired ? 'inactive' : (isActive ? 'active' : 'inactive')} bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-gray-100 dark:border-slate-700 hover:shadow-md hover:border-teal-200 dark:hover:border-teal-400 transition-all p-5`}>
-            <div className="consent-header">
+        <div className={`glass-card p-6 rounded-3xl hover:bg-white/80 dark:hover:bg-slate-800/80 transition-all cursor-pointer group relative overflow-hidden ${isExpired ? 'opacity-80' : ''}`}>
+            <div className="flex justify-between items-start mb-6 border-b border-gray-100/50 dark:border-slate-700/50 pb-4">
                 <div>
-                    <h4 className="text-gray-900 dark:text-white font-bold">Dr. {consent.recipientName}</h4>
-                    <span className="consent-specialization">{consent.specialization}</span>
+                    <h4 className="text-lg font-bold mb-1 text-slate-800 dark:text-slate-100">Dr. {consent.recipientName}</h4>
+                    <p className="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wider font-semibold">{consent.specialization}</p>
                 </div>
-                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
-                    <span className={`consent-status ${isExpired ? 'expired' : consent.status.toLowerCase()}`}>
+                <div className="flex flex-col items-end">
+                    <span className={`px-3 py-1 bg-indigo-600 text-white text-[10px] font-bold rounded-lg truncate max-w-[120px] shadow-sm uppercase ${isExpired ? 'bg-slate-400' :
+                            isActive ? 'bg-indigo-600' :
+                                'bg-red-500'
+                        }`}>
                         {isExpired ? 'EXPIRED' : consent.status}
                     </span>
                     {isActive && consent.endTime && (
-                        <span className="text-xs text-gray-500 dark:text-gray-400 mt-1 block text-right">
+                        <span className="text-xs font-semibold text-indigo-500 dark:text-indigo-400 mt-2 text-right">
                             {remainingTime}
                         </span>
                     )}
                 </div>
             </div>
-            <div className="consent-details text-gray-700 dark:text-gray-300">
-                <div className="consent-detail-row">
-                    <span className="detail-label font-medium text-gray-500 dark:text-gray-400">Data Category:</span>
-                    <span className="detail-value">{formatCategory(consent.dataCategory)}</span>
+
+            <div className="bg-indigo-50/50 dark:bg-indigo-900/20 p-4 rounded-2xl border border-indigo-100/50 dark:border-indigo-500/10 mb-4 space-y-3">
+                <div className="flex justify-between items-center sm:grid sm:grid-cols-3 sm:gap-4">
+                    <span className="text-sm font-medium text-slate-700 dark:text-slate-200">Data Category</span>
+                    <span className="text-sm font-bold text-slate-900 dark:text-white text-right sm:col-span-2">{formatCategory(consent.dataCategory)}</span>
                 </div>
-                <div className="consent-detail-row">
-                    <span className="detail-label font-medium text-gray-500 dark:text-gray-400">Purpose:</span>
-                    <span className="detail-value">{formatPurpose(consent.purpose)}</span>
+
+                <div className="flex justify-between items-center sm:grid sm:grid-cols-3 sm:gap-4">
+                    <span className="text-sm font-medium text-slate-700 dark:text-slate-200">Purpose</span>
+                    <span className="text-sm font-bold text-slate-900 dark:text-white text-right sm:col-span-2">{formatPurpose(consent.purpose)}</span>
                 </div>
-                <div className="consent-detail-row">
-                    <span className="detail-label font-medium text-gray-500 dark:text-gray-400">Access Level:</span>
-                    <span className="detail-value">{formatAccess(consent.accessLevel)}</span>
+
+                <div className="flex justify-between items-center sm:grid sm:grid-cols-3 sm:gap-4">
+                    <span className="text-sm font-medium text-slate-700 dark:text-slate-200">Access Level</span>
+                    <span className="text-sm font-bold text-slate-900 dark:text-white text-right sm:col-span-2">{formatAccess(consent.accessLevel)}</span>
                 </div>
             </div>
-            <div className="consent-card-footer border-t border-gray-100 dark:border-slate-700 pt-3 mt-3">
-                <div className="consent-dates text-xs text-gray-500 dark:text-gray-400 flex flex-col gap-1">
+
+            <div className="flex flex-col sm:flex-row sm:justify-between sm:items-end gap-4 mt-2">
+                <div className="flex flex-col gap-1 text-xs text-slate-500 dark:text-slate-400 font-medium">
                     <span>From: {formatDate(consent.startTime)}</span>
-                    <span className={isExpired ? 'text-danger' : ''}>
+                    <span className={`${isExpired ? 'text-red-500 dark:text-red-400' : ''}`}>
                         To: {formatDate(consent.endTime)}
                     </span>
                 </div>
 
-                {/* Only show actions if consent is active */}
                 {isActive && (
-                    <div className="consent-actions">
-                        <Button
-                            variant="primary"
-                            size="sm"
-                            className="btn-edit"
+                    <div className="flex items-center gap-2">
+                        <button
+                            className="px-4 py-2 bg-indigo-50 text-indigo-600 dark:bg-indigo-500/10 dark:text-indigo-400 hover:bg-indigo-100 dark:hover:bg-indigo-500/20 text-xs font-bold rounded-lg transition-colors shadow-sm"
                             onClick={() => onEdit(consent)}
                         >
                             Edit
-                        </Button>
-                        <Button
-                            variant="danger"
-                            size="sm"
-                            className="btn-revoke"
+                        </button>
+                        <button
+                            className="px-4 py-2 bg-rose-50 text-rose-600 dark:bg-rose-500/10 dark:text-rose-400 hover:bg-rose-100 dark:hover:bg-rose-500/20 text-xs font-bold rounded-lg transition-colors shadow-sm"
                             onClick={() => onRevoke(consent.id)}
                         >
                             Revoke
-                        </Button>
+                        </button>
                     </div>
                 )}
             </div>
         </div>
     );
 }
+
 export default ConsentCard;

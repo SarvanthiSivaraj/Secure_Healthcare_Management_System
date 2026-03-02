@@ -97,6 +97,12 @@ export const visitApi = {
         return response.data;
     },
 
+    // Patient: Get Queue Status for a visit
+    getQueueStatus: async (visitId) => {
+        const response = await apiClient.get(`/visits/${visitId}/queue-status`);
+        return response.data;
+    },
+
     // Get staff by role (for assignment dropdowns)
     getStaffByRole: async (role) => {
         const response = await apiClient.get(`/visits/staff/${role}`);

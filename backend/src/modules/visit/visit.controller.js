@@ -10,7 +10,7 @@ const VisitController = {
      */
     async requestVisit(req, res) {
         try {
-            const { hospitalCode, reason, symptoms } = req.body;
+            const { hospitalCode, reason, symptoms, doctorId } = req.body;
             const patientId = req.user.id;
 
             if (!hospitalCode) {
@@ -48,7 +48,8 @@ const VisitController = {
                 reason,
                 symptoms,
                 type: 'walk_in', // Default for code entry
-                priority: 'normal'
+                priority: 'normal',
+                doctorId
             });
 
             res.status(201).json({
@@ -101,6 +102,41 @@ const VisitController = {
         } catch (error) {
             logger.error('Get hospital visits failed:', error);
             res.status(500).json({ success: false, message: 'Failed to fetch visits' });
+        }
+    },
+
+    /**
+     * Get queue status for a specific visit
+     */
+    async getQueueStatus(req, res) {
+        try {
+            const { id } = req.params;
+            const visit = await VisitModel.findById(id);
+
+            if (!visit) {
+                return res.status(404).json({ success: false, message: 'Visit not found' });
+            }
+
+            if (!visit.assigned_doctor_id) {
+                return res.json({
+                    success: true,
+                    data: { position: 0, total: 0, status: visit.status, eta_minutes: 0, message: 'No doctor assigned yet' }
+                });
+            }
+
+            const queueInfo = await VisitModel.getQueuePosition(id, visit.assigned_doctor_id);
+
+            if (!queueInfo) {
+                return res.status(404).json({ success: false, message: 'Queue info not found' });
+            }
+
+            res.json({
+                success: true,
+                data: queueInfo
+            });
+        } catch (error) {
+            console.error('Get queue status failed:', error);
+            res.status(500).json({ success: false, message: 'Failed to fetch queue status' });
         }
     },
 
@@ -188,12 +224,20 @@ const VisitController = {
 
             console.log('=== APPROVE VISIT DEBUG ===');
             console.log('Visit ID:', id);
-            console.log('Doctor ID:', doctorId);
+            console.log('Doctor ID (passed):', doctorId);
             console.log('Nurse ID:', nurseId);
             console.log('Scheduled Time:', scheduledTime);
 
-            if (!doctorId) {
-                return res.status(400).json({ success: false, message: 'Doctor ID is required' });
+            // Fetch the current visit to get existing doctor assignments
+            const currentVisit = await VisitModel.findById(id);
+            if (!currentVisit) {
+                return res.status(404).json({ success: false, message: 'Visit not found' });
+            }
+
+            const finalDoctorId = doctorId || currentVisit.assigned_doctor_id || currentVisit.doctor_id; // Try to retain existing
+
+            if (!finalDoctorId) {
+                return res.status(400).json({ success: false, message: 'Doctor ID is required for approval' });
             }
 
             // First update scheduled time if provided
@@ -204,8 +248,8 @@ const VisitController = {
             }
 
             // Approve visit and generate OTP
-            console.log('Approving visit...');
-            const updatedVisit = await VisitModel.approveVisit(id, doctorId, nurseId || null);
+            console.log('Approving visit with Doctor:', finalDoctorId);
+            const updatedVisit = await VisitModel.approveVisit(id, finalDoctorId, nurseId || null);
             console.log('Approve result:', updatedVisit);
 
             if (!updatedVisit) {

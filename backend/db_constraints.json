@@ -1,0 +1,10 @@
+[
+  {
+    "conname": "visits_access_level_check",
+    "pg_get_constraintdef": "CHECK (((access_level)::text = ANY ((ARRAY['read'::character varying, 'write'::character varying])::text[])))"
+  },
+  {
+    "conname": "visits_status_check",
+    "pg_get_constraintdef": "CHECK (((status)::text = ANY ((ARRAY['scheduled'::character varying, 'checked_in'::character varying, 'in_progress'::character varying, 'completed'::character varying, 'cancelled'::character varying, 'no_show'::character varying])::text[])))"
+  }
+]
