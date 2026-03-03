@@ -1,3 +1,4 @@
 .env
 .github\workflows\backend-cd.yml
 .github\workflows\frontend-cd.yml
+backend\node_modules
