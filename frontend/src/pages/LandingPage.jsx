@@ -12,7 +12,7 @@ function LandingPage() {
     useEffect(() => {
         const fetchStats = async () => {
             try {
-                const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:5003/api/v1';
+                const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:5000/api/v1';
                 const baseUrl = apiUrl.replace('/api/v1', '');
 
                 // Health check
