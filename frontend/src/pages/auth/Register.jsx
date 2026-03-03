@@ -81,7 +81,19 @@ function Register() {
             setLoading(false);
         }
     };
-
+    const handleResendOTP = async () => {
+        setError('');
+        setSuccessMsg('');
+        setLoading(true);
+        try {
+            const res = await authApi.resendOTP(patientData.email);
+            setSuccessMsg(res.message || 'OTP resent successfully');
+        } catch (err) {
+            setError(err.response?.data?.message || 'Failed to resend OTP');
+        } finally {
+            setLoading(false);
+        }
+    };
     const handlePasskeySetup = async () => {
         setError('');
         setPasskeyLoading(true);
@@ -310,9 +322,19 @@ function Register() {
                             >
                                 {loading ? 'Verifying...' : 'Verify OTP'}
                             </button>
-                            <button type="button" onClick={() => setStep(1)} className="text-sm font-semibold text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 transition-colors mt-4 block mx-auto">
-                                Back to Registration
-                            </button>
+                            <div className="flex flex-col gap-3 mt-4">
+                                <button
+                                    type="button"
+                                    onClick={handleResendOTP}
+                                    disabled={loading}
+                                    className="text-sm font-semibold text-indigo-600 hover:text-indigo-500 dark:text-indigo-400 dark:hover:text-indigo-300 transition-colors"
+                                >
+                                    Resend OTP
+                                </button>
+                                <button type="button" onClick={() => setStep(1)} className="text-sm font-semibold text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 transition-colors">
+                                    Back to Registration
+                                </button>
+                            </div>
                         </form>
                     </div>
                 )}

@@ -1,4 +1,4 @@
-const { Pool } = require('pg');
+const { Pool, types } = require('pg');
 const logger = require('../utils/logger');
 
 // Database configuration from environment variables
@@ -15,13 +15,6 @@ const pool = new Pool({
     connectionTimeoutMillis: 10000,
     ssl: isSupabase ? { rejectUnauthorized: false } : false,
 });
-
-// Force UTC for timestamp parsing to avoid local timezone conversions
-// 1114 is timestamp without time zone, 1184 is timestamp with time zone
-const types = require('pg').types;
-const parseFn = (val) => val; // Return raw string, let JS Date handle it as UTC if it has Z
-types.setTypeParser(1114, parseFn);
-types.setTypeParser(1184, parseFn);
 
 // Test database connection
 pool.on('connect', () => {

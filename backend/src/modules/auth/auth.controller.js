@@ -4,7 +4,7 @@ const { createPatientProfile, findPatientByUserId } = require('../../models/pati
 const { createOrganization } = require('../../models/organization.model');
 const { getRoleByName } = require('../../models/role.model');
 const { generateAndSendOTP, verifyOTP } = require('../../services/otp.service');
-const { comparePassword, hashGovtId } = require('../../services/encryption.service');
+const { comparePassword, hashPassword, hashGovtId } = require('../../services/encryption.service');
 const { generateAccessToken, generateRefreshToken } = require('../../config/jwt');
 const { hashToken } = require('../../services/encryption.service');
 const { createAuditLog } = require('../../services/audit.service');
@@ -23,7 +23,18 @@ const { sendDoctorRegistrationNotification } = require('../../config/mail');
  */
 const registerPatient = async (req, res) => {
     try {
-        const { email, phone, password, govtId, dateOfBirth, firstName, lastName } = req.body;
+        let { email, phone, password, govtId, aadhaarId, dateOfBirth, firstName, lastName, name } = req.body;
+
+        // Support aliases from new UI
+        if (!govtId && aadhaarId) govtId = aadhaarId;
+        if (govtId) govtId = String(govtId).trim();
+        if (aadhaarId) aadhaarId = String(aadhaarId).trim();
+
+        if (!firstName && name) {
+            const parts = name.trim().split(/\s+/);
+            firstName = parts[0];
+            lastName = parts.slice(1).join(' ') || null;
+        }
 
         // Validate required fields
         const validation = validateRequiredFields(req.body, ['password']);
@@ -68,13 +79,16 @@ const registerPatient = async (req, res) => {
         }
 
         // Check if user already exists
-        const exists = await userExists(email, phone);
-        if (exists) {
+        const existingUser = await findUserByEmailOrPhone(email || phone);
+        if (existingUser && existingUser.status !== 'pending') {
             return res.status(HTTP_STATUS.CONFLICT).json({
                 success: false,
                 message: ERROR_MESSAGES.USER_ALREADY_EXISTS,
             });
         }
+
+        const isReRegistering = !!existingUser;
+        const userId = existingUser ? existingUser.id : null;
 
         // Verify Aadhaar with Mock Service
         if (govtId) { // check if govtId is provided first, though usually required for patients
@@ -89,11 +103,15 @@ const registerPatient = async (req, res) => {
             }
         }
 
-        // Check if government ID already exists
+        // Check if government ID already exists (excluding the existing user if re-registering)
         if (govtId) {
             const govtIdHash = hashGovtId(govtId);
-            const govtIdCheckQuery = 'SELECT id FROM patient_profiles WHERE govt_id_hash = $1';
-            const govtIdResult = await query(govtIdCheckQuery, [govtIdHash]);
+            const govtIdCheckQuery = isReRegistering
+                ? 'SELECT id FROM patient_profiles WHERE govt_id_hash = $1 AND user_id != $2'
+                : 'SELECT id FROM patient_profiles WHERE govt_id_hash = $1';
+
+            const govtIdParams = isReRegistering ? [govtIdHash, userId] : [govtIdHash];
+            const govtIdResult = await query(govtIdCheckQuery, govtIdParams);
 
             if (govtIdResult.rows.length > 0) {
                 return res.status(HTTP_STATUS.CONFLICT).json({
@@ -109,32 +127,76 @@ const registerPatient = async (req, res) => {
             throw new Error('Patient role not found in database');
         }
 
-        // Create user and patient profile in transaction
+        // Hash password with bcrypt before transaction
+        const passwordHash = await hashPassword(password);
+
+        // Create/Update user and patient profile in transaction
         const result = await transaction(async (client) => {
-            // Create user
-            const userQuery = `
-        INSERT INTO users (email, phone, password_hash, role_id, first_name, last_name, status)
-        VALUES ($1, $2, crypt($3, gen_salt('bf', 12)), $4, $5, $6, 'pending')
-        RETURNING id, email, phone, role_id, status, created_at
-      `;
+            let user;
+            if (isReRegistering) {
+                // Update existing pending user
+                const updateQuery = `
+                    UPDATE users 
+                    SET password_hash = $1, first_name = $2, last_name = $3, updated_at = NOW()
+                    WHERE id = $4
+                    RETURNING id, email, phone, role_id, status, created_at
+                `;
+                const updateResult = await client.query(updateQuery, [passwordHash, firstName || null, lastName || null, userId]);
+                user = updateResult.rows[0];
+            } else {
+                // Create user
+                const userQuery = `
+                    INSERT INTO users (email, phone, password_hash, role_id, first_name, last_name, status)
+                    VALUES ($1, $2, $3, $4, $5, $6, 'pending')
+                    RETURNING id, email, phone, role_id, status, created_at
+                `;
+                const userResult = await client.query(userQuery, [
+                    email || null,
+                    phone || null,
+                    passwordHash,
+                    patientRole.id,
+                    firstName || null,
+                    lastName || null,
+                ]);
+                user = userResult.rows[0];
+            }
 
-            const userResult = await client.query(userQuery, [
-                email || null,
-                phone || null,
-                password,
-                patientRole.id,
-                firstName || null,
-                lastName || null,
-            ]);
+            // Create or Update patient profile
+            let profile;
+            if (isReRegistering) {
+                const profileUpdateQuery = `
+                    INSERT INTO patient_profiles (user_id, unique_health_id, govt_id_hash, date_of_birth)
+                    VALUES ($1, $2, $3, $4)
+                    ON CONFLICT (user_id) DO UPDATE SET
+                        govt_id_hash = EXCLUDED.govt_id_hash,
+                        date_of_birth = EXCLUDED.date_of_birth,
+                        updated_at = NOW()
+                    RETURNING *
+                `;
+                // Generate a health ID if they somehow don't have one, but they should if they were partially registered
+                // For safety, we'll use a new one if it's missing
+                const existingProfileQuery = 'SELECT unique_health_id FROM patient_profiles WHERE user_id = $1';
+                const existingProfileRes = await client.query(existingProfileQuery, [userId]);
+                const healthId = existingProfileRes.rows[0]?.unique_health_id || null; // We'll let createPatientProfile handle it below if missing or just do it here
 
-            const user = userResult.rows[0];
+                // Better: Just use a similar logic to createPatientProfile but for upsert
+                // To keep it simple, we'll just delete and recreate the profile if it exists, or update it.
+                // Actually, let's just use the existing helper if possible, but it doesn't handle updates well.
 
-            // Create patient profile
-            const profile = await createPatientProfile({
-                userId: user.id,
-                govtId: govtId || null,
-                dateOfBirth: dateOfBirth || null,
-            }, client);
+                const profileRes = await client.query(profileUpdateQuery, [
+                    user.id,
+                    healthId || require('../../utils/idGenerator').generateHealthID(),
+                    govtId ? hashGovtId(govtId) : null,
+                    dateOfBirth || null
+                ]);
+                profile = profileRes.rows[0];
+            } else {
+                profile = await createPatientProfile({
+                    userId: user.id,
+                    govtId: govtId || null,
+                    dateOfBirth: dateOfBirth || null,
+                }, client);
+            }
 
             return { user, profile };
         });
@@ -257,19 +319,22 @@ const registerOrganization = async (req, res) => {
             throw new Error('Hospital admin role not found in database');
         }
 
+        // Hash password before transaction
+        const passwordHash = await hashPassword(password);
+
         // Create user and organization in transaction
         const result = await transaction(async (client) => {
             // Create admin user
             const userQuery = `
         INSERT INTO users (email, phone, password_hash, role_id, status, is_verified)
-        VALUES ($1, $2, crypt($3, gen_salt('bf', 12)), $4, 'pending', false)
+        VALUES ($1, $2, $3, $4, 'pending', false)
         RETURNING id, email, phone, role_id, status, created_at
       `;
 
             const userResult = await client.query(userQuery, [
                 email,
                 phone || null,
-                password,
+                passwordHash,
                 adminRole.id,
             ]);
 

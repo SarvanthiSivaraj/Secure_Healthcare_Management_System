@@ -40,6 +40,15 @@ const mockAadhaarDB = {
         photoUrl: 'https://randomuser.me/api/portraits/men/3.jpg',
         email: 'gmharish285@gmail.com',
         phone: '9080134035'
+    },
+    '739461347231': {
+        name: 'Harshita',
+        dob: '2000-01-01',
+        gender: 'female',
+        address: 'Amrita University, Coimbatore',
+        photoUrl: 'https://randomuser.me/api/portraits/women/3.jpg',
+        email: 'harshitaravi31@gmail.com',
+        phone: '7364827354'
     }
 };
 
@@ -67,7 +76,7 @@ const mockMedicalCouncilDB = {
     },
     'REG11111': {
         name: 'Dr. Rajesh Gupta',
-        status: 'suspended', 
+        status: 'suspended',
         regYear: 2005,
         council: 'Delhi Medical Council',
         qualification: 'MBBS',
