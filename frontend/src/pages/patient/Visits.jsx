@@ -1,6 +1,7 @@
 // Patient Visits Page - Epic 3: Visit Management
-import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect, useContext } from 'react';
+import { useNavigate, Link } from 'react-router-dom';
+import { AuthContext } from '../../context/AuthContext';
 import { visitApi } from '../../api/visitApi';
 import VisitCard from '../../components/visit/VisitCard';
 import CheckInForm from '../../components/visit/CheckInForm';
@@ -9,6 +10,7 @@ import './Visits.css';
 
 function Visits() {
     const navigate = useNavigate();
+    const { logout } = useContext(AuthContext);
     const [visits, setVisits] = useState([]);
     const [loading, setLoading] = useState(true);
     const [filter, setFilter] = useState('upcoming'); // upcoming, past, all
@@ -63,79 +65,128 @@ function Visits() {
     const filteredVisits = filterVisits();
 
     return (
-        <div className="dashboard-container bg-slate-50 dark:bg-slate-900 min-h-screen">
-            <header className="w-full bg-gradient-to-r from-[#3a8d9b] to-[#257582] text-white py-4 px-6 md:px-12 flex justify-between items-center shadow-md">
-                <div className="flex items-center space-x-3">
-                    <div className="w-10 h-10 rounded-full border border-white/40 flex items-center justify-center bg-white/10">
-                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
-                    </div>
-                    <div>
-                        <h1 className="text-xl font-bold tracking-wide m-0">My Visits</h1>
-                        <p className="text-white/80 text-xs mt-0.5 m-0 font-medium">Manage your appointments and check-ins</p>
-                    </div>
-                </div>
+        <div className="patient-dashboard-wrapper bg-[var(--background-light)] dark:bg-[var(--background-dark)] text-slate-800 dark:text-slate-100 flex h-screen w-full overflow-hidden">
+            {/* Theme Toggle styling */}
+            <div className="absolute top-4 right-4 z-50">
+                <button onClick={() => document.documentElement.classList.toggle('dark')} className="glass-card p-3 rounded-full hover:bg-white/40 dark:hover:bg-slate-700/50 transition flex items-center justify-center">
+                    <span className="material-symbols-outlined text-indigo-500 !block dark:!hidden">dark_mode</span>
+                    <span className="material-symbols-outlined text-amber-500 !hidden dark:!block">light_mode</span>
+                </button>
+            </div>
 
-                <div className="flex items-center space-x-3">
-                    <button
-                        onClick={() => navigate('/patient/dashboard')}
-                        className="bg-white/20 hover:bg-white/30 transition-colors border border-white/20 text-white font-medium px-4 py-2 rounded-lg text-sm"
-                    >
-                        Back to Dashboard
+            <aside className="w-64 flex-shrink-0 border-r border-slate-200 dark:border-slate-800/50 p-6 flex flex-col h-full overflow-y-auto">
+                <div className="flex items-center gap-3 mb-10 px-2 cursor-pointer group" onClick={() => navigate('/patient/dashboard')}>
+                    <div className="relative">
+                        <div className="absolute inset-0 bg-indigo-500 blur-lg opacity-0 group-hover:opacity-60 transition-opacity duration-500 rounded-full"></div>
+                        <div className="relative w-10 h-10 bg-indigo-500 rounded-xl flex items-center justify-center text-white shadow-lg transform transition-all duration-500 group-hover:scale-110 group-hover:-rotate-3 group-hover:shadow-[0_0_15px_rgba(99,102,241,0.5)]">
+                            <span className="material-symbols-outlined text-xl transition-transform duration-500 group-hover:scale-110">local_hospital</span>
+                        </div>
+                    </div>
+                    <h1 className="text-xl font-bold tracking-tight text-slate-800 dark:text-white transition-all duration-500 drop-shadow-sm group-hover:text-indigo-600 dark:group-hover:text-indigo-400 group-hover:drop-shadow-[0_0_10px_rgba(99,102,241,0.4)]">Medicare</h1>
+                </div>
+                <nav className="space-y-2 flex-grow">
+                    <button onClick={() => navigate('/patient/dashboard')} className="w-full flex items-center gap-3 px-4 py-3 text-slate-500 dark:text-slate-400 hover:bg-white/50 dark:hover:bg-white/5 transition rounded-xl">
+                        <span className="material-symbols-outlined text-[20px]">grid_view</span>
+                        Dashboard
+                    </button>
+                    <button className="w-full flex items-center gap-3 px-4 py-3 sidebar-item-active rounded-xl font-medium text-slate-800 dark:text-slate-800">
+                        <span className="material-symbols-outlined text-[20px]">calendar_today</span>
+                        Appointments
+                    </button>
+                    <button className="w-full flex items-center gap-3 px-4 py-3 text-slate-500 dark:text-slate-400 hover:bg-white/50 dark:hover:bg-white/5 transition rounded-xl">
+                        <span className="material-symbols-outlined text-[20px]">chat_bubble_outline</span>
+                        Messages
+                    </button>
+                    <button onClick={() => navigate('/patient/medical-records')} className="w-full flex items-center gap-3 px-4 py-3 text-slate-500 dark:text-slate-400 hover:bg-white/50 dark:hover:bg-white/5 transition rounded-xl">
+                        <span className="material-symbols-outlined text-[20px]">folder_shared</span>
+                        Records
+                    </button>
+                    <button onClick={() => navigate('/patient/consent')} className="w-full flex items-center gap-3 px-4 py-3 text-slate-500 dark:text-slate-400 hover:bg-white/50 dark:hover:bg-white/5 transition rounded-xl">
+                        <span className="material-symbols-outlined text-[20px]">verified_user</span>
+                        Consents
+                    </button>
+                </nav>
+                <div className="space-y-2 mt-auto pt-6 border-t border-slate-200 dark:border-slate-800/50">
+                    <Link to="#" className="flex items-center gap-3 px-4 py-3 text-slate-500 dark:text-slate-400 hover:bg-white/50 dark:hover:bg-white/5 transition rounded-xl">
+                        <span className="material-symbols-outlined text-[20px]">favorite_border</span>
+                        Support
+                    </Link>
+                    <Link to="/patient/profile" className="flex items-center gap-3 px-4 py-3 text-slate-500 dark:text-slate-400 hover:bg-white/50 dark:hover:bg-white/5 transition rounded-xl">
+                        <span className="material-symbols-outlined text-[20px]">manage_accounts</span>
+                        Profile
+                    </Link>
+                    <button onClick={logout} className="w-full flex items-center gap-3 px-4 py-3 text-rose-500 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-900/20 transition rounded-xl font-medium">
+                        <span className="material-symbols-outlined text-[20px]">logout</span>
+                        Sign Out
                     </button>
                 </div>
-            </header>
+            </aside>
 
-            <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            {/* Main Content */}
+            <main className="flex-grow p-8 overflow-y-auto">
+                <header className="mb-10">
+                    <div className="flex items-center justify-between mb-8">
+                        <div>
+                            <h2 className="text-3xl font-bold text-slate-900 dark:text-white">My Visits</h2>
+                            <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">Manage your appointments and check-ins</p>
+                        </div>
+                    </div>
+                </header>
+
                 {successMessage && (
-                    <div className="success-alert">
+                    <div className="bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 p-4 rounded-2xl mb-8 flex items-center gap-3">
+                        <span className="material-symbols-outlined">check_circle</span>
                         {successMessage}
                     </div>
                 )}
 
                 {/* Check In Section */}
-                <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-gray-100 dark:border-slate-700 p-6 md:p-8 mb-6">
-                    <div className="mb-5">
-                        <h3 className="text-lg font-bold text-gray-800 dark:text-white m-0 mb-1">Schedule or Check In</h3>
-                        <p className="text-gray-500 dark:text-gray-400 text-sm m-0">Have a scheduled visit? Enter the code provided by your doctor or nurse to check in.</p>
-                    </div>
-                    <div className="flex flex-col sm:flex-row gap-4">
-                        <button
-                            className="bg-[#4a9fae] hover:bg-[#3a8d9b] text-white px-5 py-2.5 rounded-lg text-sm font-medium transition-colors shadow-sm"
-                            onClick={() => navigate('/patient/visits/new')}
-                        >
-                            + Request New Visit
-                        </button>
-                        <button
-                            className="bg-white dark:bg-slate-700 border border-gray-300 dark:border-slate-600 hover:bg-gray-50 dark:hover:bg-slate-600 text-gray-700 dark:text-gray-200 px-5 py-2.5 rounded-lg text-sm font-medium transition-colors"
-                            onClick={() => setShowCheckIn(!showCheckIn)}
-                        >
-                            {showCheckIn ? 'Hide Check-In Form' : 'Check In with Code'}
-                        </button>
+                <div className="glass-card p-6 md:p-8 rounded-3xl mb-8 border border-white/50 dark:border-slate-700/50 relative overflow-hidden group">
+                    <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-500/10 dark:bg-indigo-500/5 rounded-full blur-3xl -mr-20 -mt-20 pointer-events-none"></div>
+                    <div className="relative z-10 flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+                        <div>
+                            <h3 className="text-xl font-bold text-slate-800 dark:text-white mb-2">Schedule or Check In</h3>
+                            <p className="text-slate-500 dark:text-slate-400 text-sm max-w-md">Have a scheduled visit? Enter the code provided by your doctor or nurse to check in.</p>
+                        </div>
+                        <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
+                            <button
+                                className="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-xl text-sm font-semibold transition-all shadow-lg shadow-indigo-600/30 whitespace-nowrap"
+                                onClick={() => navigate('/patient/visits/new')}
+                            >
+                                + Request New Visit
+                            </button>
+                            <button
+                                className="bg-white/80 dark:bg-slate-800/80 hover:bg-white dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 px-6 py-3 rounded-xl text-sm font-semibold transition-all whitespace-nowrap"
+                                onClick={() => setShowCheckIn(!showCheckIn)}
+                            >
+                                {showCheckIn ? 'Hide Check-In Form' : 'Check In with Code'}
+                            </button>
+                        </div>
                     </div>
                 </div>
 
                 {showCheckIn && (
-                    <div className="mb-6 -mt-2">
+                    <div className="mb-8 p-6 glass-card rounded-3xl">
                         <CheckInForm onCheckIn={handleCheckIn} />
                     </div>
                 )}
 
                 {/* Filter Tabs */}
-                <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-gray-100 dark:border-slate-700 p-2 mb-6 flex gap-2">
+                <div className="flex gap-2 mb-8 bg-white/40 dark:bg-slate-800/40 p-1.5 rounded-2xl inline-flex backdrop-blur-sm border border-white/50 dark:border-slate-700/50">
                     <button
-                        className={`px-6 py-2 rounded-lg text-sm font-medium transition-colors ${filter === 'upcoming' ? 'bg-[#257582] text-white shadow-sm' : 'text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-slate-700'}`}
+                        className={`px-6 py-2.5 rounded-xl text-sm font-semibold transition-all ${filter === 'upcoming' ? 'bg-white dark:bg-slate-700 text-indigo-600 dark:text-indigo-400 shadow-sm' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'}`}
                         onClick={() => setFilter('upcoming')}
                     >
                         Upcoming
                     </button>
                     <button
-                        className={`px-6 py-2 rounded-lg text-sm font-medium transition-colors ${filter === 'past' ? 'bg-[#257582] text-white shadow-sm' : 'text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-slate-700'}`}
+                        className={`px-6 py-2.5 rounded-xl text-sm font-semibold transition-all ${filter === 'past' ? 'bg-white dark:bg-slate-700 text-indigo-600 dark:text-indigo-400 shadow-sm' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'}`}
                         onClick={() => setFilter('past')}
                     >
                         Past Visits
                     </button>
                     <button
-                        className={`px-6 py-2 rounded-lg text-sm font-medium transition-colors ${filter === 'all' ? 'bg-[#257582] text-white shadow-sm' : 'text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-slate-700'}`}
+                        className={`px-6 py-2.5 rounded-xl text-sm font-semibold transition-all ${filter === 'all' ? 'bg-white dark:bg-slate-700 text-indigo-600 dark:text-indigo-400 shadow-sm' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'}`}
                         onClick={() => setFilter('all')}
                     >
                         All
@@ -145,17 +196,17 @@ function Visits() {
                 {/* Visits List */}
                 <div className="space-y-4">
                     {loading ? (
-                        <div className="text-center py-12 text-gray-500">
-                            <div className="spinner mb-4 mx-auto"></div>
-                            <p>Loading visits...</p>
+                        <div className="glass-card rounded-3xl p-12 text-center">
+                            <span className="material-symbols-outlined text-4xl text-slate-300 dark:text-slate-600 animate-spin mb-4">refresh</span>
+                            <p className="text-slate-500 font-medium">Loading visits...</p>
                         </div>
                     ) : filteredVisits.length === 0 ? (
-                        <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-gray-100 dark:border-slate-700 p-12 text-center flex flex-col items-center">
-                            <div className="w-16 h-16 bg-gray-50 dark:bg-slate-700 rounded-full flex items-center justify-center mb-4">
-                                <svg className="w-8 h-8 text-gray-400 dark:text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                        <div className="glass-card rounded-3xl p-16 text-center flex flex-col items-center">
+                            <div className="w-20 h-20 bg-slate-100 dark:bg-slate-800/50 rounded-3xl flex items-center justify-center mb-6 text-slate-400 dark:text-slate-500">
+                                <span className="material-symbols-outlined text-4xl">event_busy</span>
                             </div>
-                            <p className="text-gray-900 dark:text-white font-bold text-lg m-0 mb-2">No {filter} visits found</p>
-                            <p className="text-gray-500 dark:text-gray-400 text-sm m-0">
+                            <h3 className="text-xl font-bold text-slate-800 dark:text-white mb-2">No {filter} visits found</h3>
+                            <p className="text-slate-500 dark:text-slate-400 max-w-sm">
                                 {filter === 'upcoming'
                                     ? 'Schedule an appointment to see it here'
                                     : 'Your visit history will appear here'}
@@ -163,16 +214,17 @@ function Visits() {
                         </div>
                     ) : (
                         filteredVisits.map(visit => (
-                            <VisitCard
-                                key={visit.id}
-                                visit={visit}
-                                userRole="patient"
-                                showActions={false}
-                            />
+                            <div key={visit.id} className="glass-card rounded-3xl overflow-hidden hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1">
+                                <VisitCard
+                                    visit={visit}
+                                    userRole="patient"
+                                    showActions={false}
+                                />
+                            </div>
                         ))
                     )}
                 </div>
-            </div>
+            </main>
         </div>
     );
 }

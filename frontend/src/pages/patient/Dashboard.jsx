@@ -1,12 +1,12 @@
 import React, { useContext, useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { AuthContext } from '../../context/AuthContext';
 import { consentApi } from '../../api/consentApi';
 import { visitApi } from '../../api/visitApi';
 import { emrApi } from '../../api/emrApi';
+import { patientApi } from '../../api/patientApi';
+import ThemeToggle from '../../components/common/ThemeToggle';
 import './Dashboard.css';
-
-// Remove image imports and replace with inline SVGs for cleaner Doctor Portal match
 
 function PatientDashboard() {
     const navigate = useNavigate();
@@ -17,17 +17,32 @@ function PatientDashboard() {
         scheduledVisits: 0,
         accessLogs: 0
     });
+    const [patientDetails, setPatientDetails] = useState(null);
+    const [healthFacts, setHealthFacts] = useState([]);
+    const [activities, setActivities] = useState([]);
+    const [activityPage, setActivityPage] = useState(0);
+    const ACTIVITIES_PER_PAGE = 3;
+
+    const [activeVisit, setActiveVisit] = useState(null);
+    const [queueStatus, setQueueStatus] = useState(null);
 
     useEffect(() => {
         const fetchStats = async () => {
             if (!user?.id) return;
 
             try {
-                const [consentsRes, recordsRes, visitsRes] = await Promise.allSettled([
+                const [consentsRes, recordsRes, visitsRes, profileRes, factsRes, activitiesRes] = await Promise.allSettled([
                     consentApi.getActiveConsents(),
                     emrApi.getPatientMedicalRecords(user.id),
-                    visitApi.getMyVisits()
+                    visitApi.getMyVisits(),
+                    patientApi.getProfile(),
+                    patientApi.getHealthFacts(),
+                    patientApi.getActivities()
                 ]);
+
+                if (profileRes.status === 'fulfilled') setPatientDetails(profileRes.value?.data || profileRes.value);
+                if (factsRes.status === 'fulfilled') setHealthFacts(factsRes.value?.data || factsRes.value || []);
+                if (activitiesRes.status === 'fulfilled') setActivities(activitiesRes.value?.data || activitiesRes.value || []);
 
                 setStats({
                     activeConsents: consentsRes.status === 'fulfilled'
@@ -39,6 +54,21 @@ function PatientDashboard() {
                     scheduledVisits: visitsRes.status === 'fulfilled' ? (visitsRes.value?.filter(v => ['approved', 'pending', 'scheduled'].includes(v.status?.toLowerCase())).length || 0) : 0,
                     accessLogs: 0 // TODO: Implement access logs API
                 });
+
+                if (visitsRes.status === 'fulfilled' && Array.isArray(visitsRes.value)) {
+                    const latestActive = visitsRes.value.find(v => ['pending', 'approved', 'checked_in', 'in_progress'].includes(v.status?.toLowerCase()));
+                    if (latestActive) {
+                        setActiveVisit(latestActive);
+                        try {
+                            const queueRes = await visitApi.getQueueStatus(latestActive.id);
+                            if (queueRes.success) {
+                                setQueueStatus(queueRes.data);
+                            }
+                        } catch (err) {
+                            console.error('Failed to fetch queue status', err);
+                        }
+                    }
+                }
             } catch (error) {
                 console.error('Failed to fetch dashboard stats:', error);
             }
@@ -47,134 +77,336 @@ function PatientDashboard() {
         fetchStats();
     }, [user?.id]);
 
-    return (
-        <div className="dashboard-container bg-slate-50 dark:bg-slate-900 min-h-screen">
-            {/* Header matches Doctor Portal style - Teal gradient, white text */}
-            <header className="w-full bg-gradient-to-r from-[#3a8d9b] to-[#257582] text-white py-4 px-6 md:px-12 flex justify-between items-center shadow-md">
-                <div className="flex items-center space-x-3">
-                    <div className="w-10 h-10 rounded-full border border-white/40 flex items-center justify-center bg-white/10">
-                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path></svg>
-                    </div>
-                    <div>
-                        <h1 className="text-xl font-bold tracking-wide m-0">Patient Portal</h1>
-                        <p className="text-white/80 text-xs mt-0.5 m-0 font-medium">Healthcare Data & Medical Records Management</p>
-                    </div>
-                </div>
+    const totalActivityPages = Math.ceil(activities.length / ACTIVITIES_PER_PAGE);
 
-                <div className="flex items-center space-x-3">
-                    <button
-                        onClick={() => navigate('/profile')}
-                        className="h-[38px] w-[38px] flex items-center justify-center rounded-xl border border-white/30 text-white hover:bg-white/10 transition-all duration-200"
-                        title="View Profile"
-                    >
-                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                        </svg>
-                    </button>
-                    <button
-                        onClick={logout}
-                        className="bg-white/20 hover:bg-white/30 transition-colors border border-white/20 text-white font-medium px-4 py-2 rounded-lg text-sm"
-                    >
+    const handleNextActivityPage = () => {
+        if (activityPage < totalActivityPages - 1) setActivityPage(p => p + 1);
+    };
+
+    const handlePrevActivityPage = () => {
+        if (activityPage > 0) setActivityPage(p => p - 1);
+    };
+
+    const currentActivities = activities.slice(
+        activityPage * ACTIVITIES_PER_PAGE,
+        (activityPage + 1) * ACTIVITIES_PER_PAGE
+    );
+
+    // Format date nicely
+    const formatDate = (dateString) => {
+        const d = new Date(dateString);
+        return d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+    };
+
+    return (
+        <div className="patient-dashboard-wrapper bg-[var(--background-light)] dark:bg-[var(--background-dark)] text-slate-800 dark:text-slate-100 flex h-screen w-full overflow-hidden">
+            {/* Theme Toggle styling */}
+            <div className="absolute top-4 right-4 z-50">
+                <ThemeToggle />
+            </div>
+
+            <aside className="w-64 flex-shrink-0 border-r border-slate-200 dark:border-slate-800/50 p-6 flex flex-col h-full overflow-y-auto">
+                <div className="flex items-center gap-3 mb-10 px-2 cursor-pointer group" onClick={() => navigate('/patient/dashboard')}>
+                    <div className="relative">
+                        <div className="absolute inset-0 bg-indigo-500 blur-lg opacity-0 group-hover:opacity-60 transition-opacity duration-500 rounded-full"></div>
+                        <div className="relative w-10 h-10 bg-indigo-500 rounded-xl flex items-center justify-center text-white shadow-lg transform transition-all duration-500 group-hover:scale-110 group-hover:-rotate-3 group-hover:shadow-[0_0_15px_rgba(99,102,241,0.5)]">
+                            <span className="material-symbols-outlined text-xl transition-transform duration-500 group-hover:scale-110">local_hospital</span>
+                        </div>
+                    </div>
+                    <h1 className="text-xl font-bold tracking-tight text-slate-800 dark:text-white transition-all duration-500 drop-shadow-sm group-hover:text-indigo-600 dark:group-hover:text-indigo-400 group-hover:drop-shadow-[0_0_10px_rgba(99,102,241,0.4)]">Medicare</h1>
+                </div>
+                <nav className="space-y-2 flex-grow">
+                    <Link to="/patient/dashboard" className="flex items-center gap-3 px-4 py-3 sidebar-item-active rounded-xl font-medium text-slate-800 dark:text-slate-800">
+                        <span className="material-symbols-outlined text-[20px]">grid_view</span>
+                        Dashboard
+                    </Link>
+                    <Link to="/patient/visits" className="flex items-center gap-3 px-4 py-3 text-slate-500 dark:text-slate-400 hover:bg-white/50 dark:hover:bg-white/5 transition rounded-xl">
+                        <span className="material-symbols-outlined text-[20px]">calendar_today</span>
+                        Appointments
+                    </Link>
+                    <Link to="#" className="flex items-center gap-3 px-4 py-3 text-slate-500 dark:text-slate-400 hover:bg-white/50 dark:hover:bg-white/5 transition rounded-xl">
+                        <span className="material-symbols-outlined text-[20px]">chat_bubble_outline</span>
+                        Messages
+                    </Link>
+                    <Link to="/patient/medical-records" className="flex items-center gap-3 px-4 py-3 text-slate-500 dark:text-slate-400 hover:bg-white/50 dark:hover:bg-white/5 transition rounded-xl">
+                        <span className="material-symbols-outlined text-[20px]">folder_shared</span>
+                        Records
+                    </Link>
+                    <Link to="/patient/consent" className="flex items-center gap-3 px-4 py-3 text-slate-500 dark:text-slate-400 hover:bg-white/50 dark:hover:bg-white/5 transition rounded-xl">
+                        <span className="material-symbols-outlined text-[20px]">verified_user</span>
+                        Consents
+                    </Link>
+                </nav>
+                <div className="space-y-2 mt-auto pt-6 border-t border-white/20 dark:border-slate-800/50">
+                    <Link to="#" className="flex items-center gap-3 px-4 py-3 text-slate-500 dark:text-slate-400 hover:bg-white/50 dark:hover:bg-white/5 transition rounded-xl">
+                        <span className="material-symbols-outlined text-[20px]">favorite_border</span>
+                        Support
+                    </Link>
+                    <Link to="/patient/profile" className="flex items-center gap-3 px-4 py-3 text-slate-500 dark:text-slate-400 hover:bg-white/50 dark:hover:bg-white/5 transition rounded-xl">
+                        <span className="material-symbols-outlined text-[20px]">manage_accounts</span>
+                        Profile
+                    </Link>
+                    <button onClick={logout} className="w-full flex items-center gap-3 px-4 py-3 text-rose-500 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-900/20 transition rounded-xl font-medium">
+                        <span className="material-symbols-outlined text-[20px]">logout</span>
                         Sign Out
                     </button>
                 </div>
-            </header>
+            </aside>
 
-            <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
-
-                {/* User Info Bar - Solid white card */}
-                <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-gray-100 dark:border-slate-700 p-6 flex flex-col">
-                    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center">
+            <main className="flex-grow p-8 overflow-y-auto h-full relative">
+                <header className="mb-10">
+                    <div className="flex items-center justify-between mb-8">
                         <div>
-                            <div className="text-lg font-bold text-gray-800 dark:text-white">
-                                {user?.firstName || 'Patient Name'} {user?.lastName || ''}
+                            <h2 className="text-3xl font-bold text-slate-900 dark:text-white">Patient Hub</h2>
+                            <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">
+                                {patientDetails?.firstName || user?.firstName || 'Patient Name'} {patientDetails?.lastName || user?.lastName || ''} • Patient ID: {patientDetails?.id || user?.id || 'N/A'}
+                            </p>
+                        </div>
+                        <div className="flex items-center gap-3 glass-card px-4 py-2 rounded-2xl">
+                            <div className="w-8 h-8 rounded-full bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center">
+                                <div className="w-2 h-2 rounded-full bg-emerald-500"></div>
                             </div>
-                            <div className="text-gray-500 text-sm mt-1">
-                                ID: {user?.id || 'MD-2024-789456'}
+                            <span className="text-sm font-semibold text-slate-800 dark:text-slate-100">Active Status</span>
+                        </div>
+                    </div>
+                    <div className="grid grid-cols-2 gap-6">
+                        <div onClick={() => navigate('/patient/consent')} className="glass-card p-6 rounded-3xl hover:bg-white/80 dark:hover:bg-slate-800/80 transition-all cursor-pointer group">
+                            <div className="flex items-center justify-between mb-6">
+                                <div className="w-12 h-12 rounded-2xl bg-indigo-50 dark:bg-indigo-900/30 flex items-center justify-center text-indigo-600 dark:text-indigo-400">
+                                    <span className="material-symbols-outlined text-2xl">verified_user</span>
+                                </div>
+                                <span className="material-symbols-outlined text-slate-300 dark:text-slate-600 group-hover:text-indigo-500 transition-colors">arrow_forward</span>
+                            </div>
+                            <h4 className="text-lg font-bold mb-1 text-slate-800 dark:text-slate-100">Consent Management</h4>
+                            <p className="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wider font-semibold mb-4">Privacy &amp; Permissions</p>
+                            <div className="bg-indigo-50/50 dark:bg-indigo-900/20 p-4 rounded-2xl border border-indigo-100/50 dark:border-indigo-500/10">
+                                <div className="flex justify-between items-center">
+                                    <span className="text-sm font-medium text-slate-700 dark:text-slate-200">Active Consents</span>
+                                    <span className="px-2 py-1 bg-indigo-600 text-white text-[10px] font-bold rounded-lg truncate max-w-[120px]">{stats.activeConsents || 0} GRANTED</span>
+                                </div>
                             </div>
                         </div>
 
-                        <div className="mt-4 sm:mt-0 px-4 py-1.5 rounded-full border border-green-200 dark:border-green-800 bg-green-50 dark:bg-green-900/30 flex items-center space-x-2">
-                            <span className="w-2.5 h-2.5 rounded-full bg-green-500 dark:bg-green-400"></span>
-                            <span className="text-green-700 dark:text-green-400 text-sm font-semibold">Active Patient</span>
-                        </div>
-                    </div>
-
-                </div>
-
-
-                {/* Stats row - Teal cards like Doctor Portal */}
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                    {[
-                        { label: 'ACTIVE CONSENTS', value: stats.activeConsents, icon: <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg> },
-                        { label: 'MEDICAL RECORDS', value: stats.medicalRecords, icon: <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg> },
-                        { label: 'SCHEDULED VISITS', value: stats.scheduledVisits, icon: <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg> },
-                        { label: 'ACCESS LOGS', value: stats.accessLogs, icon: <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg> }
-                    ].map((stat, idx) => (
-                        <div key={idx} className="bg-[#4a9fae] dark:bg-[#3a8d9b] rounded-xl p-5 text-white flex flex-col items-center justify-center shadow-md hover:shadow-lg hover:-translate-y-1 cursor-pointer transition-all duration-300">
-                            <div className="mb-2 opacity-90">{stat.icon}</div>
-                            <div className="text-3xl font-bold mb-1">{stat.value}</div>
-                            <div className="text-[10px] sm:text-xs font-semibold tracking-wider opacity-90 text-center">{stat.label}</div>
-                        </div>
-                    ))}
-                </div>
-
-                {/* Patient Services */}
-                <div className="mt-8">
-                    <div className="flex items-center space-x-2 mb-4">
-                        <div className="w-1.5 h-5 bg-[#4a9fae] rounded-full"></div>
-                        <h2 className="text-lg font-bold text-gray-800 dark:text-white m-0">Patient Services</h2>
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        {[
-                            {
-                                path: '/patient/consent',
-                                title: 'Consent Requests',
-                                desc: 'Review and manage healthcare provider data access protocols',
-                                icon: <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path></svg>
-                            },
-                            {
-                                path: '/patient/medical-records',
-                                title: 'Patient Records',
-                                desc: 'Access and manage your complete medical history',
-                                icon: <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
-                            },
-                            {
-                                path: '/patient/visits',
-                                title: 'Visit Management',
-                                desc: 'View scheduled appointments and request workflow visits',
-                                icon: <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
-                            },
-                            {
-                                path: '/patient/audit-trail',
-                                title: 'Access Logs',
-                                desc: 'Track external healthcare provider access to your data',
-                                icon: <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path></svg>
-                            }
-                        ].map((service, idx) => (
-                            <div
-                                key={idx}
-                                onClick={() => navigate(service.path)}
-                                className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-gray-100 dark:border-slate-700 p-5 flex items-start space-x-4 cursor-pointer hover:shadow-md hover:border-teal-200 transition-all group"
-                            >
-                                <div className="p-3 bg-teal-50 text-[#4a9fae] rounded-lg group-hover:bg-[#4a9fae] group-hover:text-white transition-colors">
-                                    {service.icon}
+                        <div onClick={() => navigate('/patient/medical-records')} className="glass-card p-6 rounded-3xl hover:bg-white/80 dark:hover:bg-slate-800/80 transition-all cursor-pointer group">
+                            <div className="flex items-center justify-between mb-6">
+                                <div className="w-12 h-12 rounded-2xl bg-teal-50 dark:bg-teal-900/30 flex items-center justify-center text-teal-600 dark:text-teal-400">
+                                    <span className="material-symbols-outlined text-2xl">folder_shared</span>
                                 </div>
-                                <div className="flex-1">
-                                    <h3 className="text-gray-800 dark:text-gray-100 font-bold m-0 group-hover:text-[#257582] transition-colors">{service.title}</h3>
-                                    <p className="text-xs text-gray-500 mt-1 m-0 pr-4 leading-relaxed">{service.desc}</p>
-                                </div>
-                                <div className="text-gray-300 flex items-center h-full pt-2 group-hover:text-[#4a9fae] transition-colors">
-                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7"></path></svg>
+                                <span className="material-symbols-outlined text-slate-300 dark:text-slate-600 group-hover:text-teal-500 transition-colors">arrow_forward</span>
+                            </div>
+                            <h4 className="text-lg font-bold mb-1 text-slate-800 dark:text-slate-100">Patient Records</h4>
+                            <p className="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wider font-semibold mb-4">Medical History</p>
+                            <div className="bg-teal-50/50 dark:bg-teal-900/20 p-4 rounded-2xl border border-teal-100/50 dark:border-teal-500/10 transition-colors">
+                                <div className="flex items-center gap-3">
+                                    <span className="text-sm font-semibold text-teal-700 dark:text-teal-400">View your records</span>
                                 </div>
                             </div>
-                        ))}
+                        </div>
+
+                        <div onClick={() => navigate('/patient/visits')} className="glass-card p-6 rounded-3xl hover:bg-white/80 dark:hover:bg-slate-800/80 transition-all cursor-pointer group">
+                            <div className="flex items-center justify-between mb-6">
+                                <div className="w-12 h-12 rounded-2xl bg-amber-50 dark:bg-amber-900/30 flex items-center justify-center text-amber-600 dark:text-amber-400">
+                                    <span className="material-symbols-outlined text-2xl">assignment_ind</span>
+                                </div>
+                                <span className="material-symbols-outlined text-slate-300 dark:text-slate-600 group-hover:text-amber-500 transition-colors">arrow_forward</span>
+                            </div>
+                            <h4 className="text-lg font-bold mb-1 text-slate-800 dark:text-slate-100">Visit Management</h4>
+                            <p className="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wider font-semibold mb-4">Appointments &amp; Queue</p>
+                            <div className="bg-amber-50/50 dark:bg-amber-900/20 p-4 rounded-2xl border border-amber-100/50 dark:border-amber-500/10">
+                                <div className="flex items-center gap-3">
+                                    <span className="material-symbols-outlined text-amber-600 text-sm">event</span>
+                                    <span className="text-sm font-medium text-slate-700 dark:text-slate-200">{stats.scheduledVisits} Scheduled Upcoming</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div onClick={() => navigate('/patient/audit-trail')} className="glass-card p-6 rounded-3xl hover:bg-white/80 dark:hover:bg-slate-800/80 transition-all cursor-pointer group">
+                            <div className="flex items-center justify-between mb-6">
+                                <div className="w-12 h-12 rounded-2xl bg-rose-50 dark:bg-rose-900/30 flex items-center justify-center text-rose-600 dark:text-rose-400">
+                                    <span className="material-symbols-outlined text-2xl">history_edu</span>
+                                </div>
+                                <span className="material-symbols-outlined text-slate-300 dark:text-slate-600 group-hover:text-rose-500 transition-colors">arrow_forward</span>
+                            </div>
+                            <h4 className="text-lg font-bold mb-1 text-slate-800 dark:text-slate-100">Access Logs</h4>
+                            <p className="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wider font-semibold mb-4">Security Audit</p>
+                            <div className="bg-rose-50/50 dark:bg-rose-900/20 p-4 rounded-2xl border border-rose-100/50 dark:border-rose-500/10">
+                                <div className="flex items-center gap-3">
+                                    <span className="material-symbols-outlined text-rose-600 text-sm">lock_clock</span>
+                                    <span className="text-sm font-medium text-slate-700 dark:text-slate-200">Track Access Logs</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </header>
+                <div className="grid grid-cols-2 gap-8">
+                    <section>
+                        <div className="flex items-center justify-between mb-4">
+                            <h4 className="text-xl font-semibold text-slate-800 dark:text-slate-100">Health Facts</h4>
+                        </div>
+                        <div className="glass-card rounded-3xl p-6 space-y-6">
+                            {healthFacts.map((fact, index) => (
+                                <div key={index} className="flex gap-4 items-start">
+                                    <div>
+                                        <h5 className="font-bold text-sm text-slate-800 dark:text-slate-100">{fact.title}</h5>
+                                        <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">{fact.description}</p>
+                                    </div>
+                                </div>
+                            ))}
+                            {healthFacts.length === 0 && (
+                                <p className="text-sm text-slate-500 dark:text-slate-400 text-center py-4">No health facts available currently.</p>
+                            )}
+                        </div>
+                    </section>
+                    <section>
+                        <div className="flex items-center justify-between mb-4">
+                            <h4 className="text-xl font-semibold text-slate-800 dark:text-slate-100">Activity History</h4>
+                            {activities.length > 0 && (
+                                <div className="flex gap-2">
+                                    <button
+                                        onClick={handlePrevActivityPage}
+                                        disabled={activityPage === 0}
+                                        className={`w-8 h-8 flex items-center justify-center glass-card rounded-full hover:bg-white dark:hover:bg-slate-700 transition ${activityPage === 0 ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                    >
+                                        <span className="material-symbols-outlined text-sm text-slate-600 dark:text-slate-300">chevron_left</span>
+                                    </button>
+                                    <button
+                                        onClick={handleNextActivityPage}
+                                        disabled={activityPage >= totalActivityPages - 1}
+                                        className={`w-8 h-8 flex items-center justify-center glass-card rounded-full hover:bg-white dark:hover:bg-slate-700 transition ${activityPage >= totalActivityPages - 1 ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                    >
+                                        <span className="material-symbols-outlined text-sm text-slate-600 dark:text-slate-300">chevron_right</span>
+                                    </button>
+                                </div>
+                            )}
+                        </div>
+                        <div className="glass-card rounded-3xl p-6">
+                            <div className="space-y-6">
+                                {currentActivities.map((activity) => (
+                                    <div key={activity.id} className={`relative pl-6 border-l-2 ${activity.borderColorClass || 'border-indigo-500/30'}`}>
+                                        <div className={`absolute -left-[9px] top-0 w-4 h-4 rounded-full ${activity.colorClass || 'bg-indigo-500'} border-4 border-white dark:border-slate-800`}></div>
+                                        <div className="flex justify-between items-start">
+                                            <div>
+                                                <p className="text-xs text-slate-500 uppercase tracking-tighter mb-1">{activity.type}</p>
+                                                <p className="font-bold text-sm text-slate-800 dark:text-slate-100">{activity.title}</p>
+                                            </div>
+                                            <span className="text-[10px] text-slate-400 font-medium">{formatDate(activity.date)}</span>
+                                        </div>
+                                    </div>
+                                ))}
+                                {activities.length === 0 && (
+                                    <p className="text-sm text-slate-500 dark:text-slate-400 text-center py-4">No recent activity found.</p>
+                                )}
+                            </div>
+                        </div>
+                    </section>
+                </div>
+            </main>
+
+            <aside className="w-80 flex-shrink-0 border-l border-slate-200 dark:border-slate-800/50 p-6 glass-panel flex flex-col h-full overflow-y-auto">
+                <h3 className="text-xl font-bold mb-6 text-slate-800 dark:text-slate-100">Search Records</h3>
+                <div className="relative mb-8">
+                    <input className="w-full bg-white dark:bg-slate-800/50 border-none rounded-2xl py-3 pl-12 pr-4 text-sm focus:ring-2 focus:ring-indigo-500 shadow-sm text-slate-800 dark:text-slate-100" placeholder="Search files, tests..." type="text" />
+                    <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-slate-400">search</span>
+                </div>
+                <div className="grid grid-cols-3 gap-3 mb-10">
+                    <div className="glass-card rounded-2xl p-4 flex flex-col items-center gap-2 cursor-pointer hover:bg-white dark:hover:bg-white/10 transition">
+                        <span className="material-symbols-outlined text-indigo-500 text-xl">add</span>
+                        <span className="text-[9px] font-bold text-slate-500 dark:text-slate-300 uppercase">General</span>
+                    </div>
+                    <div className="glass-card rounded-2xl p-4 flex flex-col items-center gap-2 cursor-pointer hover:bg-white dark:hover:bg-white/10 transition">
+                        <span className="material-symbols-outlined text-indigo-500 text-xl">child_care</span>
+                        <span className="text-[9px] font-bold text-slate-500 dark:text-slate-300 uppercase text-center leading-none">Peds</span>
+                    </div>
+                    <div className="glass-card rounded-2xl p-4 flex flex-col items-center gap-2 cursor-pointer hover:bg-white dark:hover:bg-white/10 transition">
+                        <span className="material-symbols-outlined text-indigo-500 text-xl">favorite</span>
+                        <span className="text-[9px] font-bold text-slate-500 dark:text-slate-300 uppercase text-center leading-none">OBGYN</span>
+                    </div>
+                    <div className="glass-card rounded-2xl p-4 flex flex-col items-center gap-2 cursor-pointer hover:bg-white dark:hover:bg-white/10 transition">
+                        <span className="material-symbols-outlined text-indigo-500 text-xl">monitor_heart</span>
+                        <span className="text-[9px] font-bold text-slate-500 dark:text-slate-300 uppercase text-center leading-none">Internal</span>
+                    </div>
+                    <div className="glass-card rounded-2xl p-4 flex flex-col items-center gap-2 cursor-pointer hover:bg-white dark:hover:bg-white/10 transition">
+                        <span className="material-symbols-outlined text-indigo-500 text-xl">spa</span>
+                        <span className="text-[9px] font-bold text-slate-500 dark:text-slate-300 uppercase text-center leading-none">Derma</span>
+                    </div>
+                    <div className="glass-card rounded-2xl p-4 flex flex-col items-center gap-2 cursor-pointer hover:bg-white dark:hover:bg-white/10 transition">
+                        <span className="material-symbols-outlined text-indigo-500 text-xl">psychology</span>
+                        <span className="text-[9px] font-bold text-slate-500 dark:text-slate-300 uppercase text-center leading-none">Mental</span>
+                    </div>
+                    <div className="glass-card rounded-2xl p-4 flex flex-col items-center gap-2 cursor-pointer hover:bg-white dark:hover:bg-white/10 transition">
+                        <span className="material-symbols-outlined text-indigo-500 text-xl">favorite_border</span>
+                        <span className="text-[9px] font-bold text-slate-500 dark:text-slate-300 uppercase text-center leading-none">Cardio</span>
+                    </div>
+                    <div className="glass-card rounded-2xl p-4 flex flex-col items-center gap-2 cursor-pointer hover:bg-white dark:hover:bg-white/10 transition">
+                        <span className="material-symbols-outlined text-indigo-500 text-xl">hardware</span>
+                        <span className="text-[9px] font-bold text-slate-500 dark:text-slate-300 uppercase text-center leading-none">Ortho</span>
+                    </div>
+                    <div className="glass-card rounded-2xl p-4 flex flex-col items-center gap-2 cursor-pointer hover:bg-white dark:hover:bg-white/10 transition">
+                        <span className="material-symbols-outlined text-indigo-500 text-xl">security</span>
+                        <span className="text-[9px] font-bold text-slate-500 dark:text-slate-300 uppercase text-center leading-none">Disease</span>
                     </div>
                 </div>
 
-            </div>
-        </div >
+                <h3 className="text-xl font-bold mb-4 text-slate-800 dark:text-slate-100">Visit Queue</h3>
+
+                {activeVisit ? (
+                    <>
+                        <div className="bg-white/80 dark:bg-slate-800/80 rounded-2xl p-4 shadow-sm mb-4 border border-white/50 dark:border-slate-700/50 text-slate-800 dark:text-slate-100">
+                            <div className="flex justify-between items-start">
+                                <div>
+                                    <p className="text-[10px] text-slate-400 font-bold uppercase">Organization</p>
+                                    <p className="text-sm font-bold">{activeVisit.organizationName || 'Hospital'}</p>
+                                    <p className="text-xs text-slate-500 mt-1">
+                                        {activeVisit.doctor_first_name ? `Dr. ${activeVisit.doctor_first_name} ${activeVisit.doctor_last_name}` : 'Awaiting Assignment'}
+                                    </p>
+                                </div>
+                                <span className={`px-2 py-1 text-[10px] font-bold uppercase rounded-lg bg-indigo-50 text-indigo-600 dark:bg-indigo-900/30 dark:text-indigo-400`}>
+                                    {activeVisit.status}
+                                </span>
+                            </div>
+                        </div>
+
+                        {queueStatus && queueStatus.total > 0 ? (
+                            <div className="grid grid-cols-3 gap-2">
+                                <div className="glass-card rounded-2xl p-3 flex flex-col items-center">
+                                    <span className="text-[9px] font-bold text-slate-400 uppercase">Status</span>
+                                    <span className="text-sm font-bold text-slate-800 dark:text-slate-100 capitalize">{queueStatus.status}</span>
+                                </div>
+                                <div className="glass-card rounded-2xl p-3 flex flex-col items-center">
+                                    <span className="text-[9px] font-bold text-slate-400 uppercase">Order</span>
+                                    <span className="text-sm font-bold text-slate-800 dark:text-slate-100">{queueStatus.position} <span className="text-[10px] text-slate-400 font-normal">of {queueStatus.total}</span></span>
+                                </div>
+                                <div className="glass-card rounded-2xl p-3 flex flex-col items-center">
+                                    <span className="text-[9px] font-bold text-slate-400 uppercase">Wait Time</span>
+                                    <span className="text-sm font-bold text-slate-800 dark:text-slate-100">~{queueStatus.eta_minutes}m</span>
+                                </div>
+                            </div>
+                        ) : (
+                            <div className="glass-card rounded-2xl p-4 text-center mt-2">
+                                <span className="text-[10px] font-bold text-slate-400 uppercase">Queue</span>
+                                <p className="text-sm font-medium text-slate-800 dark:text-slate-100 mt-1">
+                                    {activeVisit.status === 'pending' ? 'Waiting for admin approval' : 'Your doctor will see you shortly.'}
+                                </p>
+                            </div>
+                        )}
+                    </>
+                ) : (
+                    <div className="bg-white/50 dark:bg-slate-800/30 rounded-2xl p-6 text-center border border-white/50 dark:border-slate-700/50">
+                        <span className="material-symbols-outlined text-3xl text-slate-300 dark:text-slate-600 mb-2">event_busy</span>
+                        <p className="text-sm font-medium text-slate-500 dark:text-slate-400">No active visits in queue</p>
+                        <button
+                            onClick={() => navigate('/patient/visits/new')}
+                            className="mt-3 text-[11px] font-bold text-indigo-600 dark:text-indigo-400 uppercase tracking-wider hover:underline"
+                        >
+                            Request New Visit
+                        </button>
+                    </div>
+                )}
+
+                <div className="mt-auto hidden">
+                </div>
+            </aside>
+        </div>
     );
 }
 

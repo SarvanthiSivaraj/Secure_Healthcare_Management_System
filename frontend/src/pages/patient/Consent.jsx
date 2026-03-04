@@ -1,14 +1,17 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect, useCallback, useContext } from 'react';
+import { useNavigate, Link } from 'react-router-dom';
+import { AuthContext } from '../../context/AuthContext';
 import ConsentForm from '../../components/consent/ConsentForm';
 import ConsentCard from '../../components/consent/ConsentCard';
 import { consentApi } from '../../api/consentApi';
-import '../patient/Dashboard.css'; // Shared dashboard theme
+import ThemeToggle from '../../components/common/ThemeToggle';
+import '../patient/Dashboard.css';
 import './Consent.css';
 
 function Consent() {
     const navigate = useNavigate();
-    const [viewMode, setViewMode] = useState('active'); // 'active' or 'history'
+    const { logout } = useContext(AuthContext);
+    const [viewMode, setViewMode] = useState('active');
     const [showForm, setShowForm] = useState(false);
     const [editingConsent, setEditingConsent] = useState(null);
     const [consents, setConsents] = useState([]);
@@ -16,11 +19,8 @@ function Consent() {
     const [error, setError] = useState('');
 
     useEffect(() => {
-        if (viewMode === 'active') {
-            loadConsents();
-        } else {
-            loadHistory();
-        }
+        if (viewMode === 'active') loadConsents();
+        else loadHistory();
     }, [viewMode]);
 
     const loadConsents = async () => {
@@ -30,12 +30,8 @@ function Consent() {
             const data = await consentApi.getActiveConsents();
             setConsents(data || []);
         } catch (err) {
-            console.error(err);
-            if (err.response && err.response.status !== 404) {
-                setError('Failed to load active consents');
-            } else {
-                setConsents([]);
-            }
+            if (err.response && err.response.status !== 404) setError('Failed to load active consents');
+            else setConsents([]);
         } finally {
             setLoading(false);
         }
@@ -45,14 +41,10 @@ function Consent() {
         setLoading(true);
         setError('');
         try {
-            // Check if getConsentHistory exists before calling
-            if (typeof consentApi.getConsentHistory !== 'function') {
-                throw new Error('History API not implemented yet');
-            }
+            if (typeof consentApi.getConsentHistory !== 'function') throw new Error('History API not implemented yet');
             const data = await consentApi.getConsentHistory();
             setConsents(data || []);
         } catch (err) {
-            console.error(err);
             setError('Failed to load consent history');
             setConsents([]);
         } finally {
@@ -63,12 +55,8 @@ function Consent() {
     const handleGrantSuccess = useCallback(() => {
         setShowForm(false);
         setEditingConsent(null);
-        // Switch to active view to see new consent
-        if (viewMode !== 'active') {
-            setViewMode('active');
-        } else {
-            loadConsents();
-        }
+        if (viewMode !== 'active') setViewMode('active');
+        else loadConsents();
     }, [viewMode]);
 
     const handleEdit = useCallback((consent) => {
@@ -79,67 +67,108 @@ function Consent() {
     const handleRevoke = useCallback(async (consentId) => {
         try {
             await consentApi.revokeConsent(consentId);
-            // Refresh current view
-            if (viewMode === 'active') {
-                loadConsents();
-            } else {
-                loadHistory();
-            }
+            if (viewMode === 'active') loadConsents();
+            else loadHistory();
         } catch (err) {
             alert('Failed to revoke consent: ' + (err.response?.data?.message || err.message));
         }
     }, [viewMode]);
 
     return (
-        <div className="dashboard-container bg-slate-50 dark:bg-slate-900 min-h-screen">
-            <header className="w-full bg-gradient-to-r from-[#3a8d9b] to-[#257582] text-white py-4 px-6 md:px-12 flex justify-between items-center shadow-md">
-                <div className="flex items-center space-x-3">
-                    <div className="w-10 h-10 rounded-full border border-white/40 flex items-center justify-center bg-white/10">
-                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path></svg>
-                    </div>
-                    <div>
-                        <h1 className="text-xl font-bold tracking-wide m-0">Consent Management</h1>
-                        <p className="text-white/80 text-xs mt-0.5 m-0 font-medium">Control who can access your medical data</p>
-                    </div>
-                </div>
+        <div className="patient-dashboard-wrapper bg-[var(--background-light)] dark:bg-[var(--background-dark)] text-slate-800 dark:text-slate-100 flex h-screen w-full overflow-hidden">
+            {/* ── Theme Toggle ── */}
+            <div className="absolute top-4 right-4 z-50">
+                <ThemeToggle />
+            </div>
 
-                <div className="flex items-center space-x-3">
-                    <button
-                        onClick={() => navigate('/patient/dashboard')}
-                        className="bg-white/20 hover:bg-white/30 transition-colors border border-white/20 text-white font-medium px-4 py-2 rounded-lg text-sm"
-                    >
-                        Back to Dashboard
+            {/* ── Left Sidebar ── */}
+            <aside className="w-64 flex-shrink-0 border-r border-slate-200 dark:border-slate-800/50 p-6 flex flex-col h-full overflow-y-auto">
+                <div className="flex items-center gap-3 mb-10 px-2 cursor-pointer group" onClick={() => navigate('/patient/dashboard')}>
+                    <div className="relative">
+                        <div className="absolute inset-0 bg-indigo-500 blur-lg opacity-0 group-hover:opacity-60 transition-opacity duration-500 rounded-full"></div>
+                        <div className="relative w-10 h-10 bg-indigo-500 rounded-xl flex items-center justify-center text-white shadow-lg transform transition-all duration-500 group-hover:scale-110 group-hover:-rotate-3 group-hover:shadow-[0_0_15px_rgba(99,102,241,0.5)]">
+                            <span className="material-symbols-outlined text-xl transition-transform duration-500 group-hover:scale-110">local_hospital</span>
+                        </div>
+                    </div>
+                    <h1 className="text-xl font-bold tracking-tight text-slate-800 dark:text-white transition-all duration-500 drop-shadow-sm group-hover:text-indigo-600 dark:group-hover:text-indigo-400 group-hover:drop-shadow-[0_0_10px_rgba(99,102,241,0.4)]">Medicare</h1>
+                </div>
+                <nav className="space-y-2 flex-grow">
+                    <Link to="/patient/dashboard" className="flex items-center gap-3 px-4 py-3 text-slate-500 dark:text-slate-400 hover:bg-white/50 dark:hover:bg-white/5 transition rounded-xl">
+                        <span className="material-symbols-outlined text-[20px]">grid_view</span>
+                        Dashboard
+                    </Link>
+                    <Link to="/patient/visits" className="flex items-center gap-3 px-4 py-3 text-slate-500 dark:text-slate-400 hover:bg-white/50 dark:hover:bg-white/5 transition rounded-xl">
+                        <span className="material-symbols-outlined text-[20px]">calendar_today</span>
+                        Appointments
+                    </Link>
+                    <Link to="#" className="flex items-center gap-3 px-4 py-3 text-slate-500 dark:text-slate-400 hover:bg-white/50 dark:hover:bg-white/5 transition rounded-xl">
+                        <span className="material-symbols-outlined text-[20px]">chat_bubble_outline</span>
+                        Messages
+                    </Link>
+                    <Link to="/patient/medical-records" className="flex items-center gap-3 px-4 py-3 text-slate-500 dark:text-slate-400 hover:bg-white/50 dark:hover:bg-white/5 transition rounded-xl">
+                        <span className="material-symbols-outlined text-[20px]">folder_shared</span>
+                        Records
+                    </Link>
+                    <Link to="/patient/consent" className="flex items-center gap-3 px-4 py-3 sidebar-item-active rounded-xl font-medium text-slate-800 dark:text-slate-800">
+                        <span className="material-symbols-outlined text-[20px]">verified_user</span>
+                        Consents
+                    </Link>
+                    <Link to="/patient/audit-trail" className="flex items-center gap-3 px-4 py-3 text-slate-500 dark:text-slate-400 hover:bg-white/50 dark:hover:bg-white/5 transition rounded-xl">
+                        <span className="material-symbols-outlined text-[20px]">history</span>
+                        Audit Trail
+                    </Link>
+                </nav>
+                <div className="space-y-2 mt-auto pt-6 border-t border-slate-200 dark:border-slate-800/50">
+                    <Link to="#" className="flex items-center gap-3 px-4 py-3 text-slate-500 dark:text-slate-400 hover:bg-white/50 dark:hover:bg-white/5 transition rounded-xl">
+                        <span className="material-symbols-outlined text-[20px]">favorite_border</span>
+                        Support
+                    </Link>
+                    <Link to="/patient/profile" className="flex items-center gap-3 px-4 py-3 text-slate-500 dark:text-slate-400 hover:bg-white/50 dark:hover:bg-white/5 transition rounded-xl">
+                        <span className="material-symbols-outlined text-[20px]">manage_accounts</span>
+                        Profile
+                    </Link>
+                    <button onClick={logout} className="w-full flex items-center gap-3 px-4 py-3 text-rose-500 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-900/20 transition rounded-xl font-medium">
+                        <span className="material-symbols-outlined text-[20px]">logout</span>
+                        Sign Out
                     </button>
                 </div>
-            </header>
+            </aside>
 
-            <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            {/* ── Main Content ── */}
+            <main className="flex-grow p-8 overflow-y-auto h-full">
+                <header className="mb-8">
+                    <h2 className="text-3xl font-bold text-slate-900 dark:text-white">Consent Management</h2>
+                    <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">Control who can access your medical data and when.</p>
+                </header>
+
+                {/* Tab bar + action button */}
                 {!showForm && (
-                    <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-gray-100 dark:border-slate-700 p-4 mb-6 flex flex-col sm:flex-row justify-between items-center gap-4">
-                        <div className="flex bg-gray-100 dark:bg-slate-700 p-1 rounded-lg">
+                    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
+                        <div className="flex bg-slate-100/80 dark:bg-slate-800/50 p-1.5 rounded-2xl border border-slate-200/50 dark:border-slate-700/50">
                             <button
-                                className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${viewMode === 'active' ? 'bg-white dark:bg-slate-800 text-[#257582] dark:text-[#3a8d9b] shadow-sm' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'}`}
                                 onClick={() => setViewMode('active')}
+                                className={`px-6 py-2.5 rounded-xl text-sm font-bold transition-all ${viewMode === 'active' ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-600 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200'}`}
                             >
                                 Active Consents
                             </button>
                             <button
-                                className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${viewMode === 'history' ? 'bg-white dark:bg-slate-800 text-[#257582] dark:text-[#3a8d9b] shadow-sm' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'}`}
                                 onClick={() => setViewMode('history')}
+                                className={`px-6 py-2.5 rounded-xl text-sm font-bold transition-all ${viewMode === 'history' ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-600 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200'}`}
                             >
                                 Past Accesses
                             </button>
                         </div>
                         <button
-                            className="bg-[#4a9fae] hover:bg-[#3a8d9b] text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center shadow-sm"
                             onClick={() => { setEditingConsent(null); setShowForm(true); }}
+                            className="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2.5 rounded-xl text-sm font-bold transition-colors shadow-md shadow-indigo-500/20 flex items-center gap-2"
                         >
-                            <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4"></path></svg>
+                            <span className="material-symbols-outlined text-[18px] text-indigo-200">add_circle</span>
                             Grant New Consent
                         </button>
                     </div>
                 )}
 
+                {/* Grant form */}
                 {showForm && (
                     <ConsentForm
                         initialData={editingConsent}
@@ -148,51 +177,63 @@ function Consent() {
                     />
                 )}
 
-                <div className="space-y-6">
-                    <div className="flex items-center space-x-2">
-                        <div className="w-1.5 h-5 bg-[#4a9fae] rounded-full"></div>
-                        <h2 className="text-lg font-bold text-gray-800 dark:text-white m-0">{viewMode === 'active' ? 'Active Consents' : 'Access History'}</h2>
-                    </div>
-
-                    {loading && <div className="text-center py-8 text-gray-500">Loading consents...</div>}
-
-                    {error && <div className="bg-red-50 text-red-600 p-4 rounded-xl border border-red-100">{error}</div>}
-
-                    {!loading && consents.length === 0 && (
-                        <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-gray-100 dark:border-slate-700 p-12 text-center flex flex-col items-center">
-                            <div className="w-16 h-16 bg-gray-50 dark:bg-slate-700 rounded-full flex items-center justify-center mb-4">
-                                <svg className="w-8 h-8 text-gray-400 dark:text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
-                            </div>
-                            {viewMode === 'active' ? (
-                                <>
-                                    <h3 className="text-lg font-bold text-gray-800 dark:text-white mb-2 m-0">No Active Consents</h3>
-                                    <p className="text-gray-500 dark:text-gray-400 m-0 text-sm">You haven't granted any consents yet. Click "Grant New Consent" to allow a doctor to access your medical data.</p>
-                                </>
-                            ) : (
-                                <>
-                                    <h3 className="text-lg font-bold text-gray-800 dark:text-white mb-2 m-0">No History Available</h3>
-                                    <p className="text-gray-500 dark:text-gray-400 m-0 text-sm">No past consent history found.</p>
-                                </>
-                            )}
-                        </div>
-                    )}
-
-                    {!loading && consents.length > 0 && (
-                        <div className="grid gap-4">
-                            {consents.map((consent) => (
-                                <ConsentCard
-                                    key={consent.id}
-                                    consent={consent}
-                                    onRevoke={handleRevoke}
-                                    onEdit={handleEdit}
-                                />
-                            ))}
-                        </div>
-                    )}
+                {/* Section label */}
+                <div className="flex items-center gap-2 mb-5">
+                    <div className="w-1.5 h-5 bg-indigo-500 rounded-full"></div>
+                    <h3 className="text-base font-bold text-slate-800 dark:text-white">
+                        {viewMode === 'active' ? 'Active Consents' : 'Access History'}
+                    </h3>
                 </div>
 
-            </div>
+                {/* States */}
+                {loading && (
+                    <div className="flex flex-col items-center justify-center py-16 text-slate-400">
+                        <span className="material-symbols-outlined text-5xl animate-spin mb-4">refresh</span>
+                        <p className="text-sm font-medium">Loading consents...</p>
+                    </div>
+                )}
+
+                {error && (
+                    <div className="bg-rose-50 dark:bg-rose-900/20 text-rose-600 dark:text-rose-400 p-4 rounded-2xl border border-rose-200 dark:border-rose-900/50 flex items-center gap-3 mb-4">
+                        <span className="material-symbols-outlined">error</span>
+                        {error}
+                    </div>
+                )}
+
+                {!loading && consents.length === 0 && (
+                    <div className="glass-card rounded-2xl border border-white/50 dark:border-slate-700/50 p-16 text-center flex flex-col items-center">
+                        <div className="w-16 h-16 bg-slate-100 dark:bg-slate-700/50 rounded-2xl flex items-center justify-center mb-4">
+                            <span className="material-symbols-outlined text-3xl text-slate-400">verified_user</span>
+                        </div>
+                        {viewMode === 'active' ? (
+                            <>
+                                <h3 className="text-lg font-bold text-slate-800 dark:text-white mb-2">No Active Consents</h3>
+                                <p className="text-slate-500 dark:text-slate-400 text-sm">You haven't granted any consents yet. Click "Grant New Consent" to allow a doctor to access your medical data.</p>
+                            </>
+                        ) : (
+                            <>
+                                <h3 className="text-lg font-bold text-slate-800 dark:text-white mb-2">No History Available</h3>
+                                <p className="text-slate-500 dark:text-slate-400 text-sm">No past consent history found.</p>
+                            </>
+                        )}
+                    </div>
+                )}
+
+                {!loading && consents.length > 0 && (
+                    <div className="grid grid-cols-1 gap-4">
+                        {consents.map((consent) => (
+                            <ConsentCard
+                                key={consent.id}
+                                consent={consent}
+                                onRevoke={handleRevoke}
+                                onEdit={handleEdit}
+                            />
+                        ))}
+                    </div>
+                )}
+            </main>
         </div>
     );
 }
+
 export default Consent;

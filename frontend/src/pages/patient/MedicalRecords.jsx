@@ -1,13 +1,14 @@
 import React, { useState, useEffect, useContext } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { AuthContext } from '../../context/AuthContext';
 import { emrApi } from '../../api/emrApi';
-import '../patient/Dashboard.css'; // Shared dashboard theme
+import ThemeToggle from '../../components/common/ThemeToggle';
+import '../patient/Dashboard.css';
 import './MedicalRecords.css';
 
 function MedicalRecords() {
     const navigate = useNavigate();
-    const { user } = useContext(AuthContext);
+    const { user, logout } = useContext(AuthContext);
     const [records, setRecords] = useState([]);
     const [loading, setLoading] = useState(true);
     const [filter, setFilter] = useState('all');
@@ -17,20 +18,16 @@ function MedicalRecords() {
         setLoading(true);
         try {
             const response = await emrApi.getPatientMedicalRecords(user.id);
-            // Handle response structure: { success: true, data: { records: [] } }
             const recordList = response.data?.records || response.data || [];
-
-            // Transform data to match UI expectations
             const formattedRecords = recordList.map(record => ({
                 id: record.id,
-                type: record.type, // consultation, diagnosis, prescription, lab_result, imaging, etc.
+                type: record.type,
                 date: record.created_at || record.visit_date,
                 doctor: record.created_by_name || 'Unknown Provider',
                 doctorRole: record.created_by_role || '',
                 title: record.title,
                 summary: record.description,
             }));
-
             setRecords(formattedRecords);
         } catch (error) {
             console.error('Failed to fetch records:', error);
@@ -40,205 +37,251 @@ function MedicalRecords() {
     }, [user.id]);
 
     useEffect(() => {
-        if (user && user.id) {
-            fetchRecords();
-        }
+        if (user && user.id) fetchRecords();
     }, [user, fetchRecords]);
 
-    const filterRecords = () => {
-        if (filter === 'all') return records;
-        return records.filter(r => r.type === filter);
-    };
+    const filterRecords = () => filter === 'all' ? records : records.filter(r => r.type === filter);
+    const filteredRecords = filterRecords();
 
     const toggleExpand = (recordId) => {
         setExpandedRecords(prev => {
             const newSet = new Set(prev);
-            if (newSet.has(recordId)) {
-                newSet.delete(recordId);
-            } else {
-                newSet.add(recordId);
-            }
+            if (newSet.has(recordId)) newSet.delete(recordId);
+            else newSet.add(recordId);
             return newSet;
         });
     };
 
-    const filteredRecords = filterRecords();
-
-    const getRecordIcon = (type) => {
-        switch (type) {
-            case 'consultation': return '📋';
-            case 'diagnosis': return '🔍';
-            case 'prescription': return '💊';
-            case 'lab_result': return '🔬';
-            case 'imaging': return '🏥';
-            case 'procedure': return '⚕️';
-            case 'note': return '📝';
-            default: return '📄';
-        }
-    };
-
     const formatRecordType = (type) => {
         const types = {
-            'consultation': 'Consultation',
-            'diagnosis': 'Diagnosis',
-            'prescription': 'Prescription',
-            'lab_result': 'Lab Result',
-            'imaging': 'Imaging',
-            'procedure': 'Procedure',
-            'note': 'Clinical Note',
-            'other': 'Other'
+            'consultation': 'Consultation', 'diagnosis': 'Diagnosis',
+            'prescription': 'Prescription', 'lab_result': 'Lab Result',
+            'imaging': 'Imaging', 'procedure': 'Procedure',
+            'note': 'Clinical Note', 'other': 'Other'
         };
         return types[type] || type;
     };
 
+    const getRecordStyle = (type) => {
+        switch (type) {
+            case 'lab_result': return { bg: 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400', icon: 'biotech', tag: 'Laboratory' };
+            case 'prescription': return { bg: 'bg-amber-100  dark:bg-amber-900/30  text-amber-600  dark:text-amber-400', icon: 'prescriptions', tag: 'Medication' };
+            case 'consultation': return { bg: 'bg-blue-100   dark:bg-blue-900/30   text-blue-600   dark:text-blue-400', icon: 'stethoscope', tag: 'Appointment' };
+            case 'note': return { bg: 'bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400', icon: 'psychology', tag: 'Note' };
+            default: return { bg: 'bg-blue-100   dark:bg-blue-900/30   text-blue-600   dark:text-blue-400', icon: 'medical_services', tag: 'Record' };
+        }
+    };
+
     return (
-        <div className="dashboard-container bg-slate-50 dark:bg-slate-900 min-h-screen">
-            <header className="w-full bg-gradient-to-r from-[#3a8d9b] to-[#257582] text-white py-4 px-6 md:px-12 flex justify-between items-center shadow-md">
-                <div className="flex items-center space-x-3">
-                    <div className="w-10 h-10 rounded-full border border-white/40 flex items-center justify-center bg-white/10">
-                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+        <div className="patient-dashboard-wrapper bg-[var(--background-light)] dark:bg-[var(--background-dark)] text-slate-800 dark:text-slate-100 flex h-screen w-full overflow-hidden">
+
+            {/* ── Left Sidebar ── */}
+            <aside className="w-64 flex-shrink-0 border-r border-slate-200 dark:border-slate-800/50 p-6 flex flex-col h-full overflow-y-auto">
+                <div className="flex items-center gap-3 mb-10 px-2 cursor-pointer group" onClick={() => navigate('/patient/dashboard')}>
+                    <div className="relative">
+                        <div className="absolute inset-0 bg-indigo-500 blur-lg opacity-0 group-hover:opacity-60 transition-opacity duration-500 rounded-full"></div>
+                        <div className="relative w-10 h-10 bg-indigo-500 rounded-xl flex items-center justify-center text-white shadow-lg transform transition-all duration-500 group-hover:scale-110 group-hover:-rotate-3 group-hover:shadow-[0_0_15px_rgba(99,102,241,0.5)]">
+                            <span className="material-symbols-outlined text-xl transition-transform duration-500 group-hover:scale-110">local_hospital</span>
+                        </div>
+                    </div>
+                    <h1 className="text-xl font-bold tracking-tight text-slate-800 dark:text-white transition-all duration-500 drop-shadow-sm group-hover:text-indigo-600 dark:group-hover:text-indigo-400 group-hover:drop-shadow-[0_0_10px_rgba(99,102,241,0.4)]">Medicare</h1>
+                </div>
+                <nav className="space-y-2 flex-grow">
+                    <Link to="/patient/dashboard" className="flex items-center gap-3 px-4 py-3 text-slate-500 dark:text-slate-400 hover:bg-white/50 dark:hover:bg-white/5 transition rounded-xl">
+                        <span className="material-symbols-outlined text-[20px]">grid_view</span>
+                        Dashboard
+                    </Link>
+                    <Link to="/patient/visits" className="flex items-center gap-3 px-4 py-3 text-slate-500 dark:text-slate-400 hover:bg-white/50 dark:hover:bg-white/5 transition rounded-xl">
+                        <span className="material-symbols-outlined text-[20px]">calendar_today</span>
+                        Appointments
+                    </Link>
+                    <Link to="#" className="flex items-center gap-3 px-4 py-3 text-slate-500 dark:text-slate-400 hover:bg-white/50 dark:hover:bg-white/5 transition rounded-xl">
+                        <span className="material-symbols-outlined text-[20px]">chat_bubble_outline</span>
+                        Messages
+                    </Link>
+                    <Link to="/patient/medical-records" className="flex items-center gap-3 px-4 py-3 sidebar-item-active rounded-xl font-medium text-slate-800 dark:text-slate-800">
+                        <span className="material-symbols-outlined text-[20px]">folder_shared</span>
+                        Records
+                    </Link>
+                    <Link to="/patient/consent" className="flex items-center gap-3 px-4 py-3 text-slate-500 dark:text-slate-400 hover:bg-white/50 dark:hover:bg-white/5 transition rounded-xl">
+                        <span className="material-symbols-outlined text-[20px]">verified_user</span>
+                        Consents
+                    </Link>
+                    <Link to="/patient/audit-trail" className="flex items-center gap-3 px-4 py-3 text-slate-500 dark:text-slate-400 hover:bg-white/50 dark:hover:bg-white/5 transition rounded-xl">
+                        <span className="material-symbols-outlined text-[20px]">history</span>
+                        Audit Trail
+                    </Link>
+                </nav>
+                <div className="space-y-2 mt-auto pt-6 border-t border-slate-200 dark:border-slate-800/50">
+                    <Link to="#" className="flex items-center gap-3 px-4 py-3 text-slate-500 dark:text-slate-400 hover:bg-white/50 dark:hover:bg-white/5 transition rounded-xl">
+                        <span className="material-symbols-outlined text-[20px]">favorite_border</span>
+                        Support
+                    </Link>
+                    <Link to="/patient/profile" className="flex items-center gap-3 px-4 py-3 text-slate-500 dark:text-slate-400 hover:bg-white/50 dark:hover:bg-white/5 transition rounded-xl">
+                        <span className="material-symbols-outlined text-[20px]">manage_accounts</span>
+                        Profile
+                    </Link>
+                    <button onClick={logout} className="w-full flex items-center gap-3 px-4 py-3 text-rose-500 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-900/20 transition rounded-xl font-medium">
+                        <span className="material-symbols-outlined text-[20px]">logout</span>
+                        Sign Out
+                    </button>
+                </div>
+            </aside>
+
+            {/* ── Main Content ── */}
+            <main className="flex-grow p-8 overflow-y-auto h-full">
+                <header className="mb-8">
+                    <h2 className="text-3xl font-bold text-slate-900 dark:text-white">Medical Records</h2>
+                    <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">Your complete health history — private, encrypted, and read-only.</p>
+                </header>
+
+                {/* Read-only notice */}
+                <div className="glass-card rounded-2xl border border-indigo-200/50 dark:border-indigo-800/50 bg-indigo-50/30 dark:bg-indigo-900/10 p-5 mb-6 flex gap-4 items-start">
+                    <div className="p-2 bg-indigo-100 dark:bg-indigo-900/40 text-indigo-600 dark:text-indigo-400 rounded-xl">
+                        <span className="material-symbols-outlined">lock</span>
                     </div>
                     <div>
-                        <h1 className="text-xl font-bold tracking-wide m-0">My Medical Records</h1>
-                        <p className="text-white/80 text-xs mt-0.5 m-0 font-medium">Complete history of your healthcare data</p>
+                        <p className="font-bold text-indigo-900 dark:text-indigo-100 text-sm">Read-Only Access</p>
+                        <p className="text-indigo-700/80 dark:text-indigo-300/80 text-xs leading-relaxed mt-1">
+                            You can view all your medical records. Only authorized healthcare providers can add records. All access is logged for your security.
+                        </p>
                     </div>
                 </div>
 
-                <div className="flex items-center space-x-3">
-                    <button
-                        onClick={() => navigate('/patient/dashboard')}
-                        className="bg-white/20 hover:bg-white/30 transition-colors border border-white/20 text-white font-medium px-4 py-2 rounded-lg text-sm"
-                    >
-                        Back to Dashboard
-                    </button>
-                </div>
-            </header>
-
-            <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-                {/* Filter Tabs */}
-                <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-gray-100 dark:border-slate-700 p-2 mb-6 overflow-x-auto flex gap-2 hide-scrollbar">
-                    <button
-                        className={`px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-colors ${filter === 'all' ? 'bg-[#257582] text-white shadow-sm' : 'text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-slate-700'}`}
-                        onClick={() => setFilter('all')}
-                    >
-                        All Records
-                    </button>
-                    <button
-                        className={`px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-colors ${filter === 'consultation' ? 'bg-[#257582] text-white shadow-sm' : 'text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-slate-700'}`}
-                        onClick={() => setFilter('consultation')}
-                    >
-                        📋 Consultations
-                    </button>
-                    <button
-                        className={`px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-colors ${filter === 'diagnosis' ? 'bg-[#257582] text-white shadow-sm' : 'text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-slate-700'}`}
-                        onClick={() => setFilter('diagnosis')}
-                    >
-                        🔍 Diagnoses
-                    </button>
-                    <button
-                        className={`px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-colors ${filter === 'prescription' ? 'bg-[#257582] text-white shadow-sm' : 'text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-slate-700'}`}
-                        onClick={() => setFilter('prescription')}
-                    >
-                        💊 Prescriptions
-                    </button>
-                    <button
-                        className={`px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-colors ${filter === 'lab_result' ? 'bg-[#257582] text-white shadow-sm' : 'text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-slate-700'}`}
-                        onClick={() => setFilter('lab_result')}
-                    >
-                        🔬 Lab Results
-                    </button>
-                    <button
-                        className={`px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-colors ${filter === 'imaging' ? 'bg-[#257582] text-white shadow-sm' : 'text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-slate-700'}`}
-                        onClick={() => setFilter('imaging')}
-                    >
-                        🏥 Imaging
-                    </button>
-                    <button
-                        className={`px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-colors ${filter === 'procedure' ? 'bg-[#257582] text-white shadow-sm' : 'text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-slate-700'}`}
-                        onClick={() => setFilter('procedure')}
-                    >
-                        ⚕️ Procedures
-                    </button>
-                    <button
-                        className={`px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-colors ${filter === 'note' ? 'bg-[#257582] text-white shadow-sm' : 'text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-slate-700'}`}
-                        onClick={() => setFilter('note')}
-                    >
-                        📝 Notes
-                    </button>
+                {/* Filter pills */}
+                <div className="flex gap-2 mb-6 overflow-x-auto pb-2 no-scrollbar">
+                    {['all', 'consultation', 'diagnosis', 'prescription', 'lab_result', 'imaging', 'procedure', 'note'].map((type) => (
+                        <button
+                            key={type}
+                            onClick={() => setFilter(type)}
+                            className={`px-5 py-2 rounded-full text-sm font-semibold transition-colors whitespace-nowrap ${filter === type
+                                ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/30'
+                                : 'glass-card text-slate-600 dark:text-slate-300 hover:bg-white/60 dark:hover:bg-white/10 border border-white/50 dark:border-slate-700/50'
+                                }`}
+                        >
+                            {type === 'all' ? 'All Records' : formatRecordType(type)}
+                        </button>
+                    ))}
                 </div>
 
-                {/* Records Timeline */}
-                <div className="space-y-4">
+                {/* Records list */}
+                <div className="space-y-3">
                     {loading ? (
-                        <div className="text-center py-12 text-gray-500">
-                            <div className="spinner mb-4 mx-auto"></div>
-                            <p>Loading medical records...</p>
+                        <div className="flex flex-col items-center justify-center py-16 text-slate-400">
+                            <div className="w-10 h-10 border-4 border-indigo-200 border-t-indigo-500 rounded-full animate-spin mb-4"></div>
+                            <p className="text-sm font-medium">Loading medical records...</p>
                         </div>
                     ) : filteredRecords.length === 0 ? (
-                        <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-gray-100 dark:border-slate-700 p-12 text-center flex flex-col items-center">
-                            <div className="w-16 h-16 bg-gray-50 dark:bg-slate-700 rounded-full flex items-center justify-center mb-4">
-                                <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                        <div className="glass-card rounded-2xl p-16 text-center border border-white/50 dark:border-slate-700/50 flex flex-col items-center">
+                            <div className="w-16 h-16 bg-slate-100 dark:bg-slate-700/50 rounded-2xl flex items-center justify-center mb-4">
+                                <span className="material-symbols-outlined text-3xl text-slate-400">content_paste_off</span>
                             </div>
-                            <p className="text-gray-900 dark:text-white font-bold text-lg m-0 mb-2">No {filter !== 'all' ? formatRecordType(filter).toLowerCase() : ''} records found.</p>
-                            <p className="text-gray-500 dark:text-gray-400 text-sm m-0">
-                                Medical records appear here after you have a consultation or procedure.
-                                <br />They are added by your healthcare provider.
+                            <p className="text-slate-900 dark:text-white font-bold text-lg mb-2">
+                                No {filter !== 'all' ? formatRecordType(filter).toLowerCase() + ' ' : ''}records found.
+                            </p>
+                            <p className="text-slate-500 dark:text-slate-400 text-sm">
+                                Medical records appear here after a consultation or procedure.
                             </p>
                         </div>
-                    ) : (
-                        filteredRecords.map((record) => {
-                            const isExpanded = expandedRecords.has(record.id);
-                            const shouldShowToggle = record.summary && record.summary.length > 150;
-
-                            return (
-                                <div key={record.id} className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-gray-100 dark:border-slate-700 hover:shadow-md hover:border-teal-200 dark:hover:border-teal-400 transition-all p-5 flex gap-4 md:gap-6 items-start">
-                                    <div className="w-12 h-12 md:w-14 md:h-14 bg-teal-50 text-teal-600 rounded-xl flex items-center justify-center text-2xl flex-shrink-0 border border-teal-100">
-                                        {getRecordIcon(record.type)}
-                                    </div>
-                                    <div className="flex-1 min-w-0">
-                                        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-2 mb-2">
-                                            <div>
-                                                <h3 className="text-lg font-bold text-gray-900 dark:text-white m-0 leading-tight">{record.title}</h3>
-                                                <p className="text-gray-500 dark:text-gray-400 text-sm m-0 mt-1">
-                                                    {record.doctor} {record.doctorRole && `(${record.doctorRole})`} • {new Date(record.date).toLocaleDateString()}
-                                                </p>
-                                            </div>
-                                            <span className="inline-flex px-3 py-1 bg-teal-50 text-teal-700 text-xs font-bold rounded-full border border-teal-100 uppercase tracking-wide whitespace-nowrap self-start">
-                                                {formatRecordType(record.type)}
-                                            </span>
+                    ) : filteredRecords.map((record) => {
+                        const isExpanded = expandedRecords.has(record.id);
+                        const shouldShowToggle = record.summary && record.summary.length > 150;
+                        const { bg, icon, tag } = getRecordStyle(record.type);
+                        return (
+                            <div
+                                key={record.id}
+                                className="glass-card rounded-2xl border border-white/50 dark:border-slate-700/50 hover:border-indigo-200 dark:hover:border-indigo-800/50 p-5 transition-all cursor-pointer group"
+                                onClick={() => { if (shouldShowToggle) toggleExpand(record.id); }}
+                            >
+                                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                                    <div className="flex items-center gap-4">
+                                        <div className={`w-12 h-12 ${bg} rounded-2xl flex items-center justify-center flex-shrink-0`}>
+                                            <span className="material-symbols-outlined text-2xl">{icon}</span>
                                         </div>
-                                        <p className={`text-gray-600 dark:text-gray-300 text-sm leading-relaxed m-0 mt-3 ${!isExpanded && shouldShowToggle ? 'line-clamp-2' : ''}`}>
-                                            {record.summary}
-                                        </p>
-                                        {shouldShowToggle && (
-                                            <button
-                                                className="text-[#3a8d9b] hover:text-[#257582] text-sm font-semibold mt-2 focus:outline-none"
-                                                onClick={() => toggleExpand(record.id)}
-                                            >
-                                                {isExpanded ? 'Show Less' : 'Show More'}
-                                            </button>
-                                        )}
+                                        <div>
+                                            <h3 className="text-base font-bold text-slate-800 dark:text-white group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">{record.title}</h3>
+                                            <p className="text-slate-500 dark:text-slate-400 text-xs mt-0.5">{record.doctor} • {formatRecordType(record.type)}</p>
+                                        </div>
+                                    </div>
+                                    <div className="flex items-center gap-6 md:ml-auto">
+                                        <div className="hidden sm:block text-right max-w-[200px]">
+                                            <p className={`text-sm font-medium text-slate-700 dark:text-slate-300 ${!isExpanded && shouldShowToggle ? 'line-clamp-1' : ''}`}>
+                                                {record.summary || 'No summary'}
+                                            </p>
+                                        </div>
+                                        <div className="text-right min-w-[90px]">
+                                            <p className="font-bold text-slate-800 dark:text-white text-sm">
+                                                {new Date(record.date).toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' })}
+                                            </p>
+                                            <p className="text-slate-400 dark:text-slate-500 text-xs uppercase tracking-wider">{tag}</p>
+                                        </div>
+                                        <span className={`material-symbols-outlined text-slate-400 transition-transform ${isExpanded ? 'rotate-90' : 'group-hover:translate-x-1'}`}>chevron_right</span>
                                     </div>
                                 </div>
-                            );
-                        })
-                    )}
+                                {isExpanded && record.summary && (
+                                    <div className="mt-4 pt-4 border-t border-slate-100 dark:border-slate-700/50 md:pl-16">
+                                        <p className="text-slate-600 dark:text-slate-300 text-sm leading-relaxed">{record.summary}</p>
+                                    </div>
+                                )}
+                            </div>
+                        );
+                    })}
+                </div>
+            </main>
+
+            {/* ── Right Sidebar ── */}
+            <aside className="w-72 flex-shrink-0 border-l border-slate-200 dark:border-slate-800/50 p-6 hidden xl:flex flex-col h-full overflow-y-auto">
+                <div className="flex items-center justify-between mb-6">
+                    <h3 className="text-lg font-bold text-slate-900 dark:text-white">Record Insights</h3>
+                    <ThemeToggle />
                 </div>
 
-                {/* Read-Only Notice */}
-                <div className="bg-blue-50 dark:bg-blue-900/30 border border-blue-100 dark:border-blue-800 rounded-xl p-5 mt-8 flex gap-4">
-                    <div className="text-blue-500 dark:text-blue-400 text-xl flex-shrink-0 mt-0.5">🔒</div>
-                    <div>
-                        <h3 className="text-blue-900 dark:text-blue-200 font-bold text-base m-0 mb-2">Read-Only Access</h3>
-                        <ul className="text-blue-800 dark:text-blue-300 text-sm list-disc pl-4 m-0 space-y-1">
-                            <li>You can view all your medical records</li>
-                            <li>Records cannot be edited or deleted by patients</li>
-                            <li>Only authorized healthcare providers can add records</li>
-                            <li>All access is logged for your security</li>
-                        </ul>
+                <div className="space-y-3 mb-6">
+                    <div className="glass-card rounded-2xl p-4 border border-white/50 dark:border-slate-700/50">
+                        <p className="text-slate-400 text-xs font-bold uppercase tracking-widest mb-1">Last Update</p>
+                        <p className="text-base font-bold text-slate-800 dark:text-white">
+                            {records.length > 0
+                                ? new Date(records[0].date).toLocaleDateString('en-US', { month: 'long', day: '2-digit', year: 'numeric' })
+                                : 'No records yet'}
+                        </p>
+                        {records.length > 0 && (
+                            <p className="text-slate-400 text-xs mt-1">by {records[0].doctor}</p>
+                        )}
+                    </div>
+                    <div className="glass-card rounded-2xl p-4 border border-white/50 dark:border-slate-700/50">
+                        <p className="text-slate-400 text-xs font-bold uppercase tracking-widest mb-2">Security Status</p>
+                        <div className="flex items-center gap-2">
+                            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                            <p className="font-bold text-slate-800 dark:text-white text-sm">Encrypted & Secure</p>
+                        </div>
+                        <p className="text-slate-400 text-xs mt-1">ID: HR-{user?.id?.toString().slice(0, 4) || '0001'}-KM0</p>
+                    </div>
+                    <div className="glass-card rounded-2xl p-4 border border-white/50 dark:border-slate-700/50">
+                        <p className="text-slate-400 text-xs font-bold uppercase tracking-widest mb-2">Total Records</p>
+                        <p className="text-3xl font-bold text-slate-800 dark:text-white">{records.length}</p>
+                        <p className="text-slate-400 text-xs mt-1">across {[...new Set(records.map(r => r.type))].length} categories</p>
                     </div>
                 </div>
-            </div>
+
+                <h3 className="text-sm font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-3">Quick Actions</h3>
+                <div className="grid grid-cols-2 gap-3">
+                    {[
+                        { icon: 'download', label: 'Export PDF' },
+                        { icon: 'share', label: 'Share' },
+                        { icon: 'print', label: 'Print' },
+                        { icon: 'history', label: 'Audit Logs', action: () => navigate('/patient/audit-trail') },
+                    ].map(({ icon, label, action }) => (
+                        <button
+                            key={label}
+                            onClick={action}
+                            className="p-4 glass-card rounded-2xl border border-white/50 dark:border-slate-700/50 hover:bg-white/60 dark:hover:bg-white/10 transition-all flex flex-col items-center justify-center gap-2"
+                        >
+                            <span className="material-symbols-outlined text-indigo-500">{icon}</span>
+                            <span className="text-xs font-bold text-slate-600 dark:text-slate-300">{label}</span>
+                        </button>
+                    ))}
+                </div>
+            </aside>
         </div>
     );
 }

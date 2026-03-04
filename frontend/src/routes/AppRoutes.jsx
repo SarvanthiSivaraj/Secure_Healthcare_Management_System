@@ -24,6 +24,7 @@ import RadiologistDashboard from '../pages/radiology/Dashboard';
 import ImagingQueue from '../pages/radiology/ImagingQueue';
 import ReportUpload from '../pages/radiology/ReportUpload';
 import NewVisit from '../pages/patient/NewVisit';
+import GrantConsent from '../pages/patient/GrantConsent';
 import VisitManagement from '../pages/admin/VisitManagement';
 import VerifyVisitOTP from '../pages/patient/VerifyVisitOTP';
 import AcceptInvitation from '../pages/auth/AcceptInvitation';
@@ -35,6 +36,7 @@ import DoctorRegistration from '../pages/admin/DoctorRegistration';
 import DoctorVerification from '../pages/admin/DoctorVerification';
 import AuditTrail from '../pages/patient/AuditTrail';
 import Profile from '../pages/common/Profile';
+import LandingPage from '../pages/LandingPage';
 
 function AppRoutes() {
     return (
@@ -68,6 +70,15 @@ function AppRoutes() {
                 element={
                     <ProtectedRoute allowedRoles={['patient']}>
                         <Consent />
+                    </ProtectedRoute>
+                }
+            />
+
+            <Route
+                path="/patient/consent/grant"
+                element={
+                    <ProtectedRoute allowedRoles={['patient']}>
+                        <GrantConsent />
                     </ProtectedRoute>
                 }
             />
@@ -321,7 +332,7 @@ function AppRoutes() {
             />
 
             <Route
-                path="/profile"
+                path="/patient/profile"
                 element={
                     <ProtectedRoute allowedRoles={['patient', 'doctor', 'staff', 'nurse', 'lab_tech', 'lab_technician', 'radiologist', 'admin', 'hospital_admin', 'system_admin']}>
                         <Profile />
@@ -330,7 +341,7 @@ function AppRoutes() {
             />
 
             {/* Default redirect */}
-            <Route path="/" element={<Navigate to="/login" replace />} />
+            <Route path="/" element={<LandingPage />} />
         </Routes>
     );
 }
