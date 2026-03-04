@@ -24,6 +24,7 @@ import RadiologistDashboard from '../pages/radiology/Dashboard';
 import ImagingQueue from '../pages/radiology/ImagingQueue';
 import ReportUpload from '../pages/radiology/ReportUpload';
 import NewVisit from '../pages/patient/NewVisit';
+import ScheduleNewVisit from '../pages/patient/ScheduleNewVisit';
 import GrantConsent from '../pages/patient/GrantConsent';
 import VisitManagement from '../pages/admin/VisitManagement';
 import VerifyVisitOTP from '../pages/patient/VerifyVisitOTP';
@@ -223,6 +224,15 @@ function AppRoutes() {
                 element={
                     <ProtectedRoute allowedRoles={['patient']}>
                         <NewVisit />
+                    </ProtectedRoute>
+                }
+            />
+
+            <Route
+                path="/patient/visits/schedule"
+                element={
+                    <ProtectedRoute allowedRoles={['patient']}>
+                        <ScheduleNewVisit />
                     </ProtectedRoute>
                 }
             />

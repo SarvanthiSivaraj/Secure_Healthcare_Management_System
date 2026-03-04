@@ -398,7 +398,7 @@ function PatientDashboard() {
                             onClick={() => navigate('/patient/visits/new')}
                             className="mt-3 text-[11px] font-bold text-indigo-600 dark:text-indigo-400 uppercase tracking-wider hover:underline"
                         >
-                            Request New Visit
+                            Walk-In Clinic / QR Sync
                         </button>
                     </div>
                 )}

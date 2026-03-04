@@ -5,6 +5,7 @@ import { AuthContext } from '../../context/AuthContext';
 import { visitApi } from '../../api/visitApi';
 import VisitCard from '../../components/visit/VisitCard';
 import CheckInForm from '../../components/visit/CheckInForm';
+import DoctorSelectionPopup from '../../components/visit/DoctorSelectionPopup';
 import '../patient/Dashboard.css'; // Shared dashboard theme
 import './Visits.css';
 
@@ -16,6 +17,35 @@ function Visits() {
     const [filter, setFilter] = useState('upcoming'); // upcoming, past, all
     const [showCheckIn, setShowCheckIn] = useState(false);
     const [successMessage, setSuccessMessage] = useState('');
+    const [showDoctorPopup, setShowDoctorPopup] = useState(false);
+    const [doctors, setDoctors] = useState([]);
+
+    const handleScheduleVisit = () => {
+        navigate('/patient/visits/schedule');
+    };
+
+    const handleDoctorSelect = async (doctor) => {
+        try {
+            setLoading(true);
+            const reason = prompt(`Briefly describe your reason for visiting Dr. ${doctor.firstName} ${doctor.lastName}:`);
+            if (!reason) return;
+
+            await visitApi.requestVisit({
+                doctorId: doctor.id,
+                reason: reason,
+                type: 'scheduled',
+                status: 'pending'
+            });
+            setShowDoctorPopup(false);
+            setSuccessMessage(`Visit request sent to Dr. ${doctor.firstName} ${doctor.lastName}`);
+            fetchVisits();
+            setTimeout(() => setSuccessMessage(''), 5000);
+        } catch (error) {
+            alert(error.response?.data?.message || 'Failed to request visit');
+        } finally {
+            setLoading(false);
+        }
+    };
 
     useEffect(() => {
         fetchVisits();
@@ -151,9 +181,15 @@ function Visits() {
                         <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
                             <button
                                 className="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-xl text-sm font-semibold transition-all shadow-lg shadow-indigo-600/30 whitespace-nowrap"
+                                onClick={handleScheduleVisit}
+                            >
+                                Schedule a Visit
+                            </button>
+                            <button
+                                className="bg-teal-600 hover:bg-teal-700 text-white px-6 py-3 rounded-xl text-sm font-semibold transition-all shadow-lg shadow-teal-600/30 whitespace-nowrap"
                                 onClick={() => navigate('/patient/visits/new')}
                             >
-                                + Request New Visit
+                                Walk-In Visit
                             </button>
                             <button
                                 className="bg-white/80 dark:bg-slate-800/80 hover:bg-white dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 px-6 py-3 rounded-xl text-sm font-semibold transition-all whitespace-nowrap"
@@ -164,6 +200,14 @@ function Visits() {
                         </div>
                     </div>
                 </div>
+
+                {showDoctorPopup && (
+                    <DoctorSelectionPopup
+                        doctors={doctors}
+                        onClose={() => setShowDoctorPopup(false)}
+                        onSelect={handleDoctorSelect}
+                    />
+                )}
 
                 {showCheckIn && (
                     <div className="mb-8 p-6 glass-card rounded-3xl">
