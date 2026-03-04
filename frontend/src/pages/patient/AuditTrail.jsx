@@ -1,23 +1,25 @@
-import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect, useContext } from 'react';
+import { useNavigate, Link } from 'react-router-dom';
+import { AuthContext } from '../../context/AuthContext';
 import auditApi from '../../api/auditApi';
-import '../patient/Dashboard.css'; // Shared dashboard theme
+import ThemeToggle from '../../components/common/ThemeToggle';
+import '../patient/Dashboard.css';
 
 function AuditTrail() {
     const navigate = useNavigate();
+    const { user, logout } = useContext(AuthContext);
+
     const [logs, setLogs] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [pagination, setPagination] = useState({ total: 0, pages: 0, limit: 50, offset: 0 });
 
-    // Filters
     const [startDate, setStartDate] = useState('');
     const [endDate, setEndDate] = useState('');
     const [actionFilter, setActionFilter] = useState('');
     const [currentPage, setCurrentPage] = useState(1);
 
     useEffect(() => {
-        // Reset to page 1 when filters change
         setCurrentPage(1);
     }, [actionFilter, startDate, endDate]);
 
@@ -30,18 +32,15 @@ function AuditTrail() {
         try {
             setLoading(true);
             setError(null);
-
             const params = {
                 limit: pagination.limit,
                 offset: (currentPage - 1) * pagination.limit,
             };
-
             if (startDate) params.startDate = startDate;
             if (endDate) params.endDate = endDate;
             if (actionFilter) params.action = actionFilter;
 
             const result = await auditApi.getMyAuditTrail(params);
-
             if (result.success) {
                 setLogs(result.data.logs);
                 setPagination(result.data.pagination);
@@ -64,28 +63,19 @@ function AuditTrail() {
     const formatDate = (dateString) => {
         if (!dateString) return 'N/A';
         return new Date(dateString).toLocaleString('en-US', {
-            year: 'numeric',
-            month: 'short',
-            day: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit'
+            year: 'numeric', month: 'short', day: 'numeric',
+            hour: '2-digit', minute: '2-digit'
         });
     };
 
     const formatAction = (action) => {
         const actionMap = {
-            // Uppercase versions (legacy)
             'VIEW_MEDICAL_RECORD': 'Viewed Medical Record',
             'CREATE_MEDICAL_RECORD': 'Created Medical Record',
             'UPDATE_MEDICAL_RECORD': 'Updated Medical Record',
             'VIEW_PATIENT_RECORDS': 'Viewed Patient Records',
             'GRANT_CONSENT': 'Granted Consent',
             'REVOKE_CONSENT': 'Revoked Consent',
-            'CREATE_DIAGNOSIS': 'Created Diagnosis',
-            'CREATE_PRESCRIPTION': 'Created Prescription',
-            'UPLOAD_LAB_RESULT': 'Uploaded Lab Result',
-            'UPLOAD_IMAGING_REPORT': 'Uploaded Imaging Report',
-            // Lowercase versions (current)
             'view_medical_record': 'Viewed Medical Record',
             'create_medical_record': 'Created Medical Record',
             'update_medical_record': 'Updated Medical Record',
@@ -100,27 +90,32 @@ function AuditTrail() {
             'upload_imaging_report': 'Uploaded Imaging Report',
             'user_login': 'User Login',
             'user_register': 'User Registration',
-            // Visit Actions
             'create_visit': 'Requested Visit',
             'approve_visit': 'Visit Approved',
             'update_visit': 'Visit Updated',
             'verify_visit_otp': 'Verified Visit OTP',
-            // Clinical Workflow Actions
-            'create_lab_order': 'Ordered Lab Test',
-            'create_imaging_order': 'Ordered Imaging',
-            'create_medication_order': 'Prescribed Medication'
         };
         return actionMap[action] || action;
     };
 
     const getActionBadgeClass = (action) => {
-        const baseClass = "px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wide whitespace-nowrap ";
-        if (action.includes('VIEW') || action.includes('view')) return baseClass + 'bg-blue-50 text-blue-700 border border-blue-100';
-        if (action.includes('CREATE') || action.includes('UPLOAD') || action.includes('create') || action.includes('upload')) return baseClass + 'bg-green-50 text-green-700 border border-green-100';
-        if (action.includes('UPDATE') || action.includes('update')) return baseClass + 'bg-yellow-50 text-yellow-700 border border-yellow-100';
-        if (action.includes('REVOKE') || action.includes('revoke')) return baseClass + 'bg-red-50 text-red-700 border border-red-100';
-        if (action.includes('GRANT') || action.includes('grant')) return baseClass + 'bg-purple-50 text-purple-700 border border-purple-100';
-        return baseClass + 'bg-gray-50 text-gray-700 border border-gray-200';
+        const base = 'px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wide whitespace-nowrap ';
+        if (action.includes('view') || action.includes('VIEW')) return base + 'bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 border border-blue-100 dark:border-blue-800/50';
+        if (action.includes('create') || action.includes('CREATE') || action.includes('upload') || action.includes('UPLOAD')) return base + 'bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 border border-emerald-100 dark:border-emerald-800/50';
+        if (action.includes('update') || action.includes('UPDATE')) return base + 'bg-amber-50 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 border border-amber-100 dark:border-amber-800/50';
+        if (action.includes('revoke') || action.includes('REVOKE')) return base + 'bg-rose-50 dark:bg-rose-900/30 text-rose-700 dark:text-rose-400 border border-rose-100 dark:border-rose-800/50';
+        if (action.includes('grant') || action.includes('GRANT')) return base + 'bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-400 border border-indigo-100 dark:border-indigo-800/50';
+        return base + 'bg-slate-50 dark:bg-slate-700/50 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-600/50';
+    };
+
+    const getRoleIcon = (role) => {
+        if (!role) return 'person';
+        const r = role.toLowerCase();
+        if (r === 'doctor') return 'stethoscope';
+        if (r === 'nurse') return 'medical_services';
+        if (r === 'patient') return 'person';
+        if (r === 'admin' || r === 'hospital_admin') return 'admin_panel_settings';
+        return 'manage_accounts';
     };
 
     const handlePageChange = (newPage) => {
@@ -130,204 +125,203 @@ function AuditTrail() {
     };
 
     return (
-        <div className="bg-mesh min-h-screen flex items-center justify-center p-4 md:p-8 transition-colors duration-500 text-slate-800 dark:text-slate-100">
-            <div className="glass w-full max-w-[1440px] h-[90vh] rounded-[2.5rem] flex overflow-hidden shadow-2xl relative">
-                <aside className="w-64 flex-shrink-0 flex flex-col p-8 border-r border-white/20 dark:border-white/5">
-                    <div className="flex items-center gap-3 mb-12 cursor-pointer" onClick={() => navigate('/patient/dashboard')}>
-                        <div className="w-10 h-10 bg-gradient-to-tr from-indigo-500 to-purple-500 rounded-xl flex items-center justify-center text-white">
-                            <span className="material-symbols-outlined material-icons-round">local_hospital</span>
+        <div className="patient-dashboard-wrapper bg-[var(--background-light)] dark:bg-[var(--background-dark)] text-slate-800 dark:text-slate-100 flex h-screen w-full overflow-hidden">
+            {/* Theme Toggle */}
+            <div className="absolute top-4 right-4 z-50">
+                <ThemeToggle />
+            </div>
+
+            {/* ── Sidebar ── */}
+            <aside className="w-64 flex-shrink-0 border-r border-slate-200 dark:border-slate-800/50 p-6 flex flex-col h-full overflow-y-auto">
+                <div className="flex items-center gap-3 mb-10 px-2 cursor-pointer group" onClick={() => navigate('/patient/dashboard')}>
+                    <div className="relative">
+                        <div className="absolute inset-0 bg-indigo-500 blur-lg opacity-0 group-hover:opacity-60 transition-opacity duration-500 rounded-full"></div>
+                        <div className="relative w-10 h-10 bg-indigo-500 rounded-xl flex items-center justify-center text-white shadow-lg transform transition-all duration-500 group-hover:scale-110 group-hover:-rotate-3 group-hover:shadow-[0_0_15px_rgba(99,102,241,0.5)]">
+                            <span className="material-symbols-outlined text-xl transition-transform duration-500 group-hover:scale-110">local_hospital</span>
                         </div>
-                        <h1 className="text-xl font-bold text-gray-800 dark:text-white tracking-tight">Medicare</h1>
                     </div>
+                    <h1 className="text-xl font-bold tracking-tight text-slate-800 dark:text-white transition-all duration-500 drop-shadow-sm group-hover:text-indigo-600 dark:group-hover:text-indigo-400 group-hover:drop-shadow-[0_0_10px_rgba(99,102,241,0.4)]">Medicare</h1>
+                </div>
+                <nav className="space-y-2 flex-grow">
+                    <Link to="/patient/dashboard" className="flex items-center gap-3 px-4 py-3 text-slate-500 dark:text-slate-400 hover:bg-white/50 dark:hover:bg-white/5 transition rounded-xl">
+                        <span className="material-symbols-outlined text-[20px]">grid_view</span>
+                        Dashboard
+                    </Link>
+                    <Link to="/patient/visits" className="flex items-center gap-3 px-4 py-3 text-slate-500 dark:text-slate-400 hover:bg-white/50 dark:hover:bg-white/5 transition rounded-xl">
+                        <span className="material-symbols-outlined text-[20px]">calendar_today</span>
+                        Appointments
+                    </Link>
+                    <Link to="#" className="flex items-center gap-3 px-4 py-3 text-slate-500 dark:text-slate-400 hover:bg-white/50 dark:hover:bg-white/5 transition rounded-xl">
+                        <span className="material-symbols-outlined text-[20px]">chat_bubble_outline</span>
+                        Messages
+                    </Link>
+                    <Link to="/patient/medical-records" className="flex items-center gap-3 px-4 py-3 text-slate-500 dark:text-slate-400 hover:bg-white/50 dark:hover:bg-white/5 transition rounded-xl">
+                        <span className="material-symbols-outlined text-[20px]">folder_shared</span>
+                        Records
+                    </Link>
+                    <Link to="/patient/consent" className="flex items-center gap-3 px-4 py-3 text-slate-500 dark:text-slate-400 hover:bg-white/50 dark:hover:bg-white/5 transition rounded-xl">
+                        <span className="material-symbols-outlined text-[20px]">verified_user</span>
+                        Consents
+                    </Link>
+                    <Link to="/patient/audit-trail" className="flex items-center gap-3 px-4 py-3 sidebar-item-active rounded-xl font-medium text-slate-800 dark:text-slate-800">
+                        <span className="material-symbols-outlined text-[20px]">history</span>
+                        Audit Trail
+                    </Link>
+                </nav>
+                <div className="space-y-2 mt-auto pt-6 border-t border-slate-200 dark:border-slate-800/50">
+                    <Link to="#" className="flex items-center gap-3 px-4 py-3 text-slate-500 dark:text-slate-400 hover:bg-white/50 dark:hover:bg-white/5 transition rounded-xl">
+                        <span className="material-symbols-outlined text-[20px]">favorite_border</span>
+                        Support
+                    </Link>
+                    <Link to="/patient/profile" className="flex items-center gap-3 px-4 py-3 text-slate-500 dark:text-slate-400 hover:bg-white/50 dark:hover:bg-white/5 transition rounded-xl">
+                        <span className="material-symbols-outlined text-[20px]">manage_accounts</span>
+                        Profile
+                    </Link>
+                    <button onClick={logout} className="w-full flex items-center gap-3 px-4 py-3 text-rose-500 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-900/20 transition rounded-xl font-medium">
+                        <span className="material-symbols-outlined text-[20px]">logout</span>
+                        Sign Out
+                    </button>
+                </div>
+            </aside>
 
-                    <nav className="flex-1 space-y-2">
-                        <button onClick={() => navigate('/patient/dashboard')} className="w-full flex items-center gap-4 px-4 py-3 text-gray-500 dark:text-gray-400 hover:text-primary transition-all rounded-2xl">
-                            <span className="material-symbols-outlined material-icons-round text-[22px]">dashboard</span>
-                            <span className="font-medium">Dashboard</span>
-                        </button>
-                        <button onClick={() => navigate('/patient/visits')} className="w-full flex items-center gap-4 px-4 py-3 text-gray-500 dark:text-gray-400 hover:text-primary transition-all rounded-2xl">
-                            <span className="material-symbols-outlined material-icons-round text-[22px]">calendar_today</span>
-                            <span className="font-medium">Appointments</span>
-                        </button>
-                        <button onClick={() => navigate('/patient/medical-records')} className="w-full flex items-center gap-4 px-4 py-3 text-gray-500 dark:text-gray-400 hover:text-primary transition-all rounded-2xl">
-                            <span className="material-symbols-outlined material-icons-round text-[22px]">content_paste</span>
-                            <span className="font-medium">Medical Records</span>
-                        </button>
-                        <button className="w-full flex items-center gap-4 px-4 py-3 text-gray-500 dark:text-gray-400 hover:text-primary transition-all rounded-2xl">
-                            <span className="material-symbols-outlined material-icons-round text-[22px]">forum</span>
-                            <span className="font-medium">Messages</span>
-                        </button>
-                        <button className="w-full flex items-center gap-4 px-4 py-3 text-gray-500 dark:text-gray-400 hover:text-primary transition-all rounded-2xl">
-                            <span className="material-symbols-outlined material-icons-round text-[22px]">medication</span>
-                            <span className="font-medium">Pharmacy</span>
-                        </button>
-                        <button className="w-full flex items-center gap-4 px-4 py-3 text-gray-500 dark:text-gray-400 hover:text-primary transition-all rounded-2xl">
-                            <span className="material-symbols-outlined material-icons-round text-[22px]">science</span>
-                            <span className="font-medium">Laboratory</span>
-                        </button>
-                    </nav>
+            {/* ── Main Content ── */}
+            <main className="flex-grow p-8 overflow-y-auto h-full">
+                <header className="mb-8">
+                    <h2 className="text-3xl font-bold text-slate-900 dark:text-white">Audit Trail</h2>
+                    <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">A full log of who accessed your medical data and when.</p>
+                </header>
 
-                    <div className="mt-auto space-y-2 pt-8 border-t border-white/10">
-                        <button className="w-full flex items-center gap-4 px-4 py-3 sidebar-active text-primary rounded-2xl">
-                            <span className="material-symbols-outlined material-icons-round text-[22px]">history</span>
-                            <span className="font-medium">Support</span>
-                        </button>
-                        <button className="w-full flex items-center gap-4 px-4 py-3 text-gray-500 dark:text-gray-400 hover:text-primary transition-all rounded-2xl">
-                            <span className="material-symbols-outlined material-icons-round text-[22px]">settings</span>
-                            <span className="font-medium">Settings</span>
-                        </button>
+                {/* Filters */}
+                <div className="glass-card rounded-2xl p-5 mb-6 flex flex-wrap gap-4 items-end border border-white/50 dark:border-slate-700/50">
+                    <div className="flex-1 min-w-[140px]">
+                        <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">Start Date</label>
+                        <input
+                            type="date"
+                            value={startDate}
+                            onChange={(e) => setStartDate(e.target.value)}
+                            className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-600/50 bg-white/60 dark:bg-slate-800/60 text-slate-900 dark:text-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition outline-none text-sm"
+                        />
                     </div>
-                </aside>
+                    <div className="flex-1 min-w-[140px]">
+                        <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">End Date</label>
+                        <input
+                            type="date"
+                            value={endDate}
+                            onChange={(e) => setEndDate(e.target.value)}
+                            className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-600/50 bg-white/60 dark:bg-slate-800/60 text-slate-900 dark:text-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition outline-none text-sm"
+                        />
+                    </div>
+                    <div className="flex-1 min-w-[160px]">
+                        <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">Action Type</label>
+                        <select
+                            value={actionFilter}
+                            onChange={(e) => setActionFilter(e.target.value)}
+                            className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-600/50 bg-white/60 dark:bg-slate-800/60 text-slate-900 dark:text-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition outline-none text-sm"
+                        >
+                            <option value="">All Actions</option>
+                            <option value="view_patient_records">Viewed Records</option>
+                            <option value="consent_grant">Granted Consent</option>
+                            <option value="consent_revoke">Revoked Consent</option>
+                            <option value="consent_view">Viewed Consent</option>
+                            <option value="create_visit">Requested Visit</option>
+                            <option value="approve_visit">Visit Approved</option>
+                            <option value="user_login">Login</option>
+                        </select>
+                    </div>
+                    <button
+                        onClick={handleResetFilters}
+                        className="px-5 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-700/60 hover:bg-slate-200 dark:hover:bg-slate-600/60 text-slate-700 dark:text-slate-200 text-sm font-semibold transition-colors border border-slate-200/50 dark:border-slate-600/50 flex items-center gap-2"
+                    >
+                        <span className="material-symbols-outlined text-[16px]">refresh</span>
+                        Reset
+                    </button>
+                </div>
 
-                <main className="flex-1 flex flex-col overflow-hidden">
-                    <header className="p-8 pb-4 flex justify-between items-center">
-                        <h2 className="text-3xl font-bold text-gray-800 dark:text-white">Audit Trail</h2>
-                        <div className="flex items-center gap-4">
-                            <button onClick={() => document.documentElement.classList.toggle('dark')} className="p-3 rounded-2xl glass-card hover:bg-white dark:hover:bg-slate-700 transition flex items-center justify-center gap-2">
-                                <span className="material-symbols-outlined text-indigo-500 !block dark:!hidden">dark_mode</span>
-                                <span className="material-symbols-outlined text-amber-500 !hidden dark:!block">light_mode</span>
-                            </button>
-                            <div className="flex items-center gap-3 px-4 py-2 glass rounded-full cursor-pointer hover:bg-white/10 transition-colors" onClick={() => navigate('/profile')}>
-                                <div className="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center overflow-hidden">
-                                    <span className="material-symbols-outlined text-indigo-500 text-sm border-0">person</span>
+                {/* Log list */}
+                {loading ? (
+                    <div className="flex flex-col items-center justify-center py-20 text-slate-400">
+                        <span className="material-symbols-outlined text-5xl animate-spin mb-4">refresh</span>
+                        <p className="text-sm font-medium">Loading audit logs...</p>
+                    </div>
+                ) : error ? (
+                    <div className="bg-rose-50 dark:bg-rose-900/20 text-rose-600 dark:text-rose-400 p-5 rounded-2xl border border-rose-200 dark:border-rose-900/50 flex items-center gap-3">
+                        <span className="material-symbols-outlined">error</span>
+                        {error}
+                    </div>
+                ) : logs.length === 0 ? (
+                    <div className="glass-card rounded-2xl p-16 text-center border border-white/50 dark:border-slate-700/50 flex flex-col items-center">
+                        <div className="w-16 h-16 bg-slate-100 dark:bg-slate-700/50 rounded-2xl flex items-center justify-center mb-4">
+                            <span className="material-symbols-outlined text-3xl text-slate-400">history</span>
+                        </div>
+                        <p className="text-slate-900 dark:text-white font-bold text-lg mb-2">No audit logs found</p>
+                        <p className="text-slate-500 dark:text-slate-400 text-sm">Audit logs will appear here when someone accesses your medical records.</p>
+                    </div>
+                ) : (
+                    <>
+                        <div className="space-y-3">
+                            {logs.map((log) => (
+                                <div key={log.id} className="glass-card rounded-2xl border border-white/50 dark:border-slate-700/50 hover:border-indigo-200 dark:hover:border-indigo-800/50 transition-all p-5">
+                                    <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-4 pb-4 border-b border-slate-100 dark:border-slate-700/50">
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-10 h-10 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 rounded-xl flex items-center justify-center flex-shrink-0">
+                                                <span className="material-symbols-outlined text-[20px]">{getRoleIcon(log.userRole)}</span>
+                                            </div>
+                                            <div>
+                                                <strong className="block text-slate-900 dark:text-white font-bold text-sm">
+                                                    {log.userFirstName && log.userLastName
+                                                        ? `${log.userFirstName} ${log.userLastName}`
+                                                        : log.userEmail || 'Unknown User'}
+                                                </strong>
+                                                <span className="text-slate-500 dark:text-slate-400 text-xs font-semibold uppercase tracking-wider">
+                                                    {log.userRole || 'N/A'}
+                                                </span>
+                                            </div>
+                                        </div>
+                                        <span className={getActionBadgeClass(log.action)}>
+                                            {formatAction(log.action)}
+                                        </span>
+                                    </div>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <div>
+                                            <span className="block text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-1">Time</span>
+                                            <span className="text-sm font-medium text-slate-800 dark:text-slate-200">{formatDate(log.timestamp)}</span>
+                                        </div>
+                                        {log.purpose && (
+                                            <div>
+                                                <span className="block text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-1">Purpose</span>
+                                                <span className="text-sm font-medium text-slate-800 dark:text-slate-200">{log.purpose}</span>
+                                            </div>
+                                        )}
+                                    </div>
                                 </div>
-                                <span className="font-semibold text-gray-700 dark:text-gray-200 text-sm">Patient</span>
-                            </div>
+                            ))}
                         </div>
-                    </header>
 
-                    <div className="flex-1 overflow-y-auto px-8 pb-8 scrollbar-hide">
-                        <div className="glass rounded-xl shadow-sm border border-gray-100 dark:border-slate-700/50 p-6 mb-8 flex flex-wrap gap-4 items-end">
-                            <div className="flex-1 min-w-[150px]">
-                                <label className="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">Start Date</label>
-                                <input
-                                    type="date"
-                                    value={startDate}
-                                    onChange={(e) => setStartDate(e.target.value)}
-                                    className="w-full px-4 py-2.5 rounded-lg border border-gray-200 dark:border-slate-600 bg-white/50 dark:bg-slate-700/50 text-gray-900 dark:text-white focus:border-[#3a8d9b] focus:ring-1 focus:ring-[#3a8d9b] transition-colors outline-none text-sm"
-                                />
-                            </div>
-                            <div className="flex-1 min-w-[150px]">
-                                <label className="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">End Date</label>
-                                <input
-                                    type="date"
-                                    value={endDate}
-                                    onChange={(e) => setEndDate(e.target.value)}
-                                    className="w-full px-4 py-2.5 rounded-lg border border-gray-200 dark:border-slate-600 bg-white/50 dark:bg-slate-700/50 text-gray-900 dark:text-white focus:border-[#3a8d9b] focus:ring-1 focus:ring-[#3a8d9b] transition-colors outline-none text-sm"
-                                />
-                            </div>
-                            <div className="flex-1 min-w-[150px]">
-                                <label className="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">Action Type</label>
-                                <select
-                                    value={actionFilter}
-                                    onChange={(e) => setActionFilter(e.target.value)}
-                                    className="w-full px-4 py-2.5 rounded-lg border border-gray-200 dark:border-slate-600 bg-white/50 dark:bg-slate-700/50 text-gray-900 dark:text-white focus:border-[#3a8d9b] focus:ring-1 focus:ring-[#3a8d9b] transition-colors outline-none text-sm"
-                                >
-                                    <option value="">All Actions</option>
-                                    <option value="view_patient_records">Viewed Records</option>
-                                    <option value="consent_grant">Granted Consent</option>
-                                    <option value="consent_revoke">Revoked Consent</option>
-                                    <option value="consent_view">Viewed Consent</option>
-                                    <option value="create_visit">Requested Visit</option>
-                                    <option value="approve_visit">Visit Approved</option>
-                                    <option value="user_login">Login</option>
-                                </select>
-                            </div>
-                            <div>
+                        {pagination.pages > 1 && (
+                            <div className="flex justify-center items-center gap-4 mt-8 pt-8 border-t border-slate-200 dark:border-slate-700/50">
                                 <button
-                                    className="bg-gray-100/80 dark:bg-slate-700 hover:bg-gray-200 dark:hover:bg-slate-600 text-gray-700 dark:text-gray-200 px-5 py-2.5 rounded-lg text-sm font-medium transition-colors border border-gray-200/50 dark:border-slate-600"
-                                    onClick={handleResetFilters}
+                                    onClick={() => handlePageChange(currentPage - 1)}
+                                    disabled={currentPage === 1}
+                                    className="px-5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-600/50 text-sm font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700 disabled:opacity-40 disabled:cursor-not-allowed transition"
                                 >
-                                    Reset Filters
+                                    ← Previous
+                                </button>
+                                <span className="text-sm text-slate-600 dark:text-slate-300 font-medium">
+                                    Page {currentPage} of {pagination.pages}
+                                    <span className="text-slate-400 dark:text-slate-500 ml-1">({pagination.total} logs)</span>
+                                </span>
+                                <button
+                                    onClick={() => handlePageChange(currentPage + 1)}
+                                    disabled={currentPage === pagination.pages}
+                                    className="px-5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-600/50 text-sm font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700 disabled:opacity-40 disabled:cursor-not-allowed transition"
+                                >
+                                    Next →
                                 </button>
                             </div>
-                        </div>
-
-                        <div className="mb-8">
-                            {loading ? (
-                                <div className="text-center py-12 text-gray-500">Loading audit logs...</div>
-                            ) : error ? (
-                                <div className="bg-red-50 text-red-600 p-4 rounded-lg border border-red-100 text-center">{error}</div>
-                            ) : logs.length === 0 ? (
-                                <div className="glass rounded-xl shadow-sm border border-gray-100 dark:border-slate-700 p-12 text-center flex flex-col items-center">
-                                    <div className="w-16 h-16 bg-gray-50 dark:bg-slate-700 rounded-full flex items-center justify-center mb-4">
-                                        <svg className="w-8 h-8 text-gray-400 dark:text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
-                                    </div>
-                                    <p className="text-gray-900 dark:text-white font-bold text-lg m-0 mb-2">No audit logs found</p>
-                                    <p className="text-gray-500 dark:text-gray-400 text-sm m-0">Audit logs will appear here when someone accesses your medical records</p>
-                                </div>
-                            ) : (
-                                <>
-                                    <div className="space-y-4">
-                                        {logs.map((log) => (
-                                            <div key={log.id} className="glass rounded-xl shadow-sm border border-white/50 dark:border-white/10 hover:shadow-md hover:border-teal-200 dark:hover:border-teal-400 transition-all p-5">
-                                                <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-4 pb-4 border-b border-gray-100/50 dark:border-slate-700/50">
-                                                    <div className="flex items-center gap-3">
-                                                        <div className="w-10 h-10 bg-teal-50/80 text-teal-600 rounded-full flex items-center justify-center text-lg border border-teal-100/50 flex-shrink-0">
-                                                            {log.userRole === 'DOCTOR' ? '🩺' :
-                                                                log.userRole === 'NURSE' ? '👨‍⚕️' :
-                                                                    log.userRole === 'PATIENT' ? '🧑' : '👤'}
-                                                        </div>
-                                                        <div>
-                                                            <strong className="block text-gray-900 dark:text-white font-bold">
-                                                                {log.userFirstName && log.userLastName
-                                                                    ? `${log.userFirstName} ${log.userLastName}`
-                                                                    : log.userEmail || 'Unknown User'}
-                                                            </strong>
-                                                            <span className="text-gray-500 dark:text-gray-400 text-xs font-medium uppercase tracking-wider">
-                                                                {log.userRole || 'N/A'}
-                                                            </span>
-                                                        </div>
-                                                    </div>
-                                                    <div className="flex-shrink-0">
-                                                        <span className={getActionBadgeClass(log.action)}>
-                                                            {formatAction(log.action)}
-                                                        </span>
-                                                    </div>
-                                                </div>
-                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                                    <div>
-                                                        <span className="block text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wide mb-1">Time</span>
-                                                        <span className="text-sm font-medium text-gray-800 dark:text-gray-200">{formatDate(log.timestamp)}</span>
-                                                    </div>
-                                                    {log.purpose && (
-                                                        <div>
-                                                            <span className="block text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wide mb-1">Purpose</span>
-                                                            <span className="text-sm font-medium text-gray-800 dark:text-gray-200">{log.purpose}</span>
-                                                        </div>
-                                                    )}
-                                                </div>
-                                            </div>
-                                        ))}
-                                    </div>
-
-                                    {pagination.pages > 1 && (
-                                        <div className="flex justify-center items-center gap-6 mt-8 pt-8 border-t border-gray-200 dark:border-slate-700">
-                                            <button
-                                                className="px-4 py-2 border border-gray-300 dark:border-slate-600 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-slate-700 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed"
-                                                onClick={() => handlePageChange(currentPage - 1)}
-                                                disabled={currentPage === 1}
-                                            >
-                                                Previous
-                                            </button>
-                                            <span className="text-sm text-gray-600 dark:text-gray-300 font-medium">
-                                                Page {currentPage} of {pagination.pages} <span className="text-gray-400 dark:text-gray-500">({pagination.total} logs)</span>
-                                            </span>
-                                            <button
-                                                className="px-4 py-2 border border-gray-300 dark:border-slate-600 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-slate-700 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed"
-                                                onClick={() => handlePageChange(currentPage + 1)}
-                                                disabled={currentPage === pagination.pages}
-                                            >
-                                                Next
-                                            </button>
-                                        </div>
-                                    )}
-                                </>
-                            )}
-                        </div>
-                    </div>
-                </main>
-            </div>
+                        )}
+                    </>
+                )}
+            </main>
         </div>
     );
 }

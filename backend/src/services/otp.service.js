@@ -36,7 +36,7 @@ const generateAndSendOTP = async ({ email, phone, userId, purpose }) => {
     `;
         const rateLimitResult = await query(rateLimitQuery, [email || phone]);
 
-        if (parseInt(rateLimitResult.rows[0].count) >= config.otp.maxAttempts) {
+        if (process.env.NODE_ENV !== 'development' && parseInt(rateLimitResult.rows[0].count) >= config.otp.maxAttempts) {
             throw new Error('Too many OTP requests. Please try again later');
         }
 

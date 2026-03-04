@@ -1,73 +1,51 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { visitApi } from '../../api/visitApi'; // Ensure correct import path
-import { userApi } from '../../api/userApi'; // Added to fetch doctors
-import DoctorSelectionPopup from '../../components/visit/DoctorSelectionPopup';
-import DoctorProfilePopup from '../../components/visit/DoctorProfilePopup';
+import { visitApi } from '../../api/visitApi';
+import { Scanner } from '@yudiel/react-qr-scanner';
 
 const NewVisit = () => {
     const navigate = useNavigate();
-    const [formData, setFormData] = useState({
-        hospitalCode: '',
-        reason: '',
-        symptoms: '',
-        doctorId: ''
-    });
-    const [doctors, setDoctors] = useState([]);
-    const [loading, setLoading] = useState(false);
-    const [fetchingDoctors, setFetchingDoctors] = useState(true);
     const [error, setError] = useState(null);
-    const [success, setSuccess] = useState(null);
+    const [manualUrl, setManualUrl] = useState('');
 
-    // Popup states
-    const [showDoctorSelection, setShowDoctorSelection] = useState(false);
-    const [showDoctorProfile, setShowDoctorProfile] = useState(false);
-    const [selectedDoctor, setSelectedDoctor] = useState(null);
-
-    useEffect(() => {
-        const fetchDoctorsList = async () => {
-            setFetchingDoctors(true);
+    const handleScan = (result) => {
+        if (result && result.length > 0) {
             try {
-                const response = await userApi.getDoctors();
-                if (response.data && Array.isArray(response.data)) {
-                    setDoctors(response.data);
+                // Determine format
+                const rawValue = result[0].rawValue || result[0];
+                let params = '';
+
+                if (rawValue.startsWith('{')) {
+                    const parsed = JSON.parse(rawValue);
+                    params = new URLSearchParams(parsed).toString();
+                } else if (rawValue.includes('?')) {
+                    params = rawValue.split('?')[1];
                 } else {
-                    setDoctors([]); // Fallback 
+                    params = rawValue;
                 }
+
+                navigate('/patient/consent/grant?' + params);
             } catch (err) {
-                console.error("Failed to load doctors:", err);
-                // Non-fatal error for the form, we just might have an empty list or let user type it eventually if API goes down. 
-            } finally {
-                setFetchingDoctors(false);
+                setError('Invalid QR Code format.');
             }
-        };
-
-        fetchDoctorsList();
-    }, []);
-
-    const handleChange = (e) => {
-        setFormData({
-            ...formData,
-            [e.target.name]: e.target.value
-        });
+        }
     };
 
-    const handleSubmit = async (e) => {
-        e.preventDefault();
-        setLoading(true);
+    const handleManualUrl = () => {
         setError(null);
-        setSuccess(null);
-
         try {
-            await visitApi.createVisit(formData);
-            setSuccess('Visit requested successfully!');
-            setTimeout(() => {
-                navigate('/patient/dashboard');
-            }, 2000);
+            const url = manualUrl.trim();
+            let params = '';
+            if (url.includes('?')) {
+                params = url.split('?')[1];
+            } else if (url.startsWith('{')) {
+                params = new URLSearchParams(JSON.parse(url)).toString();
+            } else {
+                params = url;
+            }
+            navigate('/patient/consent/grant?' + params);
         } catch (err) {
-            setError(err.response?.data?.message || 'Failed to request visit');
-        } finally {
-            setLoading(false);
+            setError('Invalid URL format. Please enter a valid consent URL.');
         }
     };
 
@@ -148,134 +126,48 @@ const NewVisit = () => {
                                 </div>
                             )}
 
-                            {success && (
-                                <div className="bg-emerald-50 text-emerald-700 dark:bg-emerald-900/20 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-900/50 p-4 rounded-xl mb-6 text-sm flex items-center gap-3">
-                                    <span className="material-symbols-outlined">check_circle</span>
-                                    {success}
+                            <div className="flex flex-col items-center justify-center p-4 bg-slate-50 dark:bg-slate-900/50 rounded-2xl border border-slate-200 dark:border-slate-700">
+                                <div className="w-full max-w-sm aspect-square bg-black rounded-xl overflow-hidden shadow-inner relative">
+                                    <Scanner
+                                        onScan={handleScan}
+                                        onError={(err) => setError('Camera error: ' + err.message)}
+                                        components={{ finder: false }}
+                                    />
+                                    {/* Overlay guide */}
+                                    <div className="absolute inset-0 border-[3px] border-dashed border-white/50 m-8 rounded-lg pointer-events-none"></div>
                                 </div>
-                            )}
+                                <p className="text-xs text-slate-500 mt-4 text-center font-medium">Position the QR code within the frame to scan.</p>
+                            </div>
 
-                            <form onSubmit={handleSubmit} className="space-y-5">
-                                <div>
-                                    <label className="block text-xs font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wide mb-2">Hospital Code</label>
-                                    <div className="relative">
-                                        <input
-                                            type="text"
-                                            name="hospitalCode"
-                                            value={formData.hospitalCode}
-                                            onChange={handleChange}
-                                            placeholder="e.g. 100001"
-                                            maxLength="6"
-                                            required
-                                            className="w-full pl-11 pr-4 py-3 bg-white/50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-600/50 rounded-xl focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all text-slate-900 dark:text-white shadow-sm backdrop-blur-sm"
-                                        />
-                                        <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-slate-400">local_hospital</span>
-                                    </div>
+                            {/* Manual URL entry fallback */}
+                            <div className="mt-6">
+                                <div className="flex items-center gap-3 mb-3">
+                                    <div className="flex-1 h-px bg-slate-200 dark:bg-slate-700"></div>
+                                    <span className="text-xs text-slate-400 font-medium uppercase tracking-wider">or enter URL manually</span>
+                                    <div className="flex-1 h-px bg-slate-200 dark:bg-slate-700"></div>
                                 </div>
-
-                                <div>
-                                    <label className="block text-xs font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wide mb-2">Select Doctor (Optional)</label>
-                                    <div
-                                        onClick={() => !fetchingDoctors && setShowDoctorSelection(true)}
-                                        className={`relative w-full py-3 px-4 bg-white/50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-600/50 rounded-xl transition-all shadow-sm backdrop-blur-sm flex items-center justify-between cursor-pointer hover:bg-white dark:hover:bg-slate-800 ${fetchingDoctors ? 'opacity-70 cursor-not-allowed' : ''}`}
-                                    >
-                                        <div className="flex items-center gap-3">
-                                            <div className="w-8 h-8 rounded-lg bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
-                                                <span className="material-symbols-outlined text-sm">stethoscope</span>
-                                            </div>
-                                            <span className="text-slate-900 dark:text-white font-medium">
-                                                {fetchingDoctors ? 'Loading doctors...' : (selectedDoctor ? `Dr. ${selectedDoctor.firstName} ${selectedDoctor.lastName}` : 'Any Available Doctor')}
-                                            </span>
-                                        </div>
-                                        <span className="material-symbols-outlined text-slate-400">chevron_right</span>
-                                    </div>
-                                </div>
-
-                                <div>
-                                    <label className="block text-xs font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wide mb-2">Reason for Visit</label>
-                                    <div className="relative">
-                                        <input
-                                            type="text"
-                                            name="reason"
-                                            value={formData.reason}
-                                            onChange={handleChange}
-                                            placeholder="e.g. Regular Checkup"
-                                            required
-                                            className="w-full pl-11 pr-4 py-3 bg-white/50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-600/50 rounded-xl focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all text-slate-900 dark:text-white shadow-sm backdrop-blur-sm"
-                                        />
-                                        <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-slate-400">info</span>
-                                    </div>
-                                </div>
-
-                                <div>
-                                    <label className="block text-xs font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wide mb-2">Symptoms</label>
-                                    <div className="relative">
-                                        <textarea
-                                            name="symptoms"
-                                            value={formData.symptoms}
-                                            onChange={handleChange}
-                                            placeholder="Describe how you're feeling (optional)"
-                                            rows="3"
-                                            className="w-full pl-11 pr-4 py-3 bg-white/50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-600/50 rounded-xl focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all resize-none text-slate-900 dark:text-white shadow-sm backdrop-blur-sm"
-                                        />
-                                        <span className="material-symbols-outlined absolute left-4 top-4 text-slate-400">monitor_heart</span>
-                                    </div>
-                                </div>
-
-                                <div className="pt-2">
+                                <div className="flex gap-2">
+                                    <input
+                                        type="text"
+                                        value={manualUrl}
+                                        onChange={(e) => setManualUrl(e.target.value)}
+                                        onKeyDown={(e) => e.key === 'Enter' && handleManualUrl()}
+                                        placeholder="Paste the consent URL here..."
+                                        className="flex-1 px-4 py-3 bg-white/50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-600/50 rounded-xl focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none text-sm text-slate-900 dark:text-white"
+                                    />
                                     <button
-                                        type="submit"
-                                        disabled={loading}
-                                        className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3.5 px-4 rounded-xl shadow-lg shadow-indigo-600/30 transition-all disabled:opacity-50 disabled:cursor-not-allowed transform hover:-translate-y-0.5 active:translate-y-0 flex items-center justify-center gap-2"
+                                        onClick={handleManualUrl}
+                                        disabled={!manualUrl.trim()}
+                                        className="px-4 py-3 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-40 disabled:cursor-not-allowed text-white font-bold rounded-xl transition-colors flex items-center gap-2"
                                     >
-                                        {loading ? (
-                                            <>
-                                                <span className="material-symbols-outlined animate-spin text-sm">refresh</span>
-                                                Submitting...
-                                            </>
-                                        ) : (
-                                            <>
-                                                <span className="material-symbols-outlined text-sm">send</span>
-                                                Submit Request
-                                            </>
-                                        )}
+                                        <span className="material-symbols-outlined text-[18px]">arrow_forward</span>
                                     </button>
                                 </div>
-                            </form>
+                            </div>
                         </div>
                     </div>
                 </main>
             </div>
-
-            {/* Popups */}
-            {showDoctorSelection && (
-                <DoctorSelectionPopup
-                    doctors={doctors}
-                    onClose={() => setShowDoctorSelection(false)}
-                    onSelect={(doctor) => {
-                        setSelectedDoctor(doctor);
-                        setShowDoctorSelection(false);
-                        setShowDoctorProfile(true);
-                    }}
-                />
-            )}
-
-            {showDoctorProfile && (
-                <DoctorProfilePopup
-                    doctor={selectedDoctor}
-                    onBack={() => {
-                        setShowDoctorProfile(false);
-                        setShowDoctorSelection(true);
-                    }}
-                    onBook={(bookingDetails) => {
-                        setFormData({
-                            ...formData,
-                            doctorId: bookingDetails.doctorId
-                        });
-                        setShowDoctorProfile(false);
-                    }}
-                />
-            )}
         </div>
     );
 };
