@@ -1,0 +1,140 @@
+# Usage: docker compose -f docker-compose.dev.yaml up --build
+services:
+  # ── PostgreSQL Database ──────────────────────────────────
+  postgres:
+    image: postgres:15-alpine
+    container_name: healthcare_db_dev
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${DB_NAME:-postgres}
+      POSTGRES_USER: ${DB_USER:-postgres.dfahfdiuhwjyckdziyxo}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-Bfbubb3amGy3HQ91}
+      PGDATA: /var/lib/postgresql/data/pgdata
+    ports:
+      - "${DB_PORT:-5432}:5432"
+    volumes:
+      - postgres_data_dev:/var/lib/postgresql/data
+      - ./backend/src/database:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-postgres} -d ${DB_NAME:-healthcare_db}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - healthcare_dev
+
+  # ── Backend API (development with hot-reload) ────────────
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+      target: development
+    container_name: healthcare_backend_dev
+    restart: unless-stopped
+    environment:
+      NODE_ENV: development
+      PORT: ${PORT:-5005}
+      DB_HOST: ${DB_HOST:-aws-1-ap-northeast-1.pooler.supabase.com}
+      DB_PORT: ${DB_PORT:-5432}
+      DB_NAME: ${DB_NAME:-postgres}
+      DB_USER: ${DB_USER:-postgres.dfahfdiuhwjyckdziyxo}
+      DB_PASSWORD: ${DB_PASSWORD:-Bfbubb3amGy3HQ91}
+      JWT_SECRET: ${JWT_SECRET:-bb960edd9d20fd8864da026e227cdea844b46d2a4745bb0c1770823a963f72c21ccc89053f2f3e7a450c5ddbf28bef6d409e1a7508cdfe6b530df92026d6b8ba}
+      JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET:-7faffec04c11561d3b7f347bf2ff110820bea34e52b8851b26c1ba23cadf5f6706ee1a7ea9cad9651c099c7f4b184752d3fa8fd04a3eb45b647e7e63c575c41b}
+      JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-24h}
+      JWT_REFRESH_EXPIRES_IN: ${JWT_REFRESH_EXPIRES_IN:-7d}
+      ENCRYPTION_KEY: ${ENCRYPTION_KEY:-38a8236707d8785570adf5eb0517d3ef0feca9743ae9526f0258dabb8e7a5b90}
+      ENCRYPTION_ALGORITHM: aes-256-gcm
+      EMAIL_HOST: ${EMAIL_HOST:-smtp.gmail.com}
+      EMAIL_PORT: ${EMAIL_PORT:-587}
+      EMAIL_SECURE: ${EMAIL_SECURE:-false}
+      EMAIL_USER: ${EMAIL_USER:-sarvanthikhasivaraj27@gmail.com}
+      EMAIL_PASSWORD: ${EMAIL_PASSWORD:-ukkd nnpv vrnn ifiv}
+      EMAIL_FROM: ${EMAIL_FROM:-healthcare <sarvanthikhasivaraj27@gmail.com>}
+      CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost:3000,http://localhost:3001}
+      BCRYPT_ROUNDS: 10
+      AUDIT_LOG_RETENTION_DAYS: 2555
+      ENABLE_HASH_CHAIN: "false"
+      SESSION_TIMEOUT_MINUTES: 120
+      AUTO_LOGOUT_ENABLED: "false"
+      RATE_LIMIT_MAX_REQUESTS: 1000
+      LOGIN_RATE_LIMIT_MAX_ATTEMPTS: 50
+    ports:
+      - "${PORT:-5005}:5005"
+      - "9229:9229"   # Node.js debug port
+    volumes:
+      - ./backend:/app
+      - /app/node_modules
+      - backend_uploads_dev:/app/uploads
+      - backend_logs_dev:/app/logs
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:5005/health', (r) => process.exit(r.statusCode === 200 ? 0 : 1))"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    networks:
+      - healthcare_dev
+
+  # ── Frontend React App (development with hot-reload) ─────
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      target: development
+    container_name: healthcare_frontend_dev
+    restart: unless-stopped
+    environment:
+      NODE_ENV: development
+      REACT_APP_API_URL: ${REACT_APP_API_URL:-http://localhost:3000}
+      REACT_APP_ENV: development
+      WATCHPACK_POLLING: "true"      # File watching in Docker
+      CHOKIDAR_USEPOLLING: "true"    # CRA hot-reload in containers
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    depends_on:
+      - backend
+    stdin_open: true
+    tty: true
+    networks:
+      - healthcare_dev
+
+  # ── pgAdmin (development tooling) ───────────────────────
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: healthcare_pgadmin_dev
+    restart: unless-stopped
+    environment:
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_EMAIL:-admin@healthcare.local}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASSWORD:-admin}
+      PGADMIN_LISTEN_PORT: 80
+    ports:
+      - "5050:80"
+    volumes:
+      - pgadmin_data_dev:/var/lib/pgadmin
+    depends_on:
+      - postgres
+    networks:
+      - healthcare_dev
+    profiles:
+      - tools
+
+volumes:
+  postgres_data_dev:
+    driver: local
+  backend_uploads_dev:
+    driver: local
+  backend_logs_dev:
+    driver: local
+  pgadmin_data_dev:
+    driver: local
+
+networks:
+  healthcare_dev:
+    driver: bridge
