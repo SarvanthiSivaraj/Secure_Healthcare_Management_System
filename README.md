@@ -200,61 +200,230 @@ Secure_Healthcare_Management_System/
 ## Installation & Setup
 
 ### Prerequisites
-- Node.js (v16+)
-- PostgreSQL (v12+)
 
-### 1. Database Setup
-1. Create a PostgreSQL database (default name: `healthcare_db`).
-2. Navigate to the `backend` directory:
-   ```bash
-   cd backend
-   ```
-3. Configure environment variables (create `.env` based on `.env.example`).
-4. Run migrations and seed data:
-   ```bash
-   npm install
-   npm run db:migrate  # Creates tables
-   npm run db:seed     # Creates initial roles and admin user
-   ```
+| Tool | Minimum Version | Check |
+|---|---|---|
+| Node.js | v18+ | `node --version` |
+| npm | v9+ | `npm --version` |
+| Docker & Docker Compose | v24+ / v2+ | `docker --version` |
+| Git | any | `git --version` |
+| PostgreSQL (local only) | v15+ | Only needed if running without Docker |
 
-### 2. Backend Setup
-1. Start the server in development mode:
-   ```bash
-   npm run dev
-   ```
-   Server runs on `http://localhost:5000` (default).
+### Quick Start (Recommended)
 
-### 3. Frontend Setup
-1. Navigate to the `frontend` directory:
-   ```bash
-   cd ../frontend
-   ```
-2. Install dependencies:
-   ```bash
-   npm install
-   ```
-3. Start the React app:
-   ```bash
-   npm start
-   ```
-   App runs on `http://localhost:3000`.
+The fastest way to go from a fresh clone to a running system:
+
+```powershell
+# 1. Clone and enter the project
+git clone <repo-url>
+cd Secure_Healthcare_Management_System
+
+# 2. Run the bootstrap script — handles everything automatically
+.\scripts\dev-bootstrap.ps1
+```
+
+This single command will:
+- Verify all prerequisites (Node.js, Docker, npm, git)
+- Create `backend/.env` from the example template and generate dev secrets
+- Install backend and frontend dependencies (`npm ci`)
+- Validate environment variables
+- Run the backend test suite
+- Start all services via Docker Compose with health-check verification
+
+**Options:**
+
+```powershell
+.\scripts\dev-bootstrap.ps1 -WithTools    # Also starts pgAdmin on :5050
+.\scripts\dev-bootstrap.ps1 -SkipDocker   # Install deps + run tests only (no containers)
+.\scripts\dev-bootstrap.ps1 -FreshDb      # Wipe existing DB volumes and start clean
+```
+
+Once complete, the system is available at:
+
+| Service | URL |
+|---|---|
+| Frontend | http://localhost:3000 |
+| Backend API | http://localhost:5000 |
+| Health Check | http://localhost:5000/health |
+| pgAdmin (with `-WithTools`) | http://localhost:5050 |
+
+---
+
+### Manual Setup (Step-by-Step)
+
+If you prefer to set up manually or are not using Docker:
+
+#### 1. Environment Configuration
+
+```powershell
+# Copy the example env file
+Copy-Item backend\.env.example backend\.env
+
+# Generate secure dev secrets (recommended)
+node -e "console.log(require('crypto').randomBytes(64).toString('hex'))"
+# Paste output into JWT_SECRET and JWT_REFRESH_SECRET in backend/.env
+
+node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
+# Paste output into ENCRYPTION_KEY in backend/.env
+```
+
+Validate your configuration:
+
+```powershell
+node scripts\validate-env.js --env dev
+```
+
+#### 2. Install Dependencies
+
+```powershell
+cd backend;  npm ci
+cd ..\frontend; npm ci
+cd ..
+```
+
+#### 3. Database Setup
+
+**Option A — Docker Compose (recommended):**
+
+```powershell
+docker compose -f docker-compose.dev.yaml up postgres -d
+# Wait for healthy status
+docker ps --format "table {{.Names}}\t{{.Status}}"
+```
+
+**Option B — Local PostgreSQL:**
+
+Create a database named `healthcare_db` (or match your `.env` value).
+
+Then run migrations:
+
+```powershell
+# Check migration status
+node scripts\migrate-orchestrator.js --status
+
+# Apply all schemas and migrations (fresh DB)
+node scripts\migrate-orchestrator.js --from-scratch
+
+# Seed initial data (roles, admin user, sample doctors)
+cd backend
+npm run db:seed
+```
+
+#### 4. Start Services
+
+**With Docker (recommended):**
+
+```powershell
+docker compose -f docker-compose.dev.yaml up --build -d
+
+# Follow logs
+docker compose -f docker-compose.dev.yaml logs -f
+```
+
+**Without Docker:**
+
+```powershell
+# Terminal 1 — Backend
+cd backend
+npm run dev      # Starts on http://localhost:5000
+
+# Terminal 2 — Frontend
+cd frontend
+npm start        # Starts on http://localhost:3000
+```
+
+---
+
+### Docker Compose Profiles
+
+| File | Purpose | Usage |
+|---|---|---|
+| `docker-compose.dev.yaml` | Development — hot-reload, debug port, relaxed limits | `docker compose -f docker-compose.dev.yaml up --build` |
+| `docker-compose.prod.yaml` | Production reference — read-only root, cap_drop ALL, resource limits, network segmentation | `docker compose -f docker-compose.prod.yaml up -d` |
+| `docker-compose.yaml` | Legacy/general-purpose (preserved for backward compatibility) | `docker compose up` |
+
+---
+
+### Database Migrations
+
+Migrations are managed by a deterministic orchestrator that tracks applied migrations in a `_migrations` table:
+
+```powershell
+# View status of all migrations
+node scripts\migrate-orchestrator.js --status
+
+# Preview what would be applied (no changes)
+node scripts\migrate-orchestrator.js --dry-run
+
+# Apply only pending incremental migrations
+node scripts\migrate-orchestrator.js
+
+# Full setup from scratch (base schemas + all migrations)
+node scripts\migrate-orchestrator.js --from-scratch
+```
+
+Migrations are idempotent and tracked by ID — re-running is safe.
+
+---
+
+### Environment Validation
+
+Before starting the system or deploying, validate env vars:
+
+```powershell
+# For development
+node scripts\validate-env.js --env dev
+
+# For production (stricter checks — no placeholders, no wildcard CORS)
+node scripts\validate-env.js --env prod
+```
+
+The validator checks for missing required variables, placeholder values, insecure defaults, and production-specific security rules.
 
 ---
 
 ## Testing
 
 ### Backend Tests
-Navigate to `backend/` and run:
-- **Unit/Integration Tests:** `npm test`
-- **Manual Verification:** 
-  Run standalone scripts in `backend/` to verify logic:
-  ```bash
-  node test_admin_login.js
-  ```
 
-### Manual Testing with Postman
-1. **Login:** `POST /api/auth/login`
-2. **Use Token:** Add the returned `accessToken` to the `Authorization` header (`Bearer <token>`) for subsequent requests.
+```powershell
+cd backend
+npm test              # Run all unit tests (Vitest)
+npm run test:vitest:watch   # Watch mode
+```
+
+### Manual API Testing with Postman
+
+1. **Login:** `POST /api/auth/login` with email and password
+2. **Use Token:** Add the returned `accessToken` to the `Authorization` header as `Bearer <token>`
+3. **Health Check:** `GET /health` — no auth required
+
+---
+
+### Common Operations Cheat Sheet
+
+```powershell
+# Start dev environment
+docker compose -f docker-compose.dev.yaml up -d
+
+# Stop all services
+docker compose -f docker-compose.dev.yaml down
+
+# Reset database (wipe volumes)
+docker compose -f docker-compose.dev.yaml down -v
+
+# View backend logs
+docker compose -f docker-compose.dev.yaml logs -f backend
+
+# Run backend tests
+cd backend; npm test
+
+# Check migration status
+node scripts\migrate-orchestrator.js --status
+
+# Validate environment
+node scripts\validate-env.js --env dev
+```
 
 ---
 
