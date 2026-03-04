@@ -232,6 +232,6 @@ Write-Host "  Bootstrap Complete!" -ForegroundColor Green
 Write-Host "============================================================" -ForegroundColor Cyan
 Write-Host ""
 Write-Host "Frontend:  http://localhost:3000"
-Write-Host "API:       http://localhost:5005"
-Write-Host "Health:    http://localhost:5005/health"
+Write-Host "API:       http://localhost:5000"
+Write-Host "Health:    http://localhost:5000/health"
 Write-Host ""
