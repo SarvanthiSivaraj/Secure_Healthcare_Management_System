@@ -376,9 +376,11 @@ class VisitModel {
             SELECT v.*,
             u.first_name as doctor_first_name,
             u.last_name as doctor_last_name,
+            dp.specialization as specialization,
             o.name as hospital_name
             FROM visits v
             LEFT JOIN users u ON v.assigned_doctor_id = u.id
+            LEFT JOIN doctor_profiles dp ON v.assigned_doctor_id = dp.user_id
             LEFT JOIN organizations o ON v.organization_id = o.id
             WHERE v.patient_id = $1
             ORDER BY v.created_at DESC

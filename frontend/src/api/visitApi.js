@@ -13,22 +13,24 @@ export const visitApi = {
         const response = await apiClient.get('/visits/my-visits');
         const visits = response.data.data || [];
 
+        console.log('Fetched My Visits (Raw):', visits);
+
         // Transform snake_case backend data to camelCase for frontend
-        return visits.map(visit => ({
+        return (Array.isArray(visits) ? visits : []).map(visit => ({
             ...visit,
-            doctorName: visit.doctor_first_name && visit.doctor_last_name
+            doctorName: (visit.doctor_first_name && visit.doctor_last_name)
                 ? `${visit.doctor_first_name} ${visit.doctor_last_name}`
-                : 'Unassigned',
-            nurseName: visit.nurse_first_name && visit.nurse_last_name
+                : (visit.doctor_full_name || 'Unassigned'),
+            nurseName: (visit.nurse_first_name && visit.nurse_last_name)
                 ? `${visit.nurse_first_name} ${visit.nurse_last_name}`
-                : null,
-            patientName: visit.patient_first_name && visit.patient_last_name
+                : (visit.nurse_full_name || null),
+            patientName: (visit.patient_first_name && visit.patient_last_name)
                 ? `${visit.patient_first_name} ${visit.patient_last_name}`
-                : null,
+                : (visit.patient_full_name || null),
             scheduledTime: visit.scheduled_time,
-            visitCode: visit.visit_code,
-            visitType: visit.reason || visit.visit_type,
-            organizationName: visit.organization_name
+            visitCode: visit.visit_code || visit.otp_code,
+            visitType: visit.reason || visit.visit_type || visit.type,
+            organizationName: visit.organization_name || visit.hospital_name
         }));
     },
 

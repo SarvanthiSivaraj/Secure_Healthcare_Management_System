@@ -18,6 +18,43 @@ const createConsent = async (consentData) => {
             endTime,
         } = consentData;
 
+        // ── Deduplication: if an active consent already exists for this
+        //    patient+recipient pair, UPDATE it instead of inserting a new row.
+        const existing = await query(
+            `SELECT id FROM consents
+             WHERE patient_id = $1
+               AND recipient_user_id = $2
+               AND status = 'active'
+               AND (end_time IS NULL OR end_time > NOW())
+             LIMIT 1`,
+            [patientId, recipientUserId]
+        );
+
+        if (existing.rows.length > 0) {
+            const updateQuery = `
+                UPDATE consents
+                SET data_category = $1,
+                    purpose       = $2,
+                    access_level  = $3,
+                    start_time    = $4,
+                    end_time      = $5,
+                    updated_at    = NOW()
+                WHERE id = $6
+                RETURNING *
+            `;
+            const updated = await query(updateQuery, [
+                dataCategory,
+                purpose,
+                accessLevel,
+                startTime || new Date(),
+                endTime || null,
+                existing.rows[0].id,
+            ]);
+            logger.info(`[createConsent] Updated existing consent ${existing.rows[0].id} instead of inserting duplicate`);
+            return updated.rows[0];
+        }
+
+        // No existing active consent → insert fresh row
         const insertQuery = `
             INSERT INTO consents (
                 patient_id,
@@ -50,6 +87,7 @@ const createConsent = async (consentData) => {
         throw error;
     }
 };
+
 
 /**
  * Update existing consent
@@ -139,10 +177,11 @@ const getActiveConsents = async (patientId) => {
                 u.email as recipient_email,
                 r.name as recipient_role,
                 CONCAT(u.first_name, ' ', u.last_name) as "recipientName",
-                'General Practice' as "specialization"
+                COALESCE(dp.specialization, 'Medical Staff') as "specialization"
             FROM consents c
             INNER JOIN users u ON c.recipient_user_id = u.id
             INNER JOIN roles r ON u.role_id = r.id
+            LEFT JOIN doctor_profiles dp ON u.id = dp.user_id
             WHERE c.patient_id = $1 
                 AND c.status = 'active'
                 AND (c.end_time IS NULL OR c.end_time > NOW())
@@ -180,10 +219,11 @@ const getConsentHistory = async (patientId) => {
                 u.email as recipient_email,
                 r.name as recipient_role,
                 CONCAT(u.first_name, ' ', u.last_name) as "recipientName",
-                'General Practice' as "specialization"
+                COALESCE(dp.specialization, 'Medical Staff') as "specialization"
             FROM consents c
             INNER JOIN users u ON c.recipient_user_id = u.id
             INNER JOIN roles r ON u.role_id = r.id
+            LEFT JOIN doctor_profiles dp ON u.id = dp.user_id
             WHERE c.patient_id = $1
             AND (c.status = 'revoked' OR c.end_time <= NOW())
             ORDER BY c.created_at DESC
