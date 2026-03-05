@@ -23,7 +23,11 @@ const { sendDoctorRegistrationNotification } = require('../../config/mail');
  */
 const registerPatient = async (req, res) => {
     try {
-        const { email, phone, password, govtId, dateOfBirth, firstName, lastName } = req.body;
+        const {
+            email, phone, password, govtId, dateOfBirth, firstName, lastName,
+            gender, bloodGroup, emergencyContactName, emergencyContactPhone,
+            emergencyContactRelation, address, city, state, country, postalCode
+        } = req.body;
 
         // Validate required fields
         const validation = validateRequiredFields(req.body, ['password']);
@@ -134,6 +138,18 @@ const registerPatient = async (req, res) => {
                 userId: user.id,
                 govtId: govtId || null,
                 dateOfBirth: dateOfBirth || null,
+                gender: gender || null,
+                bloodGroup: bloodGroup || null,
+                emergencyContactName: emergencyContactName || null,
+                emergencyContactPhone: emergencyContactPhone || null,
+                emergencyContactRelation: emergencyContactRelation || null,
+                address: address || null,
+                city: city || null,
+                state: state || null,
+                country: country || null,
+                postalCode: postalCode || null,
+                insuranceProvider: req.body.insuranceProvider || null,
+                insurancePolicyNumber: req.body.insurancePolicyNumber || null,
             }, client);
 
             return { user, profile };

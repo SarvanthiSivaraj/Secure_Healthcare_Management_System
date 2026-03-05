@@ -550,7 +550,38 @@ const VisitController = {
             logger.error('Assign staff failed:', error);
             res.status(500).json({ success: false, message: 'Failed to assign staff' });
         }
+    },
+
+    /**
+     * Receptionist: Update scheduled time for a single visit
+     */
+    async updateScheduledTime(req, res) {
+        try {
+            const { id } = req.params;
+            const { scheduledTime } = req.body;
+
+            if (!scheduledTime) {
+                return res.status(400).json({ success: false, message: 'scheduledTime is required' });
+            }
+
+            const updatedVisit = await VisitModel.update(id, { scheduledTime });
+
+            if (!updatedVisit) {
+                return res.status(404).json({ success: false, message: 'Visit not found' });
+            }
+
+            res.json({
+                success: true,
+                message: 'Scheduled time updated successfully',
+                data: updatedVisit
+            });
+
+        } catch (error) {
+            logger.error('Update scheduled time failed:', error);
+            res.status(500).json({ success: false, message: 'Failed to update scheduled time' });
+        }
     }
 };
 
 module.exports = VisitController;
+

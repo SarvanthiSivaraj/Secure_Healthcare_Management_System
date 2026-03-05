@@ -38,6 +38,8 @@ import DoctorVerification from '../pages/admin/DoctorVerification';
 import AuditTrail from '../pages/patient/AuditTrail';
 import Profile from '../pages/common/Profile';
 import LandingPage from '../pages/LandingPage';
+import ReceptionistVisitManagement from '../pages/receptionist/ReceptionistVisitManagement';
+import PatientRegistration from '../pages/staff/PatientRegistration';
 
 function AppRoutes() {
     return (
@@ -98,6 +100,15 @@ function AppRoutes() {
                 element={
                     <ProtectedRoute allowedRoles={['patient']}>
                         <MedicalRecordsView />
+                    </ProtectedRoute>
+                }
+            />
+
+            <Route
+                path="/staff/registration"
+                element={
+                    <ProtectedRoute allowedRoles={['receptionist', 'nurse', 'staff']}>
+                        <PatientRegistration />
                     </ProtectedRoute>
                 }
             />
@@ -310,6 +321,15 @@ function AppRoutes() {
             />
 
             <Route
+                path="/receptionist/visits"
+                element={
+                    <ProtectedRoute allowedRoles={['receptionist']}>
+                        <ReceptionistVisitManagement />
+                    </ProtectedRoute>
+                }
+            />
+
+            <Route
                 path="/staff/dashboard"
                 element={
                     <ProtectedRoute allowedRoles={[
@@ -334,7 +354,7 @@ function AppRoutes() {
                 path="/staff/workflow"
                 element={
                     <ProtectedRoute allowedRoles={[
-                        'staff', 'nurse', 'doctor', 'admin', 'hospital_admin', 'system_admin'
+                        'staff', 'nurse', 'doctor', 'admin', 'hospital_admin', 'system_admin', 'receptionist'
                     ]}>
                         <WorkflowDashboard />
                     </ProtectedRoute>

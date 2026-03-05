@@ -149,9 +149,9 @@
     font-size: 0.7rem;
     font-weight: 700;
     text-transform: uppercase;
-    color: #ffffff;
-    background: #438a99;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    color: #64748b;
+    background: transparent;
+    border-bottom: 1px solid #e2e8f0;
 }
 
 .logs-table th:first-child {

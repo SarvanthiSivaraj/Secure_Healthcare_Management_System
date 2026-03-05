@@ -114,7 +114,7 @@ function LandingPage() {
                             onClick={() => navigate('/login')}
                             className="w-full sm:w-auto px-8 py-4 glass-card text-slate-800 dark:text-white rounded-2xl font-bold text-lg flex items-center justify-center gap-3 hover:bg-white/80 dark:hover:bg-slate-800/80 transition-all border border-slate-200 dark:border-slate-700"
                         >
-                            <span>Patient Log In</span>
+                            <span>Log In</span>
                         </button>
                     </div>
                 </div>
