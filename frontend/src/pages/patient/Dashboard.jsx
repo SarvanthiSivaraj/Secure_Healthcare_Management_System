@@ -5,6 +5,7 @@ import { consentApi } from '../../api/consentApi';
 import { visitApi } from '../../api/visitApi';
 import { emrApi } from '../../api/emrApi';
 import { patientApi } from '../../api/patientApi';
+import { auditApi } from '../../api/auditApi';
 import ThemeToggle from '../../components/common/ThemeToggle';
 import './Dashboard.css';
 
@@ -32,13 +33,14 @@ function PatientDashboard() {
             if (!user?.id) return;
 
             try {
-                const [consentsRes, recordsRes, visitsRes, profileRes, factsRes, activitiesRes] = await Promise.allSettled([
+                const [consentsRes, recordsRes, visitsRes, profileRes, factsRes, activitiesRes, auditRes] = await Promise.allSettled([
                     consentApi.getActiveConsents(),
                     emrApi.getPatientMedicalRecords(user.id),
                     visitApi.getMyVisits(),
                     patientApi.getProfile(),
                     patientApi.getHealthFacts(),
-                    patientApi.getActivities()
+                    patientApi.getActivities(),
+                    auditApi.getMyAuditTrail({ limit: 1 })
                 ]);
 
                 if (profileRes.status === 'fulfilled') setPatientDetails(profileRes.value?.data || profileRes.value);
@@ -53,7 +55,7 @@ function PatientDashboard() {
                         : 0,
                     medicalRecords: recordsRes.status === 'fulfilled' ? (recordsRes.value?.data?.records?.length || recordsRes.value?.data?.length || 0) : 0,
                     scheduledVisits: visitsRes.status === 'fulfilled' ? (visitsRes.value?.filter(v => ['approved', 'pending', 'scheduled'].includes(v.status?.toLowerCase())).length || 0) : 0,
-                    accessLogs: 0 // TODO: Implement access logs API
+                    accessLogs: auditRes.status === 'fulfilled' ? (auditRes.value?.data?.pagination?.total || auditRes.value?.data?.logs?.length || auditRes.value?.data?.length || 0) : 0
                 });
 
                 if (visitsRes.status === 'fulfilled' && Array.isArray(visitsRes.value)) {
@@ -135,7 +137,7 @@ function PatientDashboard() {
                         <span className="material-symbols-outlined text-[20px]">calendar_today</span>
                         Appointments
                     </Link>
-                    <Link to="#" className="flex items-center gap-3 px-4 py-3 text-slate-500 dark:text-slate-400 hover:bg-white/50 dark:hover:bg-white/5 transition rounded-xl">
+                    <Link to="/patient/messages" className="flex items-center gap-3 px-4 py-3 text-slate-500 dark:text-slate-400 hover:bg-white/50 dark:hover:bg-white/5 transition rounded-xl">
                         <span className="material-symbols-outlined text-[20px]">chat_bubble_outline</span>
                         Messages
                     </Link>
@@ -149,7 +151,7 @@ function PatientDashboard() {
                     </Link>
                 </nav>
                 <div className="space-y-2 mt-auto pt-6 border-t border-white/20 dark:border-slate-800/50">
-                    <Link to="#" className="flex items-center gap-3 px-4 py-3 text-slate-500 dark:text-slate-400 hover:bg-white/50 dark:hover:bg-white/5 transition rounded-xl">
+                    <Link to="/patient/support" className="flex items-center gap-3 px-4 py-3 text-slate-500 dark:text-slate-400 hover:bg-white/50 dark:hover:bg-white/5 transition rounded-xl">
                         <span className="material-symbols-outlined text-[20px]">favorite_border</span>
                         Support
                     </Link>
@@ -175,9 +177,11 @@ function PatientDashboard() {
                         </div>
                         <div className="flex items-center gap-3 glass-card px-4 py-2 rounded-2xl">
                             <div className="w-8 h-8 rounded-full bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center">
-                                <div className="w-2 h-2 rounded-full bg-emerald-500"></div>
+                                <div className={`w-2 h-2 rounded-full ${patientDetails?.status === 'active' || user?.status === 'active' ? 'bg-emerald-500' : 'bg-amber-500'}`}></div>
                             </div>
-                            <span className="text-sm font-semibold text-slate-800 dark:text-slate-100">Active Status</span>
+                            <span className="text-sm font-semibold text-slate-800 dark:text-slate-100 capitalize">
+                                {patientDetails?.status || user?.status || 'Active'} Status
+                            </span>
                         </div>
                     </div>
                     <div className="grid grid-cols-2 gap-6">

@@ -101,7 +101,7 @@ function Consent() {
                         <span className="material-symbols-outlined text-[20px]">calendar_today</span>
                         Appointments
                     </Link>
-                    <Link to="#" className="flex items-center gap-3 px-4 py-3 text-slate-500 dark:text-slate-400 hover:bg-white/50 dark:hover:bg-white/5 transition rounded-xl">
+                    <Link to="/patient/messages" className="flex items-center gap-3 px-4 py-3 text-slate-500 dark:text-slate-400 hover:bg-white/50 dark:hover:bg-white/5 transition rounded-xl">
                         <span className="material-symbols-outlined text-[20px]">chat_bubble_outline</span>
                         Messages
                     </Link>
@@ -119,7 +119,7 @@ function Consent() {
                     </Link>
                 </nav>
                 <div className="space-y-2 mt-auto pt-6 border-t border-slate-200 dark:border-slate-800/50">
-                    <Link to="#" className="flex items-center gap-3 px-4 py-3 text-slate-500 dark:text-slate-400 hover:bg-white/50 dark:hover:bg-white/5 transition rounded-xl">
+                    <Link to="/patient/support" className="flex items-center gap-3 px-4 py-3 text-slate-500 dark:text-slate-400 hover:bg-white/50 dark:hover:bg-white/5 transition rounded-xl">
                         <span className="material-symbols-outlined text-[20px]">favorite_border</span>
                         Support
                     </Link>
