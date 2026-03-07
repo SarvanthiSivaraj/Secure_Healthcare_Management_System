@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useContext, useRef } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { AuthContext } from '../../context/AuthContext';
 import { emrApi } from '../../api/emrApi';
 import ThemeToggle from '../../components/common/ThemeToggle';
@@ -16,6 +16,8 @@ function MedicalRecords() {
     const [loading, setLoading] = useState(true);
     const [filter, setFilter] = useState('all');
     const [expandedRecords, setExpandedRecords] = useState(new Set());
+    const location = useLocation();
+    const [searchTerm, setSearchTerm] = useState('');
     const [toast, setToast] = useState(null);
     const printableRef = useRef(null);
 
@@ -43,9 +45,36 @@ function MedicalRecords() {
 
     useEffect(() => {
         if (user && user.id) fetchRecords();
-    }, [user, fetchRecords]);
 
-    const filterRecords = () => filter === 'all' ? records : records.filter(r => r.type === filter);
+        // Check for search query in URL
+        const params = new URLSearchParams(location.search);
+        const searchQ = params.get('search');
+        if (searchQ) {
+            setSearchTerm(searchQ);
+        }
+    }, [user, fetchRecords, location.search]);
+
+    const filterRecords = () => {
+        let filtered = records;
+
+        // Apply type filter
+        if (filter !== 'all') {
+            filtered = filtered.filter(r => r.type === filter);
+        }
+
+        // Apply search term filter
+        if (searchTerm) {
+            const term = searchTerm.toLowerCase();
+            filtered = filtered.filter(r =>
+                (r.title && r.title.toLowerCase().includes(term)) ||
+                (r.summary && r.summary.toLowerCase().includes(term)) ||
+                (r.doctor && r.doctor.toLowerCase().includes(term)) ||
+                (r.type && r.type.toLowerCase().includes(term))
+            );
+        }
+
+        return filtered;
+    };
     const filteredRecords = filterRecords();
 
     const toggleExpand = (recordId) => {
@@ -269,7 +298,28 @@ function MedicalRecords() {
                     </div>
                 </div>
 
-                {/* Filter pills */}
+                {/* Search bar and Filter pills */}
+                <div className="print:hidden flex flex-col md:flex-row gap-4 mb-6">
+                    <div className="relative flex-grow">
+                        <input
+                            className="w-full glass-card border-white/50 dark:border-slate-700/50 rounded-2xl py-3 pl-12 pr-4 text-sm focus:ring-2 focus:ring-indigo-500 shadow-sm text-slate-800 dark:text-slate-100"
+                            placeholder="Search in records (titles, summaries, doctors)..."
+                            type="text"
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                        />
+                        <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-slate-400">search</span>
+                        {searchTerm && (
+                            <button
+                                onClick={() => setSearchTerm('')}
+                                className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+                            >
+                                <span className="material-symbols-outlined text-sm">close</span>
+                            </button>
+                        )}
+                    </div>
+                </div>
+
                 <div className="print:hidden flex gap-2 mb-6 overflow-x-auto pb-2 no-scrollbar">
                     {['all', 'consultation', 'diagnosis', 'prescription', 'lab_result', 'imaging', 'procedure', 'note'].map((type) => (
                         <button
