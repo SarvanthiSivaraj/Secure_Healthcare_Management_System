@@ -102,27 +102,7 @@ function EmergencyToggle({ isActive, onToggle }) {
     return (
         <>
             <div className={`emergency-toggle-container ${isActive ? 'active' : ''}`}>
-                <div className="toggle-content">
-                    <div className="toggle-info">
-                        <span className="toggle-icon">
-                            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke={isActive ? '#ef4444' : '#f87171'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
-                                <line x1="12" y1="9" x2="12" y2="13" />
-                                <line x1="12" y1="17" x2="12.01" y2="17" />
-                            </svg>
-                        </span>
-                        <div>
-                            <h4 className="toggle-title">
-                                {isActive ? 'Emergency Mode Active' : 'Emergency Access'}
-                            </h4>
-                            <p className="toggle-description">
-                                {isActive
-                                    ? 'Break-glass access enabled. All actions are logged.'
-                                    : 'Activate for critical patient emergencies'}
-                            </p>
-                        </div>
-                    </div>
-
+                <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
                     {isActive ? (
                         <Button onClick={handleDeactivate} variant="primary" loading={loading}>
                             Deactivate
@@ -130,7 +110,7 @@ function EmergencyToggle({ isActive, onToggle }) {
                     ) : (
                         <button
                             onClick={handleActivate}
-                            className="px-5 py-2 rounded-xl bg-red-600 hover:bg-red-700 active:bg-red-800 text-white font-semibold text-sm transition-all duration-200 shadow-md shadow-red-500/30 hover:shadow-red-500/50"
+                            className="px-4 py-2 rounded-xl bg-red-600 hover:bg-red-700 active:bg-red-800 text-white font-semibold text-xs transition-all duration-200 shadow-md shadow-red-500/30 hover:shadow-red-500/50"
                         >
                             Activate Emergency Mode
                         </button>

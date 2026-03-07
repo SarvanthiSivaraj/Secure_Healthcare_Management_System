@@ -1,12 +1,62 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { visitApi } from '../../api/visitApi';
-import VisitCard from '../../components/visit/VisitCard';
+import ThemeToggle from '../../components/common/ThemeToggle';
+import './ActiveVisits.css';
 
+// ── helpers ──────────────────────────────────────────────────────────────────
+const getProp = (obj, camel, snake) => obj && (obj[camel] || obj[snake]);
+
+const getVisitDate = (visit) => {
+    const ds = getProp(visit, 'scheduledTime', 'scheduled_time')
+        || getProp(visit, 'checkInTime', 'check_in_time')
+        || getProp(visit, 'createdAt', 'created_at');
+    return ds ? new Date(ds) : new Date();
+};
+
+const fmt = (date) => date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+const fmtTime = (date) => date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+
+const getWaitTime = (visit) => {
+    if (visit.type !== 'walk_in' && visit.visit_type !== 'walk_in') return null;
+    const date = new Date(visit.created_at || visit.createdAt);
+    const diffMins = Math.floor((new Date() - date) / 60000);
+    const h = Math.floor(diffMins / 60);
+    const m = diffMins % 60;
+    return [h > 0 ? `${h}h` : '', m > 0 ? `${m}m` : ''].filter(Boolean).join(' ') + ' ago';
+};
+
+const getPatientInitials = (visit) => {
+    const fn = visit.patient_first_name || visit.patientName?.split(' ')[0] || '';
+    const ln = visit.patient_last_name || visit.patientName?.split(' ')[1] || '';
+    return (fn[0] || '?') + (ln[0] || '');
+};
+
+const getPatientName = (visit) =>
+    visit.patientName
+    || (visit.patient_first_name
+        ? `${visit.patient_first_name} ${visit.patient_last_name}`
+        : 'Unknown Patient');
+
+const badgeClass = (status) => {
+    const s = status?.toLowerCase().replace(' ', '_');
+    const map = {
+        pending: 'aq-badge-pending',
+        approved: 'aq-badge-approved',
+        checked_in: 'aq-badge-checked_in',
+        in_progress: 'aq-badge-in_progress',
+        completed: 'aq-badge-completed',
+        cancelled: 'aq-badge-cancelled',
+    };
+    return `aq-badge ${map[s] || 'aq-badge-approved'}`;
+};
+
+// ── Component ─────────────────────────────────────────────────────────────────
 function ActiveVisits() {
     const navigate = useNavigate();
     const [visits, setVisits] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [refreshing, setRefreshing] = useState(false);
     const [successMessage, setSuccessMessage] = useState('');
 
     useEffect(() => {
@@ -15,8 +65,9 @@ function ActiveVisits() {
         return () => clearInterval(interval);
     }, []);
 
-    const fetchVisits = async () => {
-        setLoading(true);
+    const fetchVisits = async (manual = false) => {
+        if (manual) setRefreshing(true);
+        else setLoading(true);
         try {
             const data = await visitApi.getActiveVisits();
             setVisits(data.data || []);
@@ -24,6 +75,7 @@ function ActiveVisits() {
             console.error('Failed to fetch visits:', error);
         } finally {
             setLoading(false);
+            setRefreshing(false);
         }
     };
 
@@ -44,75 +96,165 @@ function ActiveVisits() {
     };
 
     return (
-        <div className="min-h-screen bg-gray-50 dark:bg-dark-bg transition-colors duration-300">
-            {/* Header */}
-            <header className="bg-gradient-to-r from-primary-700 to-primary-500 shadow-lg">
-                <div className="max-w-7xl mx-auto px-6 py-5 flex justify-between items-center">
-                    <div className="flex items-center gap-4">
-                        <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center border border-white/30">
-                            <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                            </svg>
-                        </div>
-                        <div>
-                            <h1 className="text-2xl font-bold text-white">Consultation Queue</h1>
-                            <p className="text-primary-100 text-sm">View scheduled appointments and manage consultation workflow</p>
-                        </div>
+        <div className="aq-wrapper">
+            {/* Theme toggle */}
+            <div style={{ position: 'absolute', top: 16, right: 16, zIndex: 50 }}>
+                <ThemeToggle />
+            </div>
+
+            {/* Top bar */}
+            <div className="aq-topbar">
+                <div className="aq-topbar-left">
+                    <div className="aq-topbar-icon">
+                        <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2"
+                                d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                        </svg>
                     </div>
+                    <div>
+                        <h1 className="aq-topbar-title">Consultation Queue</h1>
+                        <p className="aq-topbar-subtitle">View scheduled appointments and manage consultation workflow</p>
+                    </div>
+                </div>
+                <div className="aq-topbar-actions">
                     <button
-                        onClick={() => navigate('/doctor/dashboard')}
-                        className="flex items-center gap-2 px-4 py-2 rounded-xl border border-white/30 text-white text-sm font-medium hover:bg-white/10 transition-all duration-200"
+                        className={`aq-btn-refresh${refreshing ? ' spinning' : ''}`}
+                        onClick={() => fetchVisits(true)}
                     >
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7" /></svg>
+                        <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2"
+                                d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                        </svg>
+                        Refresh
+                    </button>
+                    <button className="aq-btn-back" onClick={() => navigate('/doctor/dashboard')}>
+                        <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7" />
+                        </svg>
                         Back to Dashboard
                     </button>
                 </div>
-            </header>
+            </div>
 
-            <main className="max-w-7xl mx-auto px-6 py-8">
-                {/* Success Toast */}
+            {/* Body */}
+            <div className="aq-body">
+                {/* Stats row */}
+                <div className="aq-stats-row">
+                    <div className="aq-stat-card">
+                        <div className="aq-stat-number">{visits.length}</div>
+                        <div className="aq-stat-label">Active Consultations</div>
+                    </div>
+                    {visits.length > 0 && (
+                        <div className="aq-stat-card" style={{ background: 'linear-gradient(135deg, #10b981, #059669)' }}>
+                            <div className="aq-stat-number">
+                                {visits.filter(v => v.status?.toLowerCase() === 'in_progress').length}
+                            </div>
+                            <div className="aq-stat-label">In Progress</div>
+                        </div>
+                    )}
+                </div>
+
+                {/* Success toast */}
                 {successMessage && (
-                    <div className="mb-6 flex items-center gap-3 px-5 py-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-700 rounded-2xl text-green-700 dark:text-green-400 font-medium">
-                        <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                    <div className="aq-toast">
+                        <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
                         {successMessage}
                     </div>
                 )}
 
-                {/* Stats + Refresh Row */}
-                <div className="flex items-center justify-between mb-6">
-                    <div className="bg-gradient-to-br from-primary-600 to-primary-500 rounded-2xl px-8 py-4 text-center shadow-lg shadow-primary-500/20">
-                        <div className="text-3xl font-bold text-white">{visits.length}</div>
-                        <div className="text-xs text-primary-100 uppercase tracking-wide font-medium">Active Consultations</div>
-                    </div>
-                    <button
-                        onClick={fetchVisits}
-                        className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-white dark:bg-dark-card border border-gray-200 dark:border-dark-border text-gray-700 dark:text-white text-sm font-medium hover:border-primary-400 hover:text-primary-600 transition-all duration-200 shadow-sm"
-                    >
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
-                        Refresh
-                    </button>
-                </div>
-
-                {/* Visits List */}
+                {/* Content */}
                 {loading ? (
-                    <div className="flex flex-col items-center justify-center py-24 gap-4">
-                        <div className="w-10 h-10 border-4 border-primary-200 border-t-primary-500 rounded-full animate-spin"></div>
-                        <p className="text-gray-500 dark:text-dark-muted">Loading active visits...</p>
+                    <div className="aq-loading">
+                        <div className="aq-spinner" />
+                        <p>Loading active visits…</p>
                     </div>
                 ) : visits.length === 0 ? (
-                    <div className="flex flex-col items-center justify-center py-24 gap-3 text-gray-400 dark:text-dark-muted">
-                        <svg className="w-16 h-16 opacity-40" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
-                        <p className="font-medium">No active visits</p>
-                        <p className="text-sm">Active patient visits will appear here for consultation</p>
+                    <div className="aq-empty-state aq-glass">
+                        <svg width="52" height="52" fill="none" stroke="#a5b4fc" strokeWidth="1.5" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                        </svg>
+                        <h3>No Active Visits</h3>
+                        <p>Active patient visits will appear here for consultation</p>
                     </div>
                 ) : (
-                    <div className="space-y-4">
-                        {visits.map(visit => (
-                            <VisitCard key={visit.id} visit={visit} userRole="doctor" onAction={handleAction} showActions={true} />
-                        ))}
-                    </div>
+                    <>
+                        <h2 className="aq-section-heading">Active Visits</h2>
+                        <div className="aq-visit-list">
+                            {visits.map(visit => {
+                                const vDate = getVisitDate(visit);
+                                const waitTime = getWaitTime(visit);
+                                const visitType = getProp(visit, 'visitType', 'type');
+                                const initials = getPatientInitials(visit);
+                                const name = getPatientName(visit);
+
+                                return (
+                                    <div key={visit.id} className="aq-visit-card aq-glass">
+                                        {/* Header */}
+                                        <div className="aq-visit-header">
+                                            <div className="aq-visit-patient">
+                                                <div className="aq-patient-avatar">{initials}</div>
+                                                <div>
+                                                    <p className="aq-patient-name">{name}</p>
+                                                    <p className="aq-patient-spec">{visit.specialization || 'General Consultation'}</p>
+                                                </div>
+                                            </div>
+                                            <span className={badgeClass(visit.status)}>
+                                                {visit.status?.replace('_', ' ')}
+                                            </span>
+                                        </div>
+
+                                        {/* Details */}
+                                        <div className="aq-visit-details">
+                                            <div>
+                                                <span className="aq-detail-label">Date</span>
+                                                <span className="aq-detail-value">{fmt(vDate)}</span>
+                                            </div>
+                                            <div>
+                                                <span className="aq-detail-label">Time</span>
+                                                <span className="aq-detail-value">{fmtTime(vDate)}</span>
+                                            </div>
+                                            {visitType && (
+                                                <div>
+                                                    <span className="aq-detail-label">Type</span>
+                                                    <span className="aq-detail-value">{visitType}</span>
+                                                </div>
+                                            )}
+                                            {waitTime && (
+                                                <div>
+                                                    <span className="aq-detail-label">Waiting</span>
+                                                    <span className="aq-detail-value">{waitTime}</span>
+                                                </div>
+                                            )}
+                                        </div>
+
+                                        {/* Actions */}
+                                        <div className="aq-visit-actions">
+                                            {visit.status?.toLowerCase() === 'in_progress' && (
+                                                <button
+                                                    className="aq-action-btn aq-action-btn-primary"
+                                                    onClick={() => handleAction('view', visit.id)}
+                                                >
+                                                    View Details
+                                                </button>
+                                            )}
+                                            {visit.status?.toLowerCase() === 'in_progress' && (
+                                                <button
+                                                    className="aq-action-btn aq-action-btn-secondary"
+                                                    onClick={() => handleAction('close', visit.id)}
+                                                >
+                                                    Close Visit
+                                                </button>
+                                            )}
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    </>
                 )}
-            </main>
+            </div>
         </div>
     );
 }
