@@ -53,6 +53,8 @@ function GrantConsent() {
                 hospitalName,
                 durationHours,
                 durationMinutes,
+                // Also calculate a fallback endTime just in case the backend path expects it
+                endTime: new Date(Date.now() + (durationHours * 3600 + durationMinutes * 60) * 1000).toISOString(),
                 permissions: Object.entries(permissions)
                     .filter(([, v]) => v !== 'none')
                     .map(([k, v]) => ({ recordType: k, accessLevel: v }))

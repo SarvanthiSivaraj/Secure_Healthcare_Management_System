@@ -10,6 +10,7 @@ const DicomService = require('../../services/dicom.service');
 const PrescriptionValidatorService = require('../../services/prescription.validator.service');
 const DrugInteractionService = require('../../services/drug.interaction.service');
 const { checkConsent } = require('../../models/consent.model');
+const auditService = require('../../services/audit.service');
 
 class EmrController {
     // ==================== Medical Records ====================
@@ -148,8 +149,23 @@ class EmrController {
 
             const count = await MedicalRecordModel.countByPatient(patientId, type);
 
-            // Create audit log for record access
-            // Audit log removed to reduce clutter on dashboard load
+            // Create audit log ONLY if accessing user is NOT the patient owner
+            // Patients don't need to see their own "viewed records" dashboard refresh clutter
+            if (userRole !== 'PATIENT' || userId !== patientId) {
+                await auditService.createAuditLog({
+                    userId,
+                    action: 'view_patient_records',
+                    entityType: 'patient',
+                    entityId: patientId,
+                    purpose: 'Medical record review',
+                    ipAddress: req.ip,
+                    userAgent: req.get('User-Agent'),
+                    requestMethod: 'GET',
+                    requestPath: req.originalUrl,
+                    statusCode: 200,
+                    metadata: { type, patientId, recordCount: records.length, visitorRole: userRole }
+                });
+            }
 
             res.json({
                 success: true,

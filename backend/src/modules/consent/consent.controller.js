@@ -123,6 +123,17 @@ const grantConsent = async (req, res) => {
             });
         }
 
+        let finalEndTime = endTime;
+        if (!finalEndTime && (req.body.durationHours || req.body.durationMinutes)) {
+            const hours = parseInt(req.body.durationHours || 0);
+            const minutes = parseInt(req.body.durationMinutes || 0);
+            const totalMs = (hours * 60 * 60 * 1000) + (minutes * 60 * 1000);
+            if (totalMs > 0) {
+                const start = startTime ? new Date(startTime) : new Date();
+                finalEndTime = new Date(start.getTime() + totalMs).toISOString();
+            }
+        }
+
         const consent = await createConsent({
             patientId,
             recipientUserId,
@@ -130,7 +141,7 @@ const grantConsent = async (req, res) => {
             purpose,
             accessLevel,
             startTime,
-            endTime: endTime === '' ? null : endTime
+            endTime: (finalEndTime === '' || !finalEndTime) ? null : finalEndTime
         });
 
         // Audit log
