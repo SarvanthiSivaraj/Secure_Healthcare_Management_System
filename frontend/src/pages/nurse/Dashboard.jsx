@@ -1,35 +1,52 @@
 import React, { useContext, useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { AuthContext } from '../../context/AuthContext';
 import { nurseApi } from '../../api/nurseApi';
-import './NurseDashboard.css';
+import ThemeToggle from '../../components/common/ThemeToggle';
+// We don't strictly need a dedicated CSS file if we use Tailwind utilities like Dashboard.css
+import '../../pages/patient/Dashboard.css'; // Reusing the global styles for consistency
 
 function NurseDashboard() {
     const navigate = useNavigate();
     const { user, logout } = useContext(AuthContext);
+
     const [stats, setStats] = useState({
         assignedPatients: 0,
         vitalsRecorded: 0,
         careTasks: 0,
         observations: 0
     });
+
+    const [assignedPatients, setAssignedPatients] = useState([]);
+    const [activities, setActivities] = useState([]);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        const fetchStats = async () => {
+        const fetchNurseData = async () => {
             try {
-                const response = await nurseApi.getDashboardStats();
-                if (response.success) {
-                    setStats(response.data);
+                const [statsRes, patientsRes, activitiesRes] = await Promise.allSettled([
+                    nurseApi.getDashboardStats(),
+                    nurseApi.getAssignedPatients(),
+                    nurseApi.getActivities()
+                ]);
+
+                if (statsRes.status === 'fulfilled' && statsRes.value?.success) {
+                    setStats(statsRes.value.data);
+                }
+                if (patientsRes.status === 'fulfilled' && patientsRes.value?.success) {
+                    setAssignedPatients(patientsRes.value.data);
+                }
+                if (activitiesRes.status === 'fulfilled' && activitiesRes.value?.success) {
+                    setActivities(activitiesRes.value.data);
                 }
             } catch (error) {
-                console.error('Failed to fetch nurse stats:', error);
+                console.error('Failed to fetch nurse data:', error);
             } finally {
                 setLoading(false);
             }
         };
 
-        fetchStats();
+        fetchNurseData();
     }, []);
 
     const handleLogout = () => {
@@ -37,151 +54,208 @@ function NurseDashboard() {
         navigate('/login');
     };
 
+    // Format date nicely
+    const formatDate = (dateString) => {
+        const d = new Date(dateString);
+        return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    };
+
     return (
-        <div className="nurse-container">
-            {/* Header */}
-            <header className="nurse-header">
-                <div className="nurse-header-inner">
-                    <div className="nurse-header-left">
-                        <div className="nurse-header-icon">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z" /></svg>
-                        </div>
-                        <div className="nurse-header-text">
-                            <h1>Nurse Portal</h1>
-                            <p>Patient Care & Vitals Management</p>
-                        </div>
-                    </div>
+        <div className="patient-dashboard-wrapper bg-[var(--background-light)] dark:bg-[var(--background-dark)] text-slate-800 dark:text-slate-100 flex h-screen w-full overflow-hidden">
+            {/* Theme Toggle styling */}
+            <div className="absolute top-4 right-4 z-50">
+                <ThemeToggle />
+            </div>
 
-                    <div className="nurse-header-right">
-                        <button
-                            className="nurse-header-btn profile-btn"
-                            onClick={() => navigate('/profile')}
-                            title="View Profile"
-                        >
-                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
-                        </button>
-                        <button className="nurse-header-btn signout-btn" onClick={handleLogout}>
-                            Sign Out
-                        </button>
+            <aside className="w-64 flex-shrink-0 border-r border-slate-200 dark:border-slate-800/50 p-6 flex flex-col h-full overflow-y-auto">
+                <div className="flex items-center gap-3 mb-10 px-2 cursor-pointer group" onClick={() => navigate('/nurse/dashboard')}>
+                    <div className="relative">
+                        <div className="absolute inset-0 bg-teal-500 blur-lg opacity-0 group-hover:opacity-60 transition-opacity duration-500 rounded-full"></div>
+                        <div className="relative w-10 h-10 bg-teal-500 rounded-xl flex items-center justify-center text-white shadow-lg transform transition-all duration-500 group-hover:scale-110 group-hover:-rotate-3 group-hover:shadow-[0_0_15px_rgba(20,184,166,0.5)]">
+                            <span className="material-symbols-outlined text-xl transition-transform duration-500 group-hover:scale-110">medical_services</span>
+                        </div>
                     </div>
-                </div>
-            </header>
-
-            <main className="nurse-content">
-                {/* Info Card */}
-                <div className="nurse-info-card">
-                    <div className="nurse-user-info">
-                        <h2>Welcome, {user?.firstName || 'Nurse'} {user?.lastName || ''}</h2>
-                        <p>License: {user?.licenseNumber || 'RN-2024-56789'}</p>
-                    </div>
-                    <div className="nurse-status-badge">
-                        <span className="status-dot"></span>
-                        On Duty
-                    </div>
+                    <h1 className="text-xl font-bold tracking-tight text-slate-800 dark:text-white transition-all duration-500 drop-shadow-sm group-hover:text-teal-600 dark:group-hover:text-teal-400 group-hover:drop-shadow-[0_0_10px_rgba(20,184,166,0.4)]">Medicare</h1>
                 </div>
 
-                {/* Stats Grid */}
-                <div className="nurse-stats-grid">
-                    <div className="nurse-stat-box">
-                        <div className="nurse-stat-icon">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle></svg>
-                        </div>
-                        <div className="nurse-stat-value">{loading ? '...' : stats.assignedPatients}</div>
-                        <div className="nurse-stat-label">Assigned Patients</div>
-                    </div>
+                <nav className="space-y-2 flex-grow">
+                    <Link to="/nurse/dashboard" className="flex items-center gap-3 px-4 py-3 bg-teal-50/80 dark:bg-teal-900/20 text-teal-700 dark:text-teal-400 border border-teal-100 dark:border-teal-800/50 shadow-sm rounded-xl font-medium">
+                        <span className="material-symbols-outlined text-[20px]">grid_view</span>
+                        Dashboard
+                    </Link>
+                    <Link to="/nurse/patients" className="flex items-center gap-3 px-4 py-3 text-slate-500 dark:text-slate-400 hover:bg-white/50 dark:hover:bg-white/5 transition rounded-xl">
+                        <span className="material-symbols-outlined text-[20px]">group</span>
+                        Assigned Patients
+                    </Link>
+                    <Link to="/nurse/vitals" className="flex items-center gap-3 px-4 py-3 text-slate-500 dark:text-slate-400 hover:bg-white/50 dark:hover:bg-white/5 transition rounded-xl">
+                        <span className="material-symbols-outlined text-[20px]">monitor_heart</span>
+                        Vitals &amp; Notes
+                    </Link>
+                    <Link to="/nurse/medications" className="flex items-center gap-3 px-4 py-3 text-slate-500 dark:text-slate-400 hover:bg-white/50 dark:hover:bg-white/5 transition rounded-xl">
+                        <span className="material-symbols-outlined text-[20px]">medication</span>
+                        Medications
+                    </Link>
+                    <Link to="#" className="flex items-center gap-3 px-4 py-3 text-slate-500 dark:text-slate-400 hover:bg-white/50 dark:hover:bg-white/5 transition rounded-xl">
+                        <span className="material-symbols-outlined text-[20px]">calendar_month</span>
+                        Shift Schedule
+                    </Link>
+                </nav>
 
-                    <div className="nurse-stat-box">
-                        <div className="nurse-stat-icon">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>
-                        </div>
-                        <div className="nurse-stat-value">{loading ? '...' : stats.vitalsRecorded}</div>
-                        <div className="nurse-stat-label">Vitals Recorded</div>
-                    </div>
-
-                    <div className="nurse-stat-box">
-                        <div className="nurse-stat-icon">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
-                        </div>
-                        <div className="nurse-stat-value">{loading ? '...' : stats.careTasks}</div>
-                        <div className="nurse-stat-label">Care Tasks</div>
-                    </div>
-
-                    <div className="nurse-stat-box">
-                        <div className="nurse-stat-icon">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
-                        </div>
-                        <div className="nurse-stat-value">{loading ? '...' : stats.observations}</div>
-                        <div className="nurse-stat-label">Observations</div>
-                    </div>
+                <div className="space-y-2 mt-auto pt-6 border-t border-white/20 dark:border-slate-800/50">
+                    <Link to="/nurse/profile" className="flex items-center gap-3 px-4 py-3 text-slate-500 dark:text-slate-400 hover:bg-white/50 dark:hover:bg-white/5 transition rounded-xl">
+                        <span className="material-symbols-outlined text-[20px]">manage_accounts</span>
+                        Profile
+                    </Link>
+                    <button onClick={handleLogout} className="w-full flex items-center gap-3 px-4 py-3 text-rose-500 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-900/20 transition rounded-xl font-medium">
+                        <span className="material-symbols-outlined text-[20px]">logout</span>
+                        Sign Out
+                    </button>
                 </div>
+            </aside>
 
-                {/* Services Section */}
-                <div className="nurse-section-header">
-                    <h3>Care Services</h3>
-                </div>
-
-                <div className="nurse-services-grid">
-                    <div className="nurse-service-card" onClick={() => navigate('/nurse/vitals')}>
-                        <div className="nurse-service-main">
-                            <div className="nurse-service-icon-wrapper">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>
-                            </div>
-                            <div className="nurse-service-info">
-                                <h4>Record Vitals</h4>
-                                <p>Record patient vital signs and physical measurements</p>
-                            </div>
+            <main className="flex-grow p-8 overflow-y-auto h-full relative">
+                <header className="mb-10">
+                    <div className="flex items-center justify-between mb-8">
+                        <div>
+                            <h2 className="text-3xl font-bold text-slate-900 dark:text-white">Nurse Hub</h2>
+                            <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">
+                                Welcome back, {user?.firstName || 'Nurse'} {user?.lastName || ''} • RN-2024-56789
+                            </p>
                         </div>
-                        <div className="nurse-service-arrow">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                        <div className="flex items-center gap-3 glass-card px-4 py-2 rounded-2xl">
+                            <div className="w-8 h-8 rounded-full bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center">
+                                <div className="w-2 h-2 rounded-full bg-emerald-500"></div>
+                            </div>
+                            <span className="text-sm font-semibold text-slate-800 dark:text-slate-100">On Duty</span>
                         </div>
                     </div>
 
-                    <div className="nurse-service-card" onClick={() => navigate('/nurse/patients')}>
-                        <div className="nurse-service-main">
-                            <div className="nurse-service-icon-wrapper">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle></svg>
+                    <div className="grid grid-cols-4 gap-4">
+                        <div className="glass-card p-5 rounded-3xl group transition-all">
+                            <div className="flex items-center justify-between mb-4">
+                                <div className="w-10 h-10 rounded-2xl bg-teal-50 dark:bg-teal-900/30 flex items-center justify-center text-teal-600 dark:text-teal-400">
+                                    <span className="material-symbols-outlined">group</span>
+                                </div>
                             </div>
-                            <div className="nurse-service-info">
-                                <h4>Assigned Patients</h4>
-                                <p>View and manage your assigned patient list</p>
-                            </div>
+                            <h4 className="text-2xl font-bold mb-1 text-slate-800 dark:text-slate-100">{loading ? '...' : stats.assignedPatients}</h4>
+                            <p className="text-xs text-slate-500 dark:text-slate-400 font-semibold">Assigned Patients</p>
                         </div>
-                        <div className="nurse-service-arrow">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
-                        </div>
-                    </div>
 
-                    <div className="nurse-service-card" onClick={() => navigate('/nurse/notes')}>
-                        <div className="nurse-service-main">
-                            <div className="nurse-service-icon-wrapper">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                        <div className="glass-card p-5 rounded-3xl group transition-all">
+                            <div className="flex items-center justify-between mb-4">
+                                <div className="w-10 h-10 rounded-2xl bg-indigo-50 dark:bg-indigo-900/30 flex items-center justify-center text-indigo-600 dark:text-indigo-400">
+                                    <span className="material-symbols-outlined">monitor_heart</span>
+                                </div>
                             </div>
-                            <div className="nurse-service-info">
-                                <h4>Care Observations</h4>
-                                <p>Document patient care observations and notes</p>
-                            </div>
+                            <h4 className="text-2xl font-bold mb-1 text-slate-800 dark:text-slate-100">{loading ? '...' : stats.vitalsRecorded}</h4>
+                            <p className="text-xs text-slate-500 dark:text-slate-400 font-semibold">Vitals Recorded</p>
                         </div>
-                        <div className="nurse-service-arrow">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
-                        </div>
-                    </div>
 
-                    <div className="nurse-service-card" onClick={() => navigate('/nurse/medications')}>
-                        <div className="nurse-service-main">
-                            <div className="nurse-service-icon-wrapper">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m10.5 20.5 10-10a4.95 4.95 0 1 0-7-7l-10 10a4.95 4.95 0 1 0 7 7Z"></path><path d="m8.5 8.5 7 7"></path></svg>
+                        <div className="glass-card p-5 rounded-3xl group transition-all">
+                            <div className="flex items-center justify-between mb-4">
+                                <div className="w-10 h-10 rounded-2xl bg-amber-50 dark:bg-amber-900/30 flex items-center justify-center text-amber-600 dark:text-amber-400">
+                                    <span className="material-symbols-outlined">check_circle</span>
+                                </div>
                             </div>
-                            <div className="nurse-service-info">
-                                <h4>Medication Admin</h4>
-                                <p>Track and document medication administration</p>
-                            </div>
+                            <h4 className="text-2xl font-bold mb-1 text-slate-800 dark:text-slate-100">{loading ? '...' : stats.careTasks}</h4>
+                            <p className="text-xs text-slate-500 dark:text-slate-400 font-semibold">Care Tasks</p>
                         </div>
-                        <div className="nurse-service-arrow">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+
+                        <div className="glass-card p-5 rounded-3xl group transition-all">
+                            <div className="flex items-center justify-between mb-4">
+                                <div className="w-10 h-10 rounded-2xl bg-rose-50 dark:bg-rose-900/30 flex items-center justify-center text-rose-600 dark:text-rose-400">
+                                    <span className="material-symbols-outlined">edit_note</span>
+                                </div>
+                            </div>
+                            <h4 className="text-2xl font-bold mb-1 text-slate-800 dark:text-slate-100">{loading ? '...' : stats.observations}</h4>
+                            <p className="text-xs text-slate-500 dark:text-slate-400 font-semibold">Observations</p>
                         </div>
                     </div>
+                </header>
+
+                <div className="grid grid-cols-1 gap-8">
+                    <section>
+                        <div className="flex items-center justify-between mb-4">
+                            <h4 className="text-xl font-semibold text-slate-800 dark:text-slate-100">Recent Activities</h4>
+                        </div>
+                        <div className="glass-card rounded-3xl p-6">
+                            <div className="space-y-6">
+                                {activities.length > 0 ? activities.map((activity) => (
+                                    <div key={activity.id} className={`relative pl-6 border-l-2 ${activity.borderColorClass || 'border-teal-500/30'}`}>
+                                        <div className={`absolute -left-[9px] top-0 w-4 h-4 rounded-full ${activity.colorClass || 'bg-teal-500'} border-4 border-white dark:border-slate-800`}></div>
+                                        <div className="flex justify-between items-start">
+                                            <div>
+                                                <p className="text-xs text-slate-500 uppercase tracking-tighter mb-1">{activity.type}</p>
+                                                <p className="font-bold text-sm text-slate-800 dark:text-slate-100">{activity.title}</p>
+                                            </div>
+                                            <span className="text-[10px] text-slate-400 font-medium">{formatDate(activity.date)}</span>
+                                        </div>
+                                    </div>
+                                )) : (
+                                    <p className="text-sm text-slate-500 dark:text-slate-400 py-4 text-center">No recent activities found.</p>
+                                )}
+                            </div>
+                        </div>
+                    </section>
                 </div>
             </main>
+
+            <aside className="w-80 flex-shrink-0 border-l border-slate-200 dark:border-slate-800/50 p-6 glass-panel flex flex-col h-full overflow-y-auto">
+                <h3 className="text-xl font-bold mb-6 text-slate-800 dark:text-slate-100">Quick Actions</h3>
+                <div className="relative mb-6">
+                    <input className="w-full bg-white dark:bg-slate-800/50 border-none rounded-2xl py-3 pl-12 pr-4 text-sm focus:ring-2 focus:ring-teal-500 shadow-sm text-slate-800 dark:text-slate-100" placeholder="Search patients..." type="text" />
+                    <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-slate-400">search</span>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3 mb-8">
+                    <button className="glass-card rounded-2xl p-4 flex flex-col items-center gap-2 hover:bg-white dark:hover:bg-white/10 transition">
+                        <span className="material-symbols-outlined text-teal-500 text-xl">monitor_heart</span>
+                        <span className="text-[10px] font-bold text-slate-500 dark:text-slate-300 uppercase leading-none">Add Vitals</span>
+                    </button>
+                    <button className="glass-card rounded-2xl p-4 flex flex-col items-center gap-2 hover:bg-white dark:hover:bg-white/10 transition">
+                        <span className="material-symbols-outlined text-teal-500 text-xl">edit_note</span>
+                        <span className="text-[10px] font-bold text-slate-500 dark:text-slate-300 uppercase leading-none">Quick Note</span>
+                    </button>
+                    <button className="glass-card rounded-2xl p-4 flex flex-col items-center gap-2 hover:bg-white dark:hover:bg-white/10 transition">
+                        <span className="material-symbols-outlined text-indigo-500 text-xl">medication</span>
+                        <span className="text-[10px] font-bold text-slate-500 dark:text-slate-300 uppercase leading-none">Record Meds</span>
+                    </button>
+                    <button className="glass-card rounded-2xl p-4 flex flex-col items-center gap-2 hover:bg-white dark:hover:bg-white/10 transition">
+                        <span className="material-symbols-outlined text-rose-500 text-xl">warning</span>
+                        <span className="text-[10px] font-bold text-slate-500 dark:text-slate-300 uppercase leading-none">Alert Doctor</span>
+                    </button>
+                </div>
+
+                <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-xl font-bold text-slate-800 dark:text-slate-100">Upcoming Checks</h3>
+                    <span className="bg-teal-100 text-teal-700 dark:bg-teal-900/30 dark:text-teal-400 text-[10px] font-bold px-2 py-1 rounded-lg uppercase">{assignedPatients.length} Waiting</span>
+                </div>
+
+                <div className="space-y-3">
+                    {assignedPatients.length > 0 ? assignedPatients.map((patient) => (
+                        <div key={patient.id} className="bg-white/80 dark:bg-slate-800/80 rounded-2xl p-4 shadow-sm border border-white/50 dark:border-slate-700/50 cursor-pointer hover:shadow-md transition">
+                            <div className="flex justify-between items-start">
+                                <div>
+                                    <p className="text-[10px] text-slate-400 font-bold uppercase mb-1">Room {patient.room}</p>
+                                    <p className="text-sm font-bold text-slate-800 dark:text-slate-100">{patient.firstName} {patient.lastName}</p>
+                                    <p className="text-[11px] text-slate-500 mt-1">{patient.condition}</p>
+                                </div>
+                                <span className={`px-2 py-1 text-[10px] font-bold uppercase rounded-lg ${patient.status === 'attention' ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400' :
+                                    patient.status === 'critical' ? 'bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400' :
+                                        'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400'
+                                    }`}>
+                                    {formatDate(patient.nextCheck)}
+                                </span>
+                            </div>
+                        </div>
+                    )) : (
+                        <div className="text-center py-6 glass-card rounded-2xl">
+                            <span className="material-symbols-outlined text-3xl text-slate-300 dark:text-slate-600 mb-2">hotel</span>
+                            <p className="text-sm font-medium text-slate-500 dark:text-slate-400">No immediate checks</p>
+                        </div>
+                    )}
+                </div>
+            </aside>
         </div>
     );
 }

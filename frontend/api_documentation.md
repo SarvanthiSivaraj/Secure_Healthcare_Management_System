@@ -399,3 +399,175 @@
        }
      }
      ```
+
+## Nurse Workflow APIs (Mocked)
+1. **GET `/api/v1/nurse/stats`**
+   - **Explanation:** Returns top-level statistics for the logged-in nurse dashboard.
+   - **Data Format required:**
+     ```json
+     {
+       "success": true,
+       "data": {
+           "assignedPatients": 14,
+           "vitalsRecorded": 32,
+           "careTasks": 8,
+           "observations": 5
+       }
+     }
+     ```
+
+2. **GET `/api/v1/nurse/assigned-patients`**
+   - **Explanation:** Returns a list of patients currently assigned to the nurse.
+   - **Data Format required:**
+     ```json
+     {
+       "success": true,
+       "data": [
+           {
+               "id": "pat-1",
+               "firstName": "Robert",
+               "lastName": "Fox",
+               "room": "101-A",
+               "condition": "Post-Op Recovery",
+               "nextCheck": "2025-12-31T10:30:00.000Z",
+               "status": "stable"
+           }
+       ]
+     }
+     ```
+
+3. **GET `/api/v1/nurse/activities`**
+   - **Explanation:** Returns a recent activity feed for actions performed by the nurse.
+   - **Data Format required:**
+     ```json
+     {
+       "success": true,
+       "data": [
+           {
+               "id": "n-act-1",
+               "type": "Vitals Recorded",
+               "title": "Vitals taken for Robert Fox",
+               "date": "2025-12-31T09:00:00.000Z",
+               "colorClass": "bg-teal-500",
+               "borderColorClass": "border-teal-500/30"
+           }
+       ]
+     }
+     ```
+
+4. **GET `/api/v1/nurse/patients/:patientId/records`**
+   - **Explanation:** Returns isolated medical records specifically visible to nurses (e.g., vitals, notes, observations).
+   - **Data Format required:**
+     ```json
+     {
+       "success": true,
+       "data": [
+           {
+               "id": "rec-n1-pat1",
+               "type": "observation",
+               "title": "Shift Observation",
+               "description": "Patient is resting comfortably...",
+               "created_at": "2025-12-31T09:00:00.000Z",
+               "created_by_name": "Nurse Sarah",
+               "created_by_role": "RN"
+           }
+       ]
+     }
+     ```
+
+5. **POST `/api/v1/nurse/patients/:patientId/records`**
+   - **Explanation:** Allows a nurse to create a new specific medical record (types: vitals, observation, input_action).
+   - **Request Body:** `{ "type": "vitals", "title": "Vitals Check", "description": "BP: 120/80..." }`
+   - **Data Format required:**
+     ```json
+     {
+       "success": true,
+       "message": "Record created successfully",
+       "data": {
+           "id": "rec-n-new-12345",
+           "type": "vitals",
+           "title": "Vitals Check",
+           "description": "BP: 120/80...",
+           "created_at": "2025-12-31T10:00:00.000Z",
+           "created_by_name": "Current Nurse",
+           "created_by_role": "RN"
+       }
+     }
+     ```
+
+6. **GET `/api/v1/nurse/medications`**
+   - **Explanation:** Returns a list of all medications due for the nurse's assigned patients during their active shift.
+   - **Data Format required:**
+     ```json
+     {
+       "success": true,
+       "data": [
+           {
+               "id": "med-1",
+               "patientId": "pat-1",
+               "patientName": "Robert Fox",
+               "room": "101-A",
+               "medicationName": "Amoxicillin",
+               "dosage": "500mg",
+               "route": "Oral",
+               "scheduledTime": "2025-12-31T09:00:00.000Z",
+               "status": "pending"
+           }
+       ]
+     }
+     ```
+
+7. **PUT `/api/v1/nurse/medications/:medicationId/status`**
+   - **Explanation:** Allows a nurse to update the administration status of a particular medication.
+   - **Request Body:** `{ "status": "administered", "notes": "Patient took med with water." }`
+   - **Data Format required:**
+     ```json
+     {
+       "success": true,
+       "message": "Medication med-1 marked as administered",
+       "data": {
+           "id": "med-1",
+           "status": "administered",
+           "notes": "Patient took med with water.",
+           "updatedAt": "2025-12-31T09:05:00.000Z"
+       }
+     }
+     ```
+
+8. **GET `/api/v1/nurse/profile`**
+   - **Explanation:** Returns the detailed profile information for the authenticated nurse.
+   - **Data Format required:**
+     ```json
+     {
+       "success": true,
+       "data": {
+           "id": "nurse-789",
+           "firstName": "Sarah",
+           "lastName": "Jenkins",
+           "role": "Registered Nurse",
+           "employeeId": "RN-2024-56789",
+           "department": "General Medicine",
+           "email": "sarah.jenkins@medicare.com",
+           "phone": "+1 (555) 123-4567",
+           "status": "Active",
+           "joinedDate": "2020-03-15",
+           "licenseNumber": "RN987654321",
+           "address": "123 Healthcare Ave...",
+           "emergencyContact": { "name": "Michael Jenkins", "relationship": "Spouse", "phone": "+1..." },
+           "assignedWards": ["Ward A (East Wing)", "Ward B (West Wing)"],
+           "shiftPreference": "Day Shift (07:00 - 19:00)"
+       }
+     }
+     ```
+
+9. **PUT `/api/v1/nurse/profile`**
+   - **Explanation:** Updates the nurse's profile details (phone, address, emergency contact).
+   - **Request Body:** `{ "phone": "+1 222-3333", "address": "New Address" }`
+   - **Data Format required:**
+     ```json
+     {
+       "success": true,
+       "message": "Profile updated successfully",
+       "data": { ...updated profile object... }
+     }
+     ```

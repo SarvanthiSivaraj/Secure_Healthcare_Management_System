@@ -19,6 +19,10 @@ import PatientMedicalRecords from '../pages/doctor/PatientMedicalRecords';
 import ConsentRequests from '../pages/doctor/ConsentRequests';
 import ClinicalNotes from '../pages/doctor/ClinicalNotes';
 import NurseDashboard from '../pages/nurse/Dashboard';
+import AssignedPatients from '../pages/nurse/AssignedPatients';
+import NursePatientRecords from '../pages/nurse/NursePatientRecords';
+import NurseMedications from '../pages/nurse/NurseMedications';
+import NurseProfile from '../pages/nurse/NurseProfile';
 import LabDashboard from '../pages/lab/Dashboard';
 import RadiologistDashboard from '../pages/radiology/Dashboard';
 import ImagingQueue from '../pages/radiology/ImagingQueue';
@@ -181,6 +185,42 @@ function AppRoutes() {
                 element={
                     <ProtectedRoute allowedRoles={['nurse']}>
                         <NurseDashboard />
+                    </ProtectedRoute>
+                }
+            />
+
+            <Route
+                path="/nurse/patients"
+                element={
+                    <ProtectedRoute allowedRoles={['nurse']}>
+                        <AssignedPatients />
+                    </ProtectedRoute>
+                }
+            />
+
+            <Route
+                path="/nurse/patients/:id/records"
+                element={
+                    <ProtectedRoute allowedRoles={['nurse']}>
+                        <NursePatientRecords />
+                    </ProtectedRoute>
+                }
+            />
+
+            <Route
+                path="/nurse/medications"
+                element={
+                    <ProtectedRoute allowedRoles={['nurse']}>
+                        <NurseMedications />
+                    </ProtectedRoute>
+                }
+            />
+
+            <Route
+                path="/nurse/profile"
+                element={
+                    <ProtectedRoute allowedRoles={['nurse']}>
+                        <NurseProfile />
                     </ProtectedRoute>
                 }
             />
