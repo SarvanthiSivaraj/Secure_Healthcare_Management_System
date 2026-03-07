@@ -1,72 +1,73 @@
 import React, { useContext, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { AuthContext } from '../../context/AuthContext';
 import EmergencyToggle from '../../components/emergency/EmergencyToggle';
+import ThemeToggle from '../../components/common/ThemeToggle';
+import './Dashboard.css';
 
 const NAV_CARDS = [
     {
         title: 'Patient Records',
         description: 'Access and manage patient medical records with consent verification',
         path: '/doctor/patients',
-        icon: (
-            <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2"
-                    d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-            </svg>
-        ),
+        icon: 'folder_shared',
+        color: 'indigo',
     },
     {
         title: 'Consultation Queue',
         description: 'View scheduled appointments and manage consultation workflow',
         path: '/doctor/active-visits',
-        icon: (
-            <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2"
-                    d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-            </svg>
-        ),
+        icon: 'calendar_today',
+        color: 'teal',
     },
     {
         title: 'Consent Requests',
         description: 'Review and manage patient data access consent requests',
         path: '/doctor/consent',
-        icon: (
-            <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2"
-                    d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-            </svg>
-        ),
+        icon: 'verified_user',
+        color: 'amber',
     },
     {
         title: 'Clinical Notes',
         description: 'Create and update patient consultation notes and prescriptions',
         path: '/doctor/notes',
-        icon: (
-            <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2"
-                    d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-            </svg>
-        ),
+        icon: 'edit_note',
+        color: 'rose',
     },
 ];
 
+const COLOR_MAP = {
+    indigo: {
+        bg: 'bg-indigo-50 dark:bg-indigo-900/30',
+        text: 'text-indigo-600 dark:text-indigo-400',
+        hover: 'group-hover:text-indigo-500',
+        accent: 'bg-indigo-50/50 dark:bg-indigo-900/20 border-indigo-100/50 dark:border-indigo-500/10',
+    },
+    teal: {
+        bg: 'bg-teal-50 dark:bg-teal-900/30',
+        text: 'text-teal-600 dark:text-teal-400',
+        hover: 'group-hover:text-teal-500',
+        accent: 'bg-teal-50/50 dark:bg-teal-900/20 border-teal-100/50 dark:border-teal-500/10',
+    },
+    amber: {
+        bg: 'bg-amber-50 dark:bg-amber-900/30',
+        text: 'text-amber-600 dark:text-amber-400',
+        hover: 'group-hover:text-amber-500',
+        accent: 'bg-amber-50/50 dark:bg-amber-900/20 border-amber-100/50 dark:border-amber-500/10',
+    },
+    rose: {
+        bg: 'bg-rose-50 dark:bg-rose-900/30',
+        text: 'text-rose-600 dark:text-rose-400',
+        hover: 'group-hover:text-rose-500',
+        accent: 'bg-rose-50/50 dark:bg-rose-900/20 border-rose-100/50 dark:border-rose-500/10',
+    },
+};
+
 const STATS = [
-    {
-        label: "Today's Patients", value: '0',
-        icon: <svg className="w-6 h-6 text-white/80" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
-    },
-    {
-        label: 'Pending Consents', value: '0',
-        icon: <svg className="w-6 h-6 text-white/80" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" /></svg>
-    },
-    {
-        label: 'Active Cases', value: '0',
-        icon: <svg className="w-6 h-6 text-white/80" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" /></svg>
-    },
-    {
-        label: 'Consultations', value: '0',
-        icon: <svg className="w-6 h-6 text-white/80" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" /></svg>
-    },
+    { label: "Today's Patients", value: '0', icon: 'groups' },
+    { label: 'Pending Consents', value: '0', icon: 'assignment' },
+    { label: 'Active Cases', value: '0', icon: 'favorite' },
+    { label: 'Consultations', value: '0', icon: 'chat_bubble_outline' },
 ];
 
 function DoctorDashboard() {
@@ -75,129 +76,140 @@ function DoctorDashboard() {
     const [emergencyMode, setEmergencyMode] = useState(false);
 
     return (
-        <div className="min-h-screen bg-gray-50 dark:bg-dark-bg transition-colors duration-300">
+        <div className="doctor-dashboard-wrapper bg-[var(--background-light)] dark:bg-[var(--background-dark)] text-slate-800 dark:text-slate-100 flex h-screen w-full overflow-hidden">
+            {/* Theme Toggle */}
+            <div className="absolute top-4 right-4 z-50">
+                <ThemeToggle />
+            </div>
 
-            {/* Header */}
-            <header className="bg-gradient-to-r from-primary-700 to-primary-500 shadow-lg">
-                <div className="max-w-7xl mx-auto px-6 py-5 flex justify-between items-center">
-                    <div className="flex items-center space-x-4">
-                        <div className="w-10 h-10 bg-white/20 backdrop-blur-md rounded-xl flex items-center justify-center border border-white/30 shadow">
-                            <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" /></svg>
+            {/* Sidebar */}
+            <aside className="w-64 flex-shrink-0 border-r border-slate-200 dark:border-slate-800/50 p-6 flex flex-col h-full overflow-y-auto">
+                <div className="flex items-center gap-3 mb-10 px-2 cursor-pointer group" onClick={() => navigate('/doctor/dashboard')}>
+                    <div className="relative">
+                        <div className="absolute inset-0 bg-indigo-500 blur-lg opacity-0 group-hover:opacity-60 transition-opacity duration-500 rounded-full"></div>
+                        <div className="relative w-10 h-10 bg-indigo-500 rounded-xl flex items-center justify-center text-white shadow-lg transform transition-all duration-500 group-hover:scale-110 group-hover:-rotate-3 group-hover:shadow-[0_0_15px_rgba(99,102,241,0.5)]">
+                            <span className="material-symbols-outlined text-xl transition-transform duration-500 group-hover:scale-110">local_hospital</span>
                         </div>
+                    </div>
+                    <h1 className="text-xl font-bold tracking-tight text-slate-800 dark:text-white transition-all duration-500 drop-shadow-sm group-hover:text-indigo-600 dark:group-hover:text-indigo-400 group-hover:drop-shadow-[0_0_10px_rgba(99,102,241,0.4)]">Medicare</h1>
+                </div>
+
+                <nav className="space-y-2 flex-grow">
+                    <Link to="/doctor/dashboard" className="flex items-center gap-3 px-4 py-3 doctor-sidebar-item-active rounded-xl font-medium text-slate-800 dark:text-slate-800">
+                        <span className="material-symbols-outlined text-[20px]">grid_view</span>
+                        Dashboard
+                    </Link>
+                    <Link to="/doctor/patients" className="flex items-center gap-3 px-4 py-3 text-slate-500 dark:text-slate-400 hover:bg-white/50 dark:hover:bg-white/5 transition rounded-xl">
+                        <span className="material-symbols-outlined text-[20px]">folder_shared</span>
+                        Patient Records
+                    </Link>
+                    <Link to="/doctor/active-visits" className="flex items-center gap-3 px-4 py-3 text-slate-500 dark:text-slate-400 hover:bg-white/50 dark:hover:bg-white/5 transition rounded-xl">
+                        <span className="material-symbols-outlined text-[20px]">calendar_today</span>
+                        Queue
+                    </Link>
+                    <Link to="/doctor/consent" className="flex items-center gap-3 px-4 py-3 text-slate-500 dark:text-slate-400 hover:bg-white/50 dark:hover:bg-white/5 transition rounded-xl">
+                        <span className="material-symbols-outlined text-[20px]">verified_user</span>
+                        Consents
+                    </Link>
+                    <Link to="/doctor/notes" className="flex items-center gap-3 px-4 py-3 text-slate-500 dark:text-slate-400 hover:bg-white/50 dark:hover:bg-white/5 transition rounded-xl">
+                        <span className="material-symbols-outlined text-[20px]">edit_note</span>
+                        Clinical Notes
+                    </Link>
+                </nav>
+
+                <div className="space-y-2 mt-auto pt-6 border-t border-white/20 dark:border-slate-800/50">
+                    <Link to="/profile" className="flex items-center gap-3 px-4 py-3 text-slate-500 dark:text-slate-400 hover:bg-white/50 dark:hover:bg-white/5 transition rounded-xl">
+                        <span className="material-symbols-outlined text-[20px]">manage_accounts</span>
+                        Profile
+                    </Link>
+                    <button onClick={logout} className="w-full flex items-center gap-3 px-4 py-3 text-rose-500 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-900/20 transition rounded-xl font-medium">
+                        <span className="material-symbols-outlined text-[20px]">logout</span>
+                        Sign Out
+                    </button>
+                </div>
+            </aside>
+
+            {/* Main Content */}
+            <main className="flex-grow p-8 overflow-y-auto h-full relative">
+                {/* Header */}
+                <header className="mb-10">
+                    <div className="flex items-center justify-between mb-8">
                         <div>
-                            <h1 className="text-2xl font-bold text-white tracking-tight">Doctor Portal</h1>
-                            <p className="text-primary-100 text-sm">Patient Care & Medical Records Management</p>
+                            <h2 className="text-3xl font-bold text-slate-900 dark:text-white">Doctor Portal</h2>
+                            <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">
+                                Dr. {user?.firstName || 'Doctor'} {user?.lastName || ''} • License: {user?.licenseNumber || 'N/A'}
+                            </p>
+                        </div>
+                        <div className="flex items-center gap-3 doctor-glass-card px-4 py-2 rounded-2xl">
+                            <div className="w-8 h-8 rounded-full bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center">
+                                <div className="w-2 h-2 rounded-full bg-emerald-500"></div>
+                            </div>
+                            <span className="text-sm font-semibold text-slate-800 dark:text-slate-100">Active Physician</span>
                         </div>
                     </div>
-                    <div className="flex items-center space-x-3">
-                        <button
-                            onClick={() => navigate('/profile')}
-                            className="h-[38px] w-[38px] flex items-center justify-center rounded-xl border border-white/30 text-white hover:bg-white/10 transition-all duration-200"
-                            title="View Profile"
-                        >
-                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                            </svg>
-                        </button>
-                        <button
-                            onClick={logout}
-                            className="px-4 py-2 rounded-xl border border-white/30 text-white text-sm font-medium hover:bg-white/10 transition-all duration-200"
-                        >
-                            Sign Out
-                        </button>
-                    </div>
-                </div>
-            </header>
 
-            <main className="max-w-7xl mx-auto px-6 py-8">
-
-                {/* Doctor Info Bar */}
-                <div className="bg-white dark:bg-dark-card rounded-2xl shadow-card dark:shadow-none border border-gray-100 dark:border-dark-border p-6 mb-8 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 animate-fade-in">
-                    <div>
-                        <p className="text-lg font-semibold text-gray-900 dark:text-white">
-                            Dr. {user?.firstName || 'Sarah'} {user?.lastName || 'Johnson'}
-                        </p>
-                        <p className="text-sm text-gray-500 dark:text-dark-muted font-mono mt-1">
-                            License: {user?.licenseNumber || 'MD-2024-789456'}
-                        </p>
+                    {/* Clinical Services Cards */}
+                    <div className="grid grid-cols-2 gap-6">
+                        {NAV_CARDS.map((card) => {
+                            const c = COLOR_MAP[card.color];
+                            return (
+                                <div
+                                    key={card.title}
+                                    onClick={() => navigate(card.path)}
+                                    className="doctor-glass-card p-6 rounded-3xl hover:bg-white/80 dark:hover:bg-slate-800/80 transition-all cursor-pointer group"
+                                >
+                                    <div className="flex items-center justify-between mb-6">
+                                        <div className={`w-12 h-12 rounded-2xl ${c.bg} flex items-center justify-center ${c.text}`}>
+                                            <span className="material-symbols-outlined text-2xl">{card.icon}</span>
+                                        </div>
+                                        <span className={`material-symbols-outlined text-slate-300 dark:text-slate-600 ${c.hover} transition-colors`}>arrow_forward</span>
+                                    </div>
+                                    <h4 className="text-lg font-bold mb-1 text-slate-800 dark:text-slate-100">{card.title}</h4>
+                                    <p className="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wider font-semibold mb-4">Clinical Services</p>
+                                    <div className={`${c.accent} p-4 rounded-2xl border`}>
+                                        <div className="flex items-center gap-3">
+                                            <span className="text-sm font-medium text-slate-700 dark:text-slate-200">{card.description}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            );
+                        })}
                     </div>
-                    <div className="flex items-center gap-2 px-4 py-2 bg-primary-50 dark:bg-primary-900/20 border border-primary-200 dark:border-primary-700 rounded-xl">
-                        <span className="w-2.5 h-2.5 rounded-full bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.6)] animate-pulse"></span>
-                        <span className="text-sm font-semibold text-primary-700 dark:text-primary-300">Active Physician</span>
-                    </div>
-                </div>
+                </header>
+            </main>
 
-                {/* Stats Overview */}
-                <div className="grid grid-cols-2 lg:grid-cols-4 gap-5 mb-8">
+            {/* Right Panel */}
+            <aside className="w-80 flex-shrink-0 border-l border-slate-200 dark:border-slate-800/50 p-6 doctor-glass-panel flex flex-col h-full overflow-y-auto">
+                {/* Stats */}
+                <h3 className="text-xl font-bold mb-6 text-slate-800 dark:text-slate-100">Overview</h3>
+                <div className="grid grid-cols-2 gap-3 mb-8">
                     {STATS.map((stat, idx) => (
-                        <div
-                            key={idx}
-                            className="bg-gradient-to-br from-primary-600 to-primary-500 rounded-2xl p-6 text-center shadow-lg shadow-primary-500/20 hover:shadow-primary-500/40 hover:-translate-y-1 transition-all duration-300 animate-fade-in overflow-hidden relative"
-                        >
-                            <div className="absolute -top-4 -right-4 w-20 h-20 bg-white/10 rounded-full blur-xl"></div>
-                            <div className="flex justify-center mb-2">{stat.icon}</div>
-                            <div className="text-4xl font-bold text-white mb-1">{stat.value}</div>
-                            <div className="text-xs text-primary-100 font-medium uppercase tracking-wide">{stat.label}</div>
+                        <div key={idx} className="doctor-glass-card rounded-2xl p-4 flex flex-col items-center gap-2">
+                            <span className="material-symbols-outlined text-indigo-500 text-xl">{stat.icon}</span>
+                            <span className="text-2xl font-bold text-slate-800 dark:text-slate-100">{stat.value}</span>
+                            <span className="text-[9px] font-bold text-slate-500 dark:text-slate-300 uppercase text-center leading-none">{stat.label}</span>
                         </div>
                     ))}
                 </div>
 
                 {/* Emergency Access */}
-                <div className="bg-white dark:bg-dark-card rounded-2xl shadow-card dark:shadow-none border border-gray-100 dark:border-dark-border p-6 mb-8 animate-fade-in">
-                    <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
-                        <span className="w-2 h-5 bg-primary-500 rounded-full inline-block"></span>
-                        Emergency Access
-                    </h2>
+                <h3 className="text-xl font-bold mb-4 text-slate-800 dark:text-slate-100">Emergency Access</h3>
+                <div className="doctor-glass-card rounded-2xl p-4 mb-6">
                     <EmergencyToggle
                         isActive={emergencyMode}
                         onToggle={setEmergencyMode}
                     />
                 </div>
 
-                {/* Clinical Services */}
-                <div className="animate-fade-in">
-                    <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
-                        <span className="w-2 h-5 bg-primary-500 rounded-full inline-block"></span>
-                        Clinical Services
-                    </h2>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-                        {NAV_CARDS.map((card) => (
-                            <div
-                                key={card.title}
-                                onClick={() => navigate(card.path)}
-                                className="group bg-white dark:bg-dark-card rounded-2xl p-6 border border-gray-100 dark:border-dark-border shadow-card dark:shadow-none cursor-pointer hover:border-primary-400 dark:hover:border-primary-500 hover:shadow-xl hover:shadow-primary-500/10 hover:-translate-y-1 transition-all duration-300 relative overflow-hidden"
-                            >
-                                {/* Accent bar */}
-                                <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-primary-500 to-primary-400 rounded-l-2xl transform scale-y-0 group-hover:scale-y-100 transition-transform duration-300 origin-top"></div>
-                                {/* Glow orb */}
-                                <div className="absolute -top-8 -right-8 w-24 h-24 bg-primary-400/10 rounded-full blur-2xl group-hover:bg-primary-400/20 transition-all duration-300"></div>
-
-                                <div className="flex items-start gap-4 relative">
-                                    <div className="w-12 h-12 rounded-xl bg-primary-50 dark:bg-primary-900/20 flex items-center justify-center text-primary-600 dark:text-primary-400 flex-shrink-0 group-hover:bg-primary-100 dark:group-hover:bg-primary-900/40 transition-colors duration-200">
-                                        {card.icon}
-                                    </div>
-                                    <div className="flex-1">
-                                        <div className="flex justify-between items-center mb-1">
-                                            <h3 className="text-base font-semibold text-gray-900 dark:text-white group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors">
-                                                {card.title}
-                                            </h3>
-                                            <svg className="w-4 h-4 text-gray-300 dark:text-gray-600 group-hover:text-primary-500 group-hover:translate-x-1 transition-all duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
-                                            </svg>
-                                        </div>
-                                        <p className="text-sm text-gray-500 dark:text-dark-muted leading-relaxed">{card.description}</p>
-                                    </div>
-                                </div>
-                            </div>
-                        ))}
+                {/* Quick Info */}
+                <div className="mt-auto">
+                    <div className="bg-white/50 dark:bg-slate-800/30 rounded-2xl p-4 border border-white/50 dark:border-slate-700/50 text-center">
+                        <span className="material-symbols-outlined text-3xl text-slate-300 dark:text-slate-600 mb-2">medical_information</span>
+                        <p className="text-sm font-medium text-slate-500 dark:text-slate-400 mt-2">Patient Care &amp; Medical Records Management</p>
+                        <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">&copy; 2026 SecureHealth Systems</p>
                     </div>
                 </div>
-
-                {/* Footer */}
-                <p className="text-center text-xs text-gray-400 dark:text-gray-600 mt-10">
-                    &copy; 2026 SecureHealth Systems. Privacy & Terms
-                </p>
-            </main>
+            </aside>
         </div>
     );
 }
