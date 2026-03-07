@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from 'react';
+import { getDoctorMockImage } from '../../utils/mockImages';
 
 const DoctorSelectionPopup = ({ doctors, onClose, onSelect }) => {
     const [searchQuery, setSearchQuery] = useState('');
@@ -31,31 +32,60 @@ const DoctorSelectionPopup = ({ doctors, onClose, onSelect }) => {
     };
 
     return (
-        <div className="fixed inset-0 z-[60] flex flex-col items-center justify-center p-4 bg-slate-200/40 dark:bg-slate-950/40 backdrop-blur-md">
-            <div className="relative z-10 w-full max-w-md h-[90vh] bg-white/80 dark:bg-slate-800/70 backdrop-blur-xl border border-white/40 dark:border-slate-700/50 shadow-[0_32px_64px_-15px_rgba(0,0,0,0.2)] rounded-[2.5rem] flex flex-col overflow-hidden">
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 md:p-8 bg-slate-900/50 backdrop-blur-sm">
+            <style>{`
+                .doctor-card:hover .doctor-image {
+                    transform: scale(1.05);
+                }
+                .custom-scrollbar::-webkit-scrollbar {
+                    width: 6px;
+                    height: 6px;
+                }
+                .custom-scrollbar::-webkit-scrollbar-track {
+                    background: transparent;
+                }
+                .custom-scrollbar::-webkit-scrollbar-thumb {
+                    background: #e2e8f0;
+                    border-radius: 10px;
+                }
+                .dark .custom-scrollbar::-webkit-scrollbar-thumb {
+                    background: #334155;
+                }
+                .animate-bounce-in {
+                    animation: bounce-in 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+                }
+                @keyframes bounce-in {
+                    0% { transform: scale(0); }
+                    100% { transform: scale(1); }
+                }
+            `}</style>
+
+            <div className="bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl w-full max-w-6xl h-[90vh] rounded-3xl shadow-2xl overflow-hidden flex flex-col border border-white/20 dark:border-slate-800">
 
                 {/* Header */}
-                <div className="pt-3 pb-4 px-6 flex flex-col items-center">
-                    <div className="w-12 h-1.5 bg-slate-300 dark:bg-slate-600 rounded-full mb-6"></div>
-                    <div className="w-full flex justify-between items-center">
-                        <h1 className="text-2xl font-bold text-slate-800 dark:text-white">Select Doctor</h1>
-                        <button onClick={onClose} className="w-10 h-10 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700 transition">
-                            <span className="material-symbols-outlined">close</span>
-                        </button>
+                <header className="p-6 md:px-10 flex items-center justify-between gap-4 border-b border-slate-100 dark:border-slate-800 shrink-0">
+                    <div className="flex items-center gap-2">
+                        <div className="w-10 h-10 bg-[#66D1A1] rounded-xl flex items-center justify-center text-white">
+                            <span className="material-symbols-outlined">medical_services</span>
+                        </div>
+                        <h1 className="text-xl font-bold text-slate-800 dark:text-white">Select Doctor</h1>
                     </div>
-                </div>
 
-                {/* Content Area */}
-                <div className="flex-1 overflow-y-auto px-6 pb-24 style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}">
-                    {/* Categories Filter */}
-                    <div className="flex gap-3 overflow-x-auto mb-6 -mx-6 px-6 style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}">
+                    <button onClick={onClose} className="p-2 text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors inline-flex">
+                        <span className="material-symbols-outlined">close</span>
+                    </button>
+                </header>
+
+                {/* Filters */}
+                <div className="px-6 md:px-10 pb-6 pt-6 shrink-0">
+                    <div className="flex items-center gap-3 overflow-x-auto pb-4 custom-scrollbar">
                         {categories.map(cat => (
                             <button
                                 key={cat}
                                 onClick={() => setSelectedCategory(cat)}
-                                className={`px-5 py-2.5 rounded-full text-sm font-semibold whitespace-nowrap transition-all ${selectedCategory === cat
-                                        ? 'bg-slate-900 dark:bg-white text-white dark:text-slate-900'
-                                        : 'bg-white/60 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200/50 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700'
+                                className={`whitespace-nowrap px-6 py-2 rounded-full text-sm font-medium transition-colors ${selectedCategory === cat
+                                    ? 'bg-slate-800 dark:bg-slate-100 text-white dark:text-slate-900 shadow-lg shadow-slate-200 dark:shadow-none'
+                                    : 'border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800'
                                     }`}
                             >
                                 {cat}
@@ -63,23 +93,27 @@ const DoctorSelectionPopup = ({ doctors, onClose, onSelect }) => {
                         ))}
                     </div>
 
-                    {/* Search Bar */}
-                    <div className="relative mb-6">
-                        <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-slate-400">search</span>
-                        <input
-                            className="w-full h-14 pl-12 pr-4 bg-white/40 dark:bg-slate-800/50 border border-white/50 dark:border-slate-700 rounded-2xl focus:ring-2 focus:ring-emerald-400 focus:border-emerald-400 text-slate-700 dark:text-slate-200 placeholder-slate-400 outline-none transition-all shadow-sm"
-                            placeholder="Search doctor or category"
-                            type="text"
-                            value={searchQuery}
-                            onChange={(e) => setSearchQuery(e.target.value)}
-                        />
+                    <div className="flex flex-col md:flex-row items-center gap-4">
+                        <div className="relative w-full md:w-96">
+                            <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 text-xl">search</span>
+                            <input
+                                className="w-full pl-12 pr-4 py-3 bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-2xl appearance-none text-sm text-slate-600 dark:text-slate-300 focus:ring-[#66D1A1] focus:border-[#66D1A1] transition-all outline-none"
+                                placeholder="Search doctor or category"
+                                type="text"
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                            />
+                        </div>
                     </div>
+                </div>
 
-                    {/* Doctors Grid */}
-                    <div className="grid grid-cols-2 gap-4">
+                {/* Doctors List */}
+                <main className="flex-1 overflow-y-auto px-6 md:px-10 pb-10 custom-scrollbar">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                         {filteredDoctors.length === 0 ? (
-                            <div className="col-span-2 text-center py-8 text-slate-500 dark:text-slate-400 text-sm">
-                                No doctors found matching your criteria.
+                            <div className="col-span-full flex flex-col items-center justify-center py-16 text-slate-500 dark:text-slate-400">
+                                <span className="material-symbols-outlined text-4xl mb-3 opacity-50">search_off</span>
+                                <p className="text-sm">No doctors found matching your criteria.</p>
                             </div>
                         ) : (
                             filteredDoctors.map(doctor => {
@@ -88,45 +122,45 @@ const DoctorSelectionPopup = ({ doctors, onClose, onSelect }) => {
                                     <div
                                         key={doctor.id}
                                         onClick={() => setSelectedDoctorId(doctor.id)}
-                                        className={`group relative p-4 rounded-3xl flex flex-col items-center text-center transition-all duration-300 cursor-pointer ${isSelected
-                                                ? 'bg-emerald-50 dark:bg-emerald-400/20 border-2 border-emerald-400 shadow-md'
-                                                : 'bg-white/60 dark:bg-slate-800/40 border border-white/50 dark:border-slate-700 hover:bg-white/80 dark:hover:bg-slate-800/60 hover:shadow-sm'
+                                        className={`doctor-card group rounded-[2rem] p-5 cursor-pointer border-2 transition-all hover:shadow-xl ${isSelected
+                                            ? 'bg-[#F2FAF6] dark:bg-[#1E293B] border-[#66D1A1]/50 shadow-[#66D1A1]/10'
+                                            : 'bg-slate-50 dark:bg-slate-800/40 border-transparent hover:border-slate-200 dark:hover:border-slate-700'
                                             }`}
                                     >
-                                        <div className={`relative w-28 h-28 mb-4 rounded-2xl flex items-center justify-center overflow-hidden transition-all ${isSelected ? 'bg-white/60 dark:bg-slate-800' : 'bg-slate-100 dark:bg-slate-700'
-                                            }`}>
-                                            {/* We use an icon as generic fallback if no profile picture is provided by API */}
-                                            {doctor.profileImage ? (
-                                                <img alt={`Dr. ${doctor.firstName} ${doctor.lastName}`} className="w-full h-full object-cover" src={doctor.profileImage} />
-                                            ) : (
-                                                <span className="material-symbols-outlined text-5xl text-slate-300 dark:text-slate-600">medical_services</span>
-                                            )}
+                                        <div className="relative mb-6 overflow-hidden rounded-2xl aspect-[4/5] bg-white dark:bg-slate-800 flex items-center justify-center">
+                                            <img alt={`Dr. ${doctor.firstName} ${doctor.lastName}`} className="doctor-image w-full h-full object-cover transition-transform duration-500" src={doctor.profileImage || getDoctorMockImage(doctor.id)} />
 
                                             {isSelected && (
-                                                <div className="absolute top-2 right-2 w-6 h-6 bg-emerald-400 rounded-full flex items-center justify-center shadow-sm">
-                                                    <span className="material-symbols-outlined text-white text-[16px]">check</span>
+                                                <div className="absolute top-3 right-3 w-8 h-8 bg-[#66D1A1] rounded-full flex items-center justify-center shadow-lg transform transition-transform animate-bounce-in">
+                                                    <span className="material-symbols-outlined text-white text-[18px]">check</span>
                                                 </div>
                                             )}
                                         </div>
-                                        <h3 className="font-bold text-slate-800 dark:text-white leading-tight text-sm">Dr. {doctor.firstName} {doctor.lastName}</h3>
-                                        <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 capitalize">{doctor.specialization || 'General'}</p>
+                                        <div className="space-y-1">
+                                            <h3 className="text-lg font-bold text-slate-800 dark:text-white">Dr. {doctor.firstName} {doctor.lastName}</h3>
+                                            <p className="text-sm text-slate-500 dark:text-slate-400 capitalize">{doctor.specialization || 'General'}</p>
+                                        </div>
                                     </div>
                                 );
                             })
                         )}
                     </div>
-                </div>
+                </main>
 
-                {/* Sticky Footer */}
-                <div className="absolute bottom-0 left-0 right-0 p-6 bg-white/80 dark:bg-slate-900/80 backdrop-blur-lg border-t border-white/20 dark:border-slate-700/30">
+                {/* Footer */}
+                <footer className="p-6 md:px-10 border-t border-slate-100 dark:border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-4 bg-white/50 dark:bg-slate-900/50 backdrop-blur-md shrink-0">
+                    <p className="text-sm text-slate-500 dark:text-slate-400">
+                        {filteredDoctors.length} specialist{filteredDoctors.length !== 1 ? 's' : ''} found
+                    </p>
                     <button
                         onClick={handleContinue}
                         disabled={!selectedDoctorId}
-                        className="w-full bg-emerald-400 hover:bg-emerald-500 disabled:bg-slate-300 disabled:dark:bg-slate-700 text-slate-900 disabled:text-slate-500 font-bold py-4 rounded-2xl transition-all active:scale-[0.98] shadow-lg shadow-emerald-400/20 disabled:shadow-none"
+                        className="w-full sm:w-auto px-8 py-3 bg-[#66D1A1] hover:brightness-105 disabled:bg-slate-200 disabled:dark:bg-slate-800 text-white disabled:text-slate-400 font-semibold rounded-2xl transition-all shadow-lg shadow-[#66D1A1]/20 disabled:shadow-none flex items-center justify-center gap-2"
                     >
-                        Continue with Selection
+                        Continue
+                        <span className="material-symbols-outlined text-lg">arrow_forward</span>
                     </button>
-                </div>
+                </footer>
             </div>
         </div>
     );

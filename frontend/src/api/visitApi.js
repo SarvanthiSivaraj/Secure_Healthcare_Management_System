@@ -109,6 +109,12 @@ export const visitApi = {
     getStaffByRole: async (role) => {
         const response = await apiClient.get(`/visits/staff/${role}`);
         return response.data;
+    },
+
+    // Receptionist: Update the scheduled time for a visit
+    updateScheduledTime: async (visitId, scheduledTime) => {
+        const response = await apiClient.patch(`/visits/${visitId}/scheduled-time`, { scheduledTime });
+        return response.data;
     }
 };
 

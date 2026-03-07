@@ -23,7 +23,12 @@ const { sendDoctorRegistrationNotification } = require('../../config/mail');
  */
 const registerPatient = async (req, res) => {
     try {
-        let { email, phone, password, govtId, aadhaarId, dateOfBirth, firstName, lastName, name } = req.body;
+        let {
+            email, phone, password, govtId, aadhaarId, dateOfBirth, firstName, lastName, name,
+            gender, bloodGroup, emergencyContactName, emergencyContactPhone,
+            emergencyContactRelation, address, city, state, country, postalCode,
+            insuranceProvider, insurancePolicyNumber
+        } = req.body;
 
         // Support aliases from new UI
         if (!govtId && aadhaarId) govtId = aadhaarId;
@@ -164,15 +169,7 @@ const registerPatient = async (req, res) => {
             // Create or Update patient profile
             let profile;
             if (isReRegistering) {
-                const profileUpdateQuery = `
-                    INSERT INTO patient_profiles (user_id, unique_health_id, govt_id_hash, date_of_birth)
-                    VALUES ($1, $2, $3, $4)
-                    ON CONFLICT (user_id) DO UPDATE SET
-                        govt_id_hash = EXCLUDED.govt_id_hash,
-                        date_of_birth = EXCLUDED.date_of_birth,
-                        updated_at = NOW()
-                    RETURNING *
-                `;
+
                 // Generate a health ID if they somehow don't have one, but they should if they were partially registered
                 // For safety, we'll use a new one if it's missing
                 const existingProfileQuery = 'SELECT unique_health_id FROM patient_profiles WHERE user_id = $1';
@@ -183,11 +180,50 @@ const registerPatient = async (req, res) => {
                 // To keep it simple, we'll just delete and recreate the profile if it exists, or update it.
                 // Actually, let's just use the existing helper if possible, but it doesn't handle updates well.
 
+                const profileUpdateQuery = `
+                    INSERT INTO patient_profiles (
+                        user_id, unique_health_id, govt_id_hash, date_of_birth,
+                        gender, blood_group, emergency_contact_name, emergency_contact_phone,
+                        emergency_contact_relation, address, city, state, country, postal_code,
+                        insurance_provider, insurance_policy_number
+                    )
+                    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)
+                    ON CONFLICT (user_id) DO UPDATE SET
+                        govt_id_hash = EXCLUDED.govt_id_hash,
+                        date_of_birth = EXCLUDED.date_of_birth,
+                        gender = EXCLUDED.gender,
+                        blood_group = EXCLUDED.blood_group,
+                        emergency_contact_name = EXCLUDED.emergency_contact_name,
+                        emergency_contact_phone = EXCLUDED.emergency_contact_phone,
+                        emergency_contact_relation = EXCLUDED.emergency_contact_relation,
+                        address = EXCLUDED.address,
+                        city = EXCLUDED.city,
+                        state = EXCLUDED.state,
+                        country = EXCLUDED.country,
+                        postal_code = EXCLUDED.postal_code,
+                        insurance_provider = EXCLUDED.insurance_provider,
+                        insurance_policy_number = EXCLUDED.insurance_policy_number,
+                        updated_at = NOW()
+                    RETURNING *
+                `;
+
                 const profileRes = await client.query(profileUpdateQuery, [
                     user.id,
                     healthId || require('../../utils/idGenerator').generateHealthID(),
                     govtId ? hashGovtId(govtId) : null,
-                    dateOfBirth || null
+                    dateOfBirth || null,
+                    gender || null,
+                    bloodGroup || null,
+                    emergencyContactName || null,
+                    emergencyContactPhone || null,
+                    emergencyContactRelation || null,
+                    address || null,
+                    city || null,
+                    state || null,
+                    country || null,
+                    postalCode || null,
+                    insuranceProvider || req.body.insuranceProvider || null,
+                    insurancePolicyNumber || req.body.insurancePolicyNumber || null,
                 ]);
                 profile = profileRes.rows[0];
             } else {
@@ -195,6 +231,18 @@ const registerPatient = async (req, res) => {
                     userId: user.id,
                     govtId: govtId || null,
                     dateOfBirth: dateOfBirth || null,
+                    gender: gender || null,
+                    bloodGroup: bloodGroup || null,
+                    emergencyContactName: emergencyContactName || null,
+                    emergencyContactPhone: emergencyContactPhone || null,
+                    emergencyContactRelation: emergencyContactRelation || null,
+                    address: address || null,
+                    city: city || null,
+                    state: state || null,
+                    country: country || null,
+                    postalCode: postalCode || null,
+                    insuranceProvider: insuranceProvider || req.body.insuranceProvider || null,
+                    insurancePolicyNumber: insurancePolicyNumber || req.body.insurancePolicyNumber || null,
                 }, client);
             }
 

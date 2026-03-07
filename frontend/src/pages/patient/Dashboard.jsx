@@ -357,9 +357,7 @@ function PatientDashboard() {
                                     <p className="text-[10px] text-slate-400 font-bold uppercase">Organization</p>
                                     <p className="text-sm font-bold">{activeVisit.organizationName || 'Hospital'}</p>
                                     <p className="text-xs text-slate-500 mt-1">
-                                        {activeVisit.doctorName && activeVisit.doctorName !== 'Unassigned'
-                                            ? `Dr. ${activeVisit.doctorName}`
-                                            : 'Awaiting Assignment'}
+                                        {activeVisit.doctor_first_name ? `Dr. ${activeVisit.doctor_first_name} ${activeVisit.doctor_last_name}` : 'Awaiting Assignment'}
                                     </p>
                                     {activeVisit.specialization && (
                                         <p className="text-[10px] text-indigo-500 font-medium mt-0.5">{activeVisit.specialization}</p>
@@ -403,7 +401,7 @@ function PatientDashboard() {
                             onClick={() => navigate('/patient/visits/new')}
                             className="mt-3 text-[11px] font-bold text-indigo-600 dark:text-indigo-400 uppercase tracking-wider hover:underline"
                         >
-                            Request New Visit
+                            Walk-In Clinic / QR Sync
                         </button>
                     </div>
                 )}

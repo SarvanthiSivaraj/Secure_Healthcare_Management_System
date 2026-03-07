@@ -24,6 +24,8 @@ const createPatientProfile = async (profileData, client = null) => {
             state,
             country,
             postalCode,
+            insuranceProvider,
+            insurancePolicyNumber,
         } = profileData;
 
         // Use provided client or default query
@@ -69,8 +71,9 @@ const createPatientProfile = async (profileData, client = null) => {
         user_id, unique_health_id, govt_id_hash,
         date_of_birth, gender, blood_group,
         emergency_contact_name, emergency_contact_phone, emergency_contact_relation,
-        address, city, state, country, postal_code
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
+        address, city, state, country, postal_code,
+        insurance_provider, insurance_policy_number
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)
       RETURNING id, user_id, unique_health_id, date_of_birth, gender, blood_group, created_at
     `;
 
@@ -89,6 +92,8 @@ const createPatientProfile = async (profileData, client = null) => {
             state || null,
             country || null,
             postalCode || null,
+            insuranceProvider || null,
+            insurancePolicyNumber || null,
         ]);
 
         return result.rows[0];

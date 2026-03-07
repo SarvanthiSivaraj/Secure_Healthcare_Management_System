@@ -20,6 +20,7 @@ INSERT INTO roles (name, description) VALUES
     ('patient', 'Patient - Primary data owner'),
     ('doctor', 'Doctor - Medical professional with clinical access'),
     ('nurse', 'Nurse - Care provider with shift-based access'),
+    ('receptionist', 'Receptionist - Front desk and patient intake'),
     ('lab_technician', 'Laboratory Technician - Lab test processing'),
     ('radiologist', 'Radiologist - Imaging and radiology specialist'),
     ('pharmacist', 'Pharmacist - Medication dispensing'),

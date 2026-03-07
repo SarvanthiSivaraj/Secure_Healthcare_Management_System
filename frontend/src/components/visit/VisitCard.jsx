@@ -83,6 +83,23 @@ function VisitCard({ visit, onAction, showActions = true, userRole = 'patient' }
                     <span className="vc-detail-label text-xs uppercase tracking-wider text-gray-400 dark:text-gray-500 font-bold mb-1">Time</span>
                     <span className="vc-detail-value text-sm font-medium text-gray-800 dark:text-gray-200">{formatTime(visitDate)}</span>
                 </div>
+                {visit.type === 'walk_in' && (
+                    <div className="vc-detail-row flex flex-col">
+                        <span className="vc-detail-label text-xs uppercase tracking-wider text-gray-400 dark:text-gray-500 font-bold mb-1">Created</span>
+                        <span className="vc-detail-value text-sm font-medium text-gray-800 dark:text-gray-200">
+                            {(() => {
+                                const date = new Date(visit.created_at || visit.createdAt);
+                                const now = new Date();
+                                const diffMins = Math.floor((now - date) / 60000);
+                                const diffHours = Math.floor(diffMins / 60);
+                                const remMins = diffMins % 60;
+                                const hText = diffHours > 0 ? `${diffHours} hr${diffHours > 1 ? 's' : ''}` : '';
+                                const mText = remMins > 0 ? `${remMins} min${remMins > 1 ? 's' : ''}` : '';
+                                return [hText, mText].filter(Boolean).join(' ') + ' ago';
+                            })()}
+                        </span>
+                    </div>
+                )}
 
                 {visitType && (
                     <div className="vc-detail-row flex flex-col">

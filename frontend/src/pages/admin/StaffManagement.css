@@ -202,40 +202,7 @@
     overflow-x: auto;
 }
 
-table {
-    width: 100%;
-    border-collapse: collapse;
-}
-
-th {
-    text-align: left;
-    padding: 1rem;
-    font-size: 0.75rem;
-    font-weight: 700;
-    text-transform: uppercase;
-    color: #ffffff;
-    background: #438a99;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-th:first-child {
-    border-top-left-radius: 12px;
-}
-
-th:last-child {
-    border-top-right-radius: 12px;
-}
-
-td {
-    padding: 1.25rem 1rem;
-    font-size: 0.95rem;
-    color: #334155;
-    border-bottom: 1px solid #f1f5f9;
-}
-
-tr:hover td {
-    background: #fcfdfe;
-}
+/* ── scoped so styles don't bleed into other pages ── */
 
 /* ── Status Badges ── */
 .status-badge {
