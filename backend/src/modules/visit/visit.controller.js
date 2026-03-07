@@ -469,11 +469,20 @@ const VisitController = {
                 });
             }
 
-            // Close visit (triggers automatic access revocation)
+            // Close visit
             const closedVisit = await VisitModel.closeVisit(id, userId, status);
 
             if (!closedVisit) {
                 return res.status(404).json({ success: false, message: 'Visit not found' });
+            }
+
+            // Automatically revoke associated consents
+            try {
+                await VisitConsentService.revokeConsentForVisit(id);
+                logger.info(`Automatically revoked consents for closed visit ${id}`);
+            } catch (revokeError) {
+                logger.error(`Failed to automatically revoke consents for visit ${id}:`, revokeError);
+                // Continue anyway
             }
 
             // Get full details for email

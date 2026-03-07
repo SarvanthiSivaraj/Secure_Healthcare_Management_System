@@ -22,8 +22,14 @@ export const authApi = {
         return response.data;
     },
     // Verify OTP
-    verifyOTP: async (email, otp) => {
-        const response = await apiClient.post('/auth/otp/verify', { email, otp });
+    verifyOTP: async (emailOrPhone, otp, purpose = 'registration') => {
+        const payload = { otp, purpose };
+        if (emailOrPhone.includes('@')) {
+            payload.email = emailOrPhone;
+        } else {
+            payload.phone = emailOrPhone;
+        }
+        const response = await apiClient.post('/auth/otp/verify', payload);
         return response.data;
     },
     // Login

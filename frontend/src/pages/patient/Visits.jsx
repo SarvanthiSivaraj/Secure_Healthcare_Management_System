@@ -125,104 +125,148 @@ function Visits() {
             {/* Main Content */}
             <main className="flex-grow p-8 overflow-y-auto">
                 <header className="mb-10">
-                    <div className="flex items-center justify-between mb-8">
+                    <div className="flex items-center justify-between">
                         <div>
                             <h2 className="text-3xl font-bold text-slate-900 dark:text-white">My Visits</h2>
                             <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">Manage your appointments and check-ins</p>
+                        </div>
+                        <div className="flex gap-3">
+                            <button
+                                className="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2.5 rounded-xl text-sm font-semibold transition-all shadow-md shadow-indigo-600/20 whitespace-nowrap flex items-center gap-2"
+                                onClick={() => navigate('/patient/visits/new')}
+                            >
+                                <span className="material-symbols-outlined text-lg">add</span>
+                                Request Visit
+                            </button>
                         </div>
                     </div>
                 </header>
 
                 {successMessage && (
-                    <div className="bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 p-4 rounded-2xl mb-8 flex items-center gap-3">
+                    <div className="bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 p-4 rounded-2xl mb-8 flex items-center gap-3 border border-emerald-100 dark:border-emerald-500/10">
                         <span className="material-symbols-outlined">check_circle</span>
                         {successMessage}
                     </div>
                 )}
 
-                {/* Check In Section */}
-                <div className="glass-card p-6 md:p-8 rounded-3xl mb-8 border border-white/50 dark:border-slate-700/50 relative overflow-hidden group">
-                    <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-500/10 dark:bg-indigo-500/5 rounded-full blur-3xl -mr-20 -mt-20 pointer-events-none"></div>
-                    <div className="relative z-10 flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
-                        <div>
-                            <h3 className="text-xl font-bold text-slate-800 dark:text-white mb-2">Schedule or Check In</h3>
-                            <p className="text-slate-500 dark:text-slate-400 text-sm max-w-md">Have a scheduled visit? Enter the code provided by your doctor or nurse to check in.</p>
+                {/* Quick Actions / Check In */}
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-10">
+                    <div className="lg:col-span-2 space-y-8">
+                        {/* Filter Tabs */}
+                        <div className="flex items-center justify-between">
+                            <div className="flex gap-2 bg-white/40 dark:bg-slate-800/40 p-1.5 rounded-2xl inline-flex backdrop-blur-sm border border-white/50 dark:border-slate-700/50">
+                                <button
+                                    className={`px-6 py-2 rounded-xl text-sm font-semibold transition-all flex items-center gap-2 ${filter === 'upcoming' ? 'bg-white dark:bg-slate-700 text-indigo-600 dark:text-indigo-400 shadow-sm' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700'}`}
+                                    onClick={() => setFilter('upcoming')}
+                                >
+                                    Upcoming
+                                    <span className={`text-[10px] px-1.5 py-0.5 rounded-md ${filter === 'upcoming' ? 'bg-indigo-100 dark:bg-indigo-500/20 text-indigo-600' : 'bg-slate-100 dark:bg-slate-700 text-slate-500'}`}>
+                                        {visits.filter(v => ['pending', 'approved', 'checked_in', 'in_progress'].includes(v.status?.toLowerCase())).length}
+                                    </span>
+                                </button>
+                                <button
+                                    className={`px-6 py-2 rounded-xl text-sm font-semibold transition-all flex items-center gap-2 ${filter === 'past' ? 'bg-white dark:bg-slate-700 text-indigo-600 dark:text-indigo-400 shadow-sm' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700'}`}
+                                    onClick={() => setFilter('past')}
+                                >
+                                    Past
+                                    <span className={`text-[10px] px-1.5 py-0.5 rounded-md ${filter === 'past' ? 'bg-indigo-100 dark:bg-indigo-500/20 text-indigo-600' : 'bg-slate-100 dark:bg-slate-700 text-slate-500'}`}>
+                                        {visits.filter(v => ['completed', 'cancelled'].includes(v.status?.toLowerCase())).length}
+                                    </span>
+                                </button>
+                                <button
+                                    className={`px-6 py-2 rounded-xl text-sm font-semibold transition-all flex items-center gap-2 ${filter === 'all' ? 'bg-white dark:bg-slate-700 text-indigo-600 dark:text-indigo-400 shadow-sm' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700'}`}
+                                    onClick={() => setFilter('all')}
+                                >
+                                    All
+                                    <span className={`text-[10px] px-1.5 py-0.5 rounded-md ${filter === 'all' ? 'bg-indigo-100 dark:bg-indigo-500/20 text-indigo-600' : 'bg-slate-100 dark:bg-slate-700 text-slate-500'}`}>
+                                        {visits.length}
+                                    </span>
+                                </button>
+                            </div>
                         </div>
-                        <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
+
+                        {/* Visits List */}
+                        <div className="space-y-4 min-h-[400px]">
+                            {loading ? (
+                                <div className="glass-card rounded-3xl p-12 text-center">
+                                    <span className="material-symbols-outlined text-4xl text-slate-300 dark:text-slate-600 animate-spin mb-4">refresh</span>
+                                    <p className="text-slate-500 font-medium">Loading visits...</p>
+                                </div>
+                            ) : filteredVisits.length === 0 ? (
+                                <div className="glass-card rounded-3xl p-16 text-center flex flex-col items-center border-dashed border-2 border-slate-200 dark:border-slate-700/50 bg-transparent">
+                                    <div className="w-16 h-16 bg-slate-50 dark:bg-slate-800/50 rounded-2xl flex items-center justify-center mb-6 text-slate-300 dark:text-slate-600">
+                                        <span className="material-symbols-outlined text-3xl">event_busy</span>
+                                    </div>
+                                    <h3 className="text-lg font-bold text-slate-800 dark:text-white mb-2 uppercase tracking-wide">No {filter} visits</h3>
+                                    <p className="text-slate-500 dark:text-slate-400 max-w-xs text-sm">
+                                        {filter === 'upcoming'
+                                            ? 'You don\'t have any active appointments. Check the "Past" tab or request a new visit.'
+                                            : 'Your visit history is currently empty.'}
+                                    </p>
+                                    {filter === 'upcoming' && (
+                                        <button
+                                            onClick={() => navigate('/patient/visits/new')}
+                                            className="mt-6 text-indigo-600 dark:text-indigo-400 font-bold text-xs uppercase hover:underline"
+                                        >
+                                            Request Your First Visit →
+                                        </button>
+                                    )}
+                                </div>
+                            ) : (
+                                filteredVisits.map(visit => (
+                                    <div key={visit.id} className="transform transition-all duration-300 hover:-translate-y-1">
+                                        <VisitCard
+                                            visit={visit}
+                                            userRole="patient"
+                                            showActions={false}
+                                        />
+                                    </div>
+                                ))
+                            )}
+                        </div>
+                    </div>
+
+                    <div className="space-y-6">
+                        <div className="glass-card p-6 rounded-3xl border border-indigo-100/50 dark:border-slate-700/50 bg-indigo-50/10 dark:bg-slate-800/20">
+                            <h3 className="text-sm font-bold text-slate-800 dark:text-white mb-4 uppercase tracking-widest flex items-center gap-2">
+                                <span className="material-symbols-outlined text-indigo-500 text-lg">qr_code_scanner</span>
+                                Quick Check-In
+                            </h3>
+                            <p className="text-slate-500 dark:text-slate-400 text-xs mb-6 leading-relaxed">
+                                Arrived at the hospital? Enter your 6-digit visit code to let the staff know you're here.
+                            </p>
                             <button
-                                className="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-xl text-sm font-semibold transition-all shadow-lg shadow-indigo-600/30 whitespace-nowrap"
-                                onClick={() => navigate('/patient/visits/new')}
-                            >
-                                + Request New Visit
-                            </button>
-                            <button
-                                className="bg-white/80 dark:bg-slate-800/80 hover:bg-white dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 px-6 py-3 rounded-xl text-sm font-semibold transition-all whitespace-nowrap"
+                                className={`w-full py-3 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 ${showCheckIn ? 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300' : 'bg-white dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 shadow-sm border border-indigo-100 dark:border-indigo-900/40'}`}
                                 onClick={() => setShowCheckIn(!showCheckIn)}
                             >
-                                {showCheckIn ? 'Hide Check-In Form' : 'Check In with Code'}
+                                {showCheckIn ? 'Cancel Check-In' : 'Open Check-In Form'}
                             </button>
+
+                            {showCheckIn && (
+                                <div className="mt-6 pt-6 border-t border-slate-200 dark:border-slate-700 animate-in fade-in slide-in-from-top-4 duration-300">
+                                    <CheckInForm onCheckIn={handleCheckIn} />
+                                </div>
+                            )}
+                        </div>
+
+                        <div className="glass-card p-6 rounded-3xl border border-white/50 dark:border-slate-700/50 bg-white/40 dark:bg-slate-800/30">
+                            <h4 className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-4">Appointment Help</h4>
+                            <div className="space-y-4">
+                                <div className="flex gap-3">
+                                    <span className="material-symbols-outlined text-indigo-500 text-sm">schedule</span>
+                                    <p className="text-xs text-slate-600 dark:text-slate-400 leading-normal">
+                                        Please arrive 15 minutes before your scheduled appointment time.
+                                    </p>
+                                </div>
+                                <div className="flex gap-3">
+                                    <span className="material-symbols-outlined text-indigo-500 text-sm">notifications_active</span>
+                                    <p className="text-xs text-slate-600 dark:text-slate-400 leading-normal">
+                                        You'll receive an SMS notification when the doctor is ready to see you.
+                                    </p>
+                                </div>
+                            </div>
                         </div>
                     </div>
-                </div>
-
-                {showCheckIn && (
-                    <div className="mb-8 p-6 glass-card rounded-3xl">
-                        <CheckInForm onCheckIn={handleCheckIn} />
-                    </div>
-                )}
-
-                {/* Filter Tabs */}
-                <div className="flex gap-2 mb-8 bg-white/40 dark:bg-slate-800/40 p-1.5 rounded-2xl inline-flex backdrop-blur-sm border border-white/50 dark:border-slate-700/50">
-                    <button
-                        className={`px-6 py-2.5 rounded-xl text-sm font-semibold transition-all ${filter === 'upcoming' ? 'bg-white dark:bg-slate-700 text-indigo-600 dark:text-indigo-400 shadow-sm' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'}`}
-                        onClick={() => setFilter('upcoming')}
-                    >
-                        Upcoming
-                    </button>
-                    <button
-                        className={`px-6 py-2.5 rounded-xl text-sm font-semibold transition-all ${filter === 'past' ? 'bg-white dark:bg-slate-700 text-indigo-600 dark:text-indigo-400 shadow-sm' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'}`}
-                        onClick={() => setFilter('past')}
-                    >
-                        Past Visits
-                    </button>
-                    <button
-                        className={`px-6 py-2.5 rounded-xl text-sm font-semibold transition-all ${filter === 'all' ? 'bg-white dark:bg-slate-700 text-indigo-600 dark:text-indigo-400 shadow-sm' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'}`}
-                        onClick={() => setFilter('all')}
-                    >
-                        All
-                    </button>
-                </div>
-
-                {/* Visits List */}
-                <div className="space-y-4">
-                    {loading ? (
-                        <div className="glass-card rounded-3xl p-12 text-center">
-                            <span className="material-symbols-outlined text-4xl text-slate-300 dark:text-slate-600 animate-spin mb-4">refresh</span>
-                            <p className="text-slate-500 font-medium">Loading visits...</p>
-                        </div>
-                    ) : filteredVisits.length === 0 ? (
-                        <div className="glass-card rounded-3xl p-16 text-center flex flex-col items-center">
-                            <div className="w-20 h-20 bg-slate-100 dark:bg-slate-800/50 rounded-3xl flex items-center justify-center mb-6 text-slate-400 dark:text-slate-500">
-                                <span className="material-symbols-outlined text-4xl">event_busy</span>
-                            </div>
-                            <h3 className="text-xl font-bold text-slate-800 dark:text-white mb-2">No {filter} visits found</h3>
-                            <p className="text-slate-500 dark:text-slate-400 max-w-sm">
-                                {filter === 'upcoming'
-                                    ? 'Schedule an appointment to see it here'
-                                    : 'Your visit history will appear here'}
-                            </p>
-                        </div>
-                    ) : (
-                        filteredVisits.map(visit => (
-                            <div key={visit.id} className="glass-card rounded-3xl overflow-hidden hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1">
-                                <VisitCard
-                                    visit={visit}
-                                    userRole="patient"
-                                    showActions={false}
-                                />
-                            </div>
-                        ))
-                    )}
                 </div>
             </main>
         </div>

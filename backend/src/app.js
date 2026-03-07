@@ -13,6 +13,7 @@ const consentRoutes = require('./modules/consent/consent.routes');
 const emrRoutes = require('./modules/emr/emr.routes');
 const workflowRoutes = require('./modules/workflow/workflow.routes');
 const auditRoutes = require('./modules/audit/audit.routes');
+const patientRoutes = require('./modules/patient/patient.routes');
 
 // Phase 1: Staff Management routes
 const staffRoutes = require('./modules/staff/staff.routes');
@@ -70,6 +71,7 @@ app.use(`${API_PREFIX}/consent`, consentRoutes);
 app.use(`${API_PREFIX}/emr`, emrRoutes);
 app.use(`${API_PREFIX}/visits`, require('./modules/visit/visit.routes'));
 app.use(`${API_PREFIX}/audit`, auditRoutes);
+app.use(`${API_PREFIX}/patient`, patientRoutes);
 app.use(`${API_PREFIX}/admin`, require('./modules/admin/admin.routes'));
 
 // Mount routes (Legacy /api support for Frontend)
@@ -78,6 +80,7 @@ app.use('/api/users', userRoutes);
 app.use('/api/consent', consentRoutes);
 app.use('/api/emr', emrRoutes);
 app.use('/api/audit', auditRoutes);
+app.use('/api/patient', patientRoutes);
 app.use('/api/workflow', workflowRoutes);
 app.use('/api/admin', require('./modules/admin/admin.routes'));
 app.use('/api/users', userRoutes);

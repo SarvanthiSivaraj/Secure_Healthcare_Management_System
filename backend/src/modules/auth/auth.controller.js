@@ -566,6 +566,11 @@ const login = async (req, res) => {
             return res.status(HTTP_STATUS.FORBIDDEN).json({
                 success: false,
                 message: ERROR_MESSAGES.ACCOUNT_NOT_VERIFIED,
+                data: {
+                    userId: user.id,
+                    email: user.email,
+                    phone: user.phone
+                }
             });
         }
 

@@ -357,8 +357,13 @@ function PatientDashboard() {
                                     <p className="text-[10px] text-slate-400 font-bold uppercase">Organization</p>
                                     <p className="text-sm font-bold">{activeVisit.organizationName || 'Hospital'}</p>
                                     <p className="text-xs text-slate-500 mt-1">
-                                        {activeVisit.doctor_first_name ? `Dr. ${activeVisit.doctor_first_name} ${activeVisit.doctor_last_name}` : 'Awaiting Assignment'}
+                                        {activeVisit.doctorName && activeVisit.doctorName !== 'Unassigned'
+                                            ? `Dr. ${activeVisit.doctorName}`
+                                            : 'Awaiting Assignment'}
                                     </p>
+                                    {activeVisit.specialization && (
+                                        <p className="text-[10px] text-indigo-500 font-medium mt-0.5">{activeVisit.specialization}</p>
+                                    )}
                                 </div>
                                 <span className={`px-2 py-1 text-[10px] font-bold uppercase rounded-lg bg-indigo-50 text-indigo-600 dark:bg-indigo-900/30 dark:text-indigo-400`}>
                                     {activeVisit.status}
