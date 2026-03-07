@@ -14,28 +14,25 @@ class VisitModel {
             symptoms,
             type,
             priority,
-            doctorId // newly extracted
+            doctorId
         } = visitData;
-
-        const combinedSymptoms = reason && symptoms
-            ? `Reason: ${reason} | Symptoms: ${symptoms}`
-            : (reason || symptoms || null);
 
         // Generate a random 8-character alphanumeric visit code
         const visitCode = 'V-' + Math.random().toString(36).substring(2, 8).toUpperCase() + Math.floor(Math.random() * 10);
 
         const query = `
             INSERT INTO visits (
-                patient_id, organization_id, symptoms, type, priority, status, assigned_doctor_id, visit_code
+                patient_id, organization_id, reason, symptoms, type, priority, status, assigned_doctor_id, visit_code
             )
-            VALUES ($1, $2, $3, $4, $5, 'pending', $6, $7)
+            VALUES ($1, $2, $3, $4, $5, $6, 'pending', $7, $8)
             RETURNING *
         `;
 
         const values = [
             patientId,
             organizationId,
-            combinedSymptoms,
+            reason || null,
+            symptoms || null,
             type || 'walk_in',
             priority || 'normal',
             doctorId || null,
