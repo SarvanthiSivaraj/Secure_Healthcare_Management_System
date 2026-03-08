@@ -38,6 +38,9 @@ function Login() {
             case 'NURSE': navigate('/nurse/dashboard'); break;
             case 'LAB_TECHNICIAN': navigate('/lab/dashboard'); break;
             case 'RADIOLOGIST': navigate('/radiology/dashboard'); break;
+            case 'PHARMACIST': navigate('/pharmacist/dashboard'); break;
+            case 'COMPLIANCE_OFFICER':
+            case 'COMPLIANCE': navigate('/compliance/dashboard'); break;
             default: navigate('/staff/dashboard');
         }
     };

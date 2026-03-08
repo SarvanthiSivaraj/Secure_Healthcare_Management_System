@@ -240,7 +240,7 @@
          "user": {
            "id": "uuid",
            "email": "user@email.com",
-           "role": "PATIENT"
+           "role": "PATIENT | DOCTOR | NURSE | RADIOLOGIST | PHARMACIST | COMPLIANCE_OFFICER | ADMIN"
          },
          "accessToken": "ey..."
        }
@@ -269,7 +269,7 @@
          "user": {
            "id": "uuid",
            "email": "user@email.com",
-           "role": "PATIENT"
+           "role": "PATIENT | DOCTOR | NURSE | RADIOLOGIST | PHARMACIST | COMPLIANCE_OFFICER | ADMIN"
          },
          "accessToken": "ey..."
        }
@@ -398,4 +398,371 @@
          "pagination": { "total": 4, "pages": 1, "limit": 50, "offset": 0 }
        }
      }
+     ```
+
+## Nurse Workflow APIs (Mocked)
+1. **GET `/api/v1/nurse/stats`**
+   - **Explanation:** Returns top-level statistics for the logged-in nurse dashboard.
+   - **Data Format required:**
+     ```json
+     {
+       "success": true,
+       "data": {
+           "assignedPatients": 14,
+           "vitalsRecorded": 32,
+           "careTasks": 8,
+           "observations": 5
+       }
+     }
+     ```
+
+2. **GET `/api/v1/nurse/assigned-patients`**
+   - **Explanation:** Returns a list of patients currently assigned to the nurse.
+   - **Data Format required:**
+     ```json
+     {
+       "success": true,
+       "data": [
+           {
+               "id": "pat-1",
+               "firstName": "Robert",
+               "lastName": "Fox",
+               "room": "101-A",
+               "condition": "Post-Op Recovery",
+               "nextCheck": "2025-12-31T10:30:00.000Z",
+               "status": "stable"
+           }
+       ]
+     }
+     ```
+
+3. **GET `/api/v1/nurse/activities`**
+   - **Explanation:** Returns a recent activity feed for actions performed by the nurse.
+   - **Data Format required:**
+     ```json
+     {
+       "success": true,
+       "data": [
+           {
+               "id": "n-act-1",
+               "type": "Vitals Recorded",
+               "title": "Vitals taken for Robert Fox",
+               "date": "2025-12-31T09:00:00.000Z",
+               "colorClass": "bg-teal-500",
+               "borderColorClass": "border-teal-500/30"
+           }
+       ]
+     }
+     ```
+
+4. **GET `/api/v1/nurse/patients/:patientId/records`**
+   - **Explanation:** Returns isolated medical records specifically visible to nurses (e.g., vitals, notes, observations).
+   - **Data Format required:**
+     ```json
+     {
+       "success": true,
+       "data": [
+           {
+               "id": "rec-n1-pat1",
+               "type": "observation",
+               "title": "Shift Observation",
+               "description": "Patient is resting comfortably...",
+               "created_at": "2025-12-31T09:00:00.000Z",
+               "created_by_name": "Nurse Sarah",
+               "created_by_role": "RN"
+           }
+       ]
+     }
+     ```
+
+5. **POST `/api/v1/nurse/patients/:patientId/records`**
+   - **Explanation:** Allows a nurse to create a new specific medical record (types: vitals, observation, input_action).
+   - **Request Body:** `{ "type": "vitals", "title": "Vitals Check", "description": "BP: 120/80..." }`
+   - **Data Format required:**
+     ```json
+     {
+       "success": true,
+       "message": "Record created successfully",
+       "data": {
+           "id": "rec-n-new-12345",
+           "type": "vitals",
+           "title": "Vitals Check",
+           "description": "BP: 120/80...",
+           "created_at": "2025-12-31T10:00:00.000Z",
+           "created_by_name": "Current Nurse",
+           "created_by_role": "RN"
+       }
+     }
+     ```
+
+6. **GET `/api/v1/nurse/medications`**
+   - **Explanation:** Returns a list of all medications due for the nurse's assigned patients during their active shift.
+   - **Data Format required:**
+     ```json
+     {
+       "success": true,
+       "data": [
+           {
+               "id": "med-1",
+               "patientId": "pat-1",
+               "patientName": "Robert Fox",
+               "room": "101-A",
+               "medicationName": "Amoxicillin",
+               "dosage": "500mg",
+               "route": "Oral",
+               "scheduledTime": "2025-12-31T09:00:00.000Z",
+               "status": "pending"
+           }
+       ]
+     }
+     ```
+
+7. **PUT `/api/v1/nurse/medications/:medicationId/status`**
+   - **Explanation:** Allows a nurse to update the administration status of a particular medication.
+   - **Request Body:** `{ "status": "administered", "notes": "Patient took med with water." }`
+   - **Data Format required:**
+     ```json
+     {
+       "success": true,
+       "message": "Medication med-1 marked as administered",
+       "data": {
+           "id": "med-1",
+           "status": "administered",
+           "notes": "Patient took med with water.",
+           "updatedAt": "2025-12-31T09:05:00.000Z"
+       }
+     }
+     ```
+
+8. **GET `/api/v1/nurse/profile`**
+   - **Explanation:** Returns the detailed profile information for the authenticated nurse.
+   - **Data Format required:**
+     ```json
+     {
+       "success": true,
+       "data": {
+           "id": "nurse-789",
+           "firstName": "Sarah",
+           "lastName": "Jenkins",
+           "role": "Registered Nurse",
+           "employeeId": "RN-2024-56789",
+           "department": "General Medicine",
+           "email": "sarah.jenkins@medicare.com",
+           "phone": "+1 (555) 123-4567",
+           "status": "Active",
+           "joinedDate": "2020-03-15",
+           "licenseNumber": "RN987654321",
+           "address": "123 Healthcare Ave...",
+           "emergencyContact": { "name": "Michael Jenkins", "relationship": "Spouse", "phone": "+1..." },
+           "assignedWards": ["Ward A (East Wing)", "Ward B (West Wing)"],
+           "shiftPreference": "Day Shift (07:00 - 19:00)"
+       }
+     }
+     ```
+
+9. **PUT `/api/v1/nurse/profile`**
+   - **Explanation:** Updates the nurse's profile details (phone, address, emergency contact).
+   - **Request Body:** `{ "phone": "+1 222-3333", "address": "New Address" }`
+   - **Data Format required:**
+     ```json
+     {
+       "success": true,
+       "message": "Profile updated successfully",
+       "data": { ...updated profile object... }
+     }
+     ```
+
+## Radiology Endpoints
+
+1. **GET `/api/v1/radiology/stats`**
+   - **Explanation:** Returns dashboard statistics like pending reads and priority cases.
+   - **Response:**
+     ```json
+     {
+       "success": true,
+       "data": {
+           "pendingReads": 14,
+           "inProgress": 3,
+           "completedToday": 28,
+           "priorityCases": 2
+       }
+     }
+     ```
+
+2. **GET `/api/v1/radiology/orders`**
+   - **Explanation:** Retrieves a list of imaging orders in the queue. Allows filtering by `status` and `priority`.
+   - **Response:**
+     ```json
+     {
+       "success": true,
+       "count": 5,
+       "data": [
+         {
+           "id": "img-req-001",
+           "visitId": "VST-2024-0891",
+           "imagingType": "MRI",
+           "status": "pending"
+         }
+       ]
+     }
+     ```
+
+3. **POST `/api/v1/radiology/upload`**
+   - **Explanation:** Uploads an imaging report securely via multipart/form-data.
+   - **Response:**
+     ```json
+     {
+       "success": true,
+       "message": "Imaging report securely uploaded and cryptographically signed.",
+       "reportId": "rep-12345"
+     }
+     ```
+
+4. **GET `/api/v1/radiology/profile`**
+   - **Explanation:** Returns the detailed profile information for the authenticated radiologist.
+   - **Response:**
+     ```json
+     {
+       "success": true,
+       "data": {
+           "id": "rad-101",
+           "firstName": "Rajesh",
+           "role": "Senior Radiologist",
+           "email": "radiologist@medicare.com",
+           "status": "Active"
+       }
+     }
+     ```
+
+5. **PUT `/api/v1/radiology/profile`**
+   - **Explanation:** Updates the radiologist's profile details.
+   - **Request Body:** `{ "phone": "+1 222-3333", "address": "New Address" }`
+   - **Response:**
+     ```json
+     {
+       "success": true,
+       "message": "Profile updated successfully",
+       "data": { ...updated profile object... }
+     }
+     ```
+
+6. **GET `/api/v1/radiology/audit-logs`**
+   - **Explanation:** Retrieves security audit logs for radiological data access and activities.
+   - **Response:**
+     ```json
+     {
+       "success": true,
+       "data": [
+         {
+           "id": "AL-1004",
+           "timestamp": "2024-03-08T10:15:30Z",
+           "action": "REPORT_SIGNED",
+           "ip": "192.168.1.55",
+           "details": "Signed MRI report for Order ORD-4829"
+         }
+       ]
+     }
+     ```
+## Pharmacist Portal
+
+**Backend APIs Needed (Mocked):**
+1. **GET `/api/v1/pharmacist/stats`**
+   - **Explanation:** Returns dashboard metrics for the pharmacist.
+   - **Data Format required:**
+     ```json
+     { "success": true, "data": { "pendingPrescriptions": 12, "dispensedToday": 48, "lowStockAlerts": 3, "refillRequests": 5 } }
+     ```
+
+2. **GET `/api/v1/pharmacist/prescriptions`**
+   - **Explanation:** Retrieves the queue of prescriptions (supports status filtering).
+   - **Data Format required:**
+     ```json
+     { "success": true, "data": [{ "id": "rx-2024-001", "patientName": "Robert Fox", "medication": "Amoxicillin 500mg", "dosage": "1 capsule three times daily for 7 days", "prescribedBy": "Dr. Sarah Smith", "status": "pending" }] }
+     ```
+
+3. **PUT `/api/v1/pharmacist/prescriptions/:id/dispense`**
+   - **Explanation:** Updates the status of a specific prescription to "dispensed".
+   - **Data Format required:**
+     ```json
+     { "success": true, "message": "Prescription rx-2024-001 marked as dispensed." }
+     ```
+
+4. **GET `/api/v1/pharmacist/inventory`**
+   - **Explanation:** Returns current medication inventory levels.
+   - **Data Format required:**
+     ```json
+     { "success": true, "data": [{ "id": "inv-101", "name": "Amoxicillin 500mg", "genericName": "Amoxicillin", "stock": 450, "status": "In Stock", "location": "Aisle 2, Shelf B" }] }
+     ```
+
+5. **GET `/api/v1/pharmacist/profile`**
+   - **Explanation:** Returns generic provider personal and contact info.
+   - **Data Format required:**
+     ```json
+     { "success": true, "data": { "id": "pharm-456", "firstName": "Aisha", "lastName": "Patel", "role": "Lead Pharmacist", "email": "pharmacist@medicare.com", "phone": "+1 (555) 777-8899" } }
+     ```
+
+6. **PUT `/api/v1/pharmacist/profile`**
+   - **Explanation:** Updates the generic provider profile.
+   - **Data Format required:**
+     ```json
+     { "success": true, "message": "Profile updated successfully", "data": { "id": "pharm-456", "email": "pharmacist@medicare.com", "phone": "new phone number" } }
+     ```
+
+7. **GET `/api/v1/pharmacist/audit-logs`**
+   - **Explanation:** Returns audit logs for the pharmacist's activities.
+   - **Data Format required:**
+     ```json
+     { "success": true, "data": [{ "id": "PAL-2005", "timestamp": "2024-03-08T10:00:00.000Z", "action": "RX_DISPENSED", "ip": "192.168.1.60", "details": "Dispensed Amoxicillin 500mg for Patient PAT-8819" }] }
+     ```
+
+## Compliance Portal
+
+**Backend APIs Needed (Mocked):**
+1. **GET `/api/v1/compliance/dashboard`**
+   - **Explanation:** Returns dashboard metrics for the compliance officer.
+   - **Data Format required:**
+     ```json
+     { "success": true, "data": { "authAnomalies": 3, "openIncidents": 5, "activeOverrides": 2, "pendingReviews": 12 } }
+     ```
+
+2. **GET `/api/v1/compliance/global-audits`**
+   - **Explanation:** Retrieves a system-wide view of all audit logs.
+   - **Data Format required:**
+     ```json
+     { "success": true, "data": [{ "id": "AUD-9905", "timestamp": "2025-01-01T10:00:00.000Z", "user": "Sarah Jenkins (NURSE)", "action": "VIEW_RECORD", "details": "Accessed vitals history for PAT-8819", "status": "Success" }] }
+     ```
+
+3. **GET `/api/v1/compliance/incidents`**
+   - **Explanation:** Returns reported security and privacy incidents.
+   - **Data Format required:**
+     ```json
+     { "success": true, "data": [{ "id": "INC-2024-001", "date": "2025-01-01T10:00:00.000Z", "type": "Unauthorized Access", "reporter": "Automated System", "status": "Investigating", "description": "Multiple failed login attempts detected..." }] }
+     ```
+
+4. **PUT `/api/v1/compliance/incidents/:id`**
+   - **Explanation:** Updates the status of a specific security incident.
+   - **Data Format required:**
+     ```json
+     { "success": true, "message": "Incident INC-2024-001 updated to Resolved." }
+     ```
+
+5. **GET `/api/v1/compliance/consent-overrides`**
+   - **Explanation:** Returns a list of emergency consent overrides by doctors ("glass breaks").
+   - **Data Format required:**
+     ```json
+     { "success": true, "data": [{ "id": "OVR-501", "date": "2025-01-01T10:00:00.000Z", "doctor": "Dr. Sarah Smith", "patientId": "PAT-9002", "reason": "Medical Emergency (Cardiac Arrest)", "status": "Pending Review" }] }
+     ```
+
+6. **GET`/api/v1/compliance/profile`**
+   - **Explanation:** Returns compliance officer personal and contact info.
+   - **Data Format required:**
+     ```json
+     { "success": true, "data": { "id": "comp-999", "firstName": "Robert", "lastName": "Oppenheimer", "role": "Chief Compliance Officer", "email": "compliance@medicare.com", "phone": "+1 (555) 999-0000" } }
+     ```
+
+7. **PUT `/api/v1/compliance/profile`**
+   - **Explanation:** Updates the compliance officer profile.
+   - **Data Format required:**
+     ```json
+     { "success": true, "message": "Profile updated successfully", "data": { "id": "comp-999", "email": "compliance@medicare.com", "phone": "new phone number" } }
      ```
