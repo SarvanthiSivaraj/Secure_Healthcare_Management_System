@@ -23,6 +23,8 @@ import AssignedPatients from '../pages/nurse/AssignedPatients';
 import NursePatientRecords from '../pages/nurse/NursePatientRecords';
 import NurseMedications from '../pages/nurse/NurseMedications';
 import NurseProfile from '../pages/nurse/NurseProfile';
+import NurseVitals from '../pages/nurse/NurseVitals';
+import NurseSchedule from '../pages/nurse/NurseSchedule';
 import LabDashboard from '../pages/lab/Dashboard';
 import RadiologistDashboard from '../pages/radiology/Dashboard';
 import ImagingQueue from '../pages/radiology/ImagingQueue';
@@ -256,6 +258,24 @@ function AppRoutes() {
                 element={
                     <ProtectedRoute allowedRoles={['nurse']}>
                         <NurseProfile />
+                    </ProtectedRoute>
+                }
+            />
+
+            <Route
+                path="/nurse/vitals"
+                element={
+                    <ProtectedRoute allowedRoles={['nurse']}>
+                        <NurseVitals />
+                    </ProtectedRoute>
+                }
+            />
+
+            <Route
+                path="/nurse/schedule"
+                element={
+                    <ProtectedRoute allowedRoles={['nurse']}>
+                        <NurseSchedule />
                     </ProtectedRoute>
                 }
             />

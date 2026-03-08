@@ -44,7 +44,7 @@ const AssignedPatients = () => {
         { id: 'patients', label: 'Assigned Patients', icon: 'group', path: '/nurse/patients' },
         { id: 'vitals', label: 'Vitals & Notes', icon: 'monitor_heart', path: '/nurse/vitals' },
         { id: 'medications', label: 'Medications', icon: 'medication', path: '/nurse/medications' },
-        { id: 'schedule', label: 'Shift Schedule', icon: 'calendar_month', path: '#' },
+        { id: 'schedule', label: 'Shift Schedule', icon: 'calendar_month', path: '/nurse/schedule' },
     ];
 
     const getStatusConfig = (status) => {

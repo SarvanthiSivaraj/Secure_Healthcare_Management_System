@@ -176,8 +176,22 @@ const NurseProfile = () => {
 
                             {/* Identity Card */}
                             <div className="md:col-span-1 border border-slate-200/80 dark:border-slate-800/80 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl rounded-3xl p-6 shadow-sm flex flex-col items-center text-center">
-                                <div className="w-24 h-24 rounded-full bg-teal-100 dark:bg-teal-900/50 text-teal-600 dark:text-teal-400 flex items-center justify-center text-3xl font-bold mb-4 border-4 border-white dark:border-slate-800 shadow-lg">
-                                    {profile.firstName.charAt(0)}{profile.lastName.charAt(0)}
+                                <div className="w-24 h-24 rounded-full bg-teal-100 dark:bg-teal-900/50 text-teal-600 dark:text-teal-400 flex items-center justify-center text-3xl font-bold mb-4 border-4 border-white dark:border-slate-800 shadow-lg overflow-hidden">
+                                    {profile.profilePhoto ? (
+                                        <img
+                                            src={profile.profilePhoto}
+                                            alt={`${profile.firstName} ${profile.lastName}`}
+                                            className="w-full h-full object-cover"
+                                            onError={(e) => {
+                                                e.target.onerror = null;
+                                                e.target.src = ''; // Clear src to show fallback
+                                                e.target.style.display = 'none';
+                                                // We can't easily trigger the initials from here without state change
+                                            }}
+                                        />
+                                    ) : (
+                                        <span>{profile.firstName.charAt(0)}{profile.lastName.charAt(0)}</span>
+                                    )}
                                 </div>
                                 <h2 className="text-xl font-bold text-slate-800 dark:text-white mb-1">{profile.firstName} {profile.lastName}</h2>
                                 <p className="text-teal-600 dark:text-teal-400 font-medium text-sm mb-4">{profile.role}</p>

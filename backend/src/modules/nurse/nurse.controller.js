@@ -74,11 +74,15 @@ class NurseController {
         const userId = req.user.id;
         const sql = `
             SELECT u.id, u.first_name as "firstName", u.last_name as "lastName", u.email, u.phone, 
-                   u.role_id, r.name as "role", som.employee_id as "employeeId", som.department, som.status, som.license_number as "licenseNumber",
-                   som.assigned_wards as "assignedWards", som.shift_preference as "shiftPreference", u.created_at
+                   u.profile_photo as "profilePhoto", r.name as "role", som.employee_id as "employeeId", 
+                   som.department, som.status, som.professional_license as "licenseNumber", 
+                   som.assigned_wards as "assignedWards", som.shift_preference as "shiftPreference", 
+                   u.created_at as "joinedDate", np.address, np.emergency_contact_name, 
+                   np.emergency_contact_phone, np.emergency_contact_relation
             FROM users u
             LEFT JOIN roles r ON u.role_id = r.id
             LEFT JOIN staff_org_mapping som ON u.id = som.user_id
+            LEFT JOIN nurse_profiles np ON u.id = np.user_id
             WHERE u.id = $1
         `;
         const result = await query(sql, [userId]);
@@ -91,13 +95,14 @@ class NurseController {
             success: true,
             data: {
                 ...profile,
-                joinedDate: profile.created_at,
-                address: profile.address || "123 Healthcare Ave, Medical District, NY 10001",
+                address: profile.address || "Add address in settings",
                 emergencyContact: {
-                    name: profile.emergency_contact_name || "Michael Jenkins",
-                    relationship: profile.emergency_contact_relation || "Spouse",
-                    phone: profile.emergency_contact_phone || "+1 (555) 987-6543"
-                }
+                    name: profile.emergency_contact_name || "Not Set",
+                    relationship: profile.emergency_contact_relation || "Not Set",
+                    phone: profile.emergency_contact_phone || "Not Set"
+                },
+                assignedWards: profile.assignedWards || ["General Ward"],
+                shiftPreference: profile.shiftPreference || "Day Shift"
             }
         });
     });
@@ -110,16 +115,30 @@ class NurseController {
         const { phone, address } = req.body;
 
         try {
-            const sql = `UPDATE users SET phone = $1 WHERE id = $2 RETURNING *`;
-            await query(sql, [phone, userId]);
+            await transaction(async (client) => {
+                // Update phone in users table
+                await client.query('UPDATE users SET phone = $1 WHERE id = $2', [phone, userId]);
 
-            // For mock/alignment, we skip real address table update if it doesn't exist
-            // and just return the combined profile
+                // Update address in nurse_profiles table (using UPSERT logic)
+                const upsertSql = `
+                    INSERT INTO nurse_profiles (user_id, address)
+                    VALUES ($1, $2)
+                    ON CONFLICT (user_id) 
+                    DO UPDATE SET address = $2, updated_at = CURRENT_TIMESTAMP
+                `;
+                await client.query(upsertSql, [userId, address]);
+            });
+
+            // Re-fetch full profile
             const profileSql = `
                 SELECT u.id, u.first_name as "firstName", u.last_name as "lastName", u.email, u.phone, 
-                       u.role, som.employee_id as "employeeId", som.department, som.status
+                       u.profile_photo as "profilePhoto", r.name as "role", som.employee_id as "employeeId", 
+                       som.department, som.status, np.address, np.emergency_contact_name, 
+                       np.emergency_contact_phone, np.emergency_contact_relation
                 FROM users u
+                LEFT JOIN roles r ON u.role_id = r.id
                 LEFT JOIN staff_org_mapping som ON u.id = som.user_id
+                LEFT JOIN nurse_profiles np ON u.id = np.user_id
                 WHERE u.id = $1
             `;
             const result = await query(profileSql, [userId]);
@@ -129,11 +148,10 @@ class NurseController {
                 message: "Profile updated successfully",
                 data: {
                     ...result.rows[0],
-                    address: address || "123 Healthcare Ave, Medical District, NY 10001",
                     emergencyContact: {
-                        name: "Michael Jenkins",
-                        relationship: "Spouse",
-                        phone: "+1 (555) 987-6543"
+                        name: result.rows[0].emergency_contact_name || "Not Set",
+                        relationship: result.rows[0].emergency_contact_relation || "Not Set",
+                        phone: result.rows[0].emergency_contact_phone || "Not Set"
                     }
                 }
             });
@@ -150,7 +168,7 @@ class NurseController {
         const userId = req.user.id;
         const sql = `
             SELECT DISTINCT v.id, v.patient_id as "patientId", u.first_name as "firstName", u.last_name as "lastName",
-                   v.chief_complaint as "admissionReason", v.status as "status", v.check_in_time as "scheduled_time"
+                   v.chief_complaint as "admissionReason", v.status as "status", v.check_in_time as "nextCheck"
             FROM visits v
             JOIN users u ON v.patient_id = u.id
             JOIN visit_staff_assignments cta ON v.id = cta.visit_id
