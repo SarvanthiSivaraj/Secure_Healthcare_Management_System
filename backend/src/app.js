@@ -19,6 +19,7 @@ const patientRoutes = require('./modules/patient/patient.routes');
 const staffRoutes = require('./modules/staff/staff.routes');
 const nurseRoutes = require('./modules/nurse/nurse.routes');
 const doctorVerificationRoutes = require('./modules/doctors/doctor.verification.routes');
+const radiologyRoutes = require('./modules/radiology/radiology.routes');
 
 
 
@@ -91,6 +92,7 @@ app.use('/api/staff', staffRoutes);
 app.use('/api/nurse', nurseRoutes);
 app.use('/api/doctors/verification', doctorVerificationRoutes);
 app.use('/api/visits', require('./modules/visit/visit.routes'));
+app.use('/api/radiology', radiologyRoutes);
 
 
 
