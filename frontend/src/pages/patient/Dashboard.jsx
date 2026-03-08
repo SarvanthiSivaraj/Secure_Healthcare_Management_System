@@ -5,6 +5,7 @@ import { consentApi } from '../../api/consentApi';
 import { visitApi } from '../../api/visitApi';
 import { emrApi } from '../../api/emrApi';
 import { patientApi } from '../../api/patientApi';
+import { auditApi } from '../../api/auditApi';
 import ThemeToggle from '../../components/common/ThemeToggle';
 import './Dashboard.css';
 
@@ -25,19 +26,21 @@ function PatientDashboard() {
 
     const [activeVisit, setActiveVisit] = useState(null);
     const [queueStatus, setQueueStatus] = useState(null);
+    const [dashboardSearch, setDashboardSearch] = useState('');
 
     useEffect(() => {
         const fetchStats = async () => {
             if (!user?.id) return;
 
             try {
-                const [consentsRes, recordsRes, visitsRes, profileRes, factsRes, activitiesRes] = await Promise.allSettled([
+                const [consentsRes, recordsRes, visitsRes, profileRes, factsRes, activitiesRes, auditRes] = await Promise.allSettled([
                     consentApi.getActiveConsents(),
                     emrApi.getPatientMedicalRecords(user.id),
                     visitApi.getMyVisits(),
                     patientApi.getProfile(),
                     patientApi.getHealthFacts(),
-                    patientApi.getActivities()
+                    patientApi.getActivities(),
+                    auditApi.getMyAuditTrail({ limit: 1 })
                 ]);
 
                 if (profileRes.status === 'fulfilled') setPatientDetails(profileRes.value?.data || profileRes.value);
@@ -52,7 +55,7 @@ function PatientDashboard() {
                         : 0,
                     medicalRecords: recordsRes.status === 'fulfilled' ? (recordsRes.value?.data?.records?.length || recordsRes.value?.data?.length || 0) : 0,
                     scheduledVisits: visitsRes.status === 'fulfilled' ? (visitsRes.value?.filter(v => ['approved', 'pending', 'scheduled'].includes(v.status?.toLowerCase())).length || 0) : 0,
-                    accessLogs: 0 // TODO: Implement access logs API
+                    accessLogs: auditRes.status === 'fulfilled' ? (auditRes.value?.data?.pagination?.total || auditRes.value?.data?.logs?.length || auditRes.value?.data?.length || 0) : 0
                 });
 
                 if (visitsRes.status === 'fulfilled' && Array.isArray(visitsRes.value)) {
@@ -98,6 +101,16 @@ function PatientDashboard() {
         return d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
     };
 
+    const handleDashboardSearch = (e) => {
+        if (e.key === 'Enter' && dashboardSearch.trim()) {
+            navigate(`/patient/medical-records?search=${encodeURIComponent(dashboardSearch.trim())}`);
+        }
+    };
+
+    const handleSpecialtyClick = (specialty) => {
+        navigate(`/patient/medical-records?search=${encodeURIComponent(specialty)}`);
+    };
+
     return (
         <div className="patient-dashboard-wrapper bg-[var(--background-light)] dark:bg-[var(--background-dark)] text-slate-800 dark:text-slate-100 flex h-screen w-full overflow-hidden">
             {/* Theme Toggle styling */}
@@ -124,7 +137,7 @@ function PatientDashboard() {
                         <span className="material-symbols-outlined text-[20px]">calendar_today</span>
                         Appointments
                     </Link>
-                    <Link to="#" className="flex items-center gap-3 px-4 py-3 text-slate-500 dark:text-slate-400 hover:bg-white/50 dark:hover:bg-white/5 transition rounded-xl">
+                    <Link to="/patient/messages" className="flex items-center gap-3 px-4 py-3 text-slate-500 dark:text-slate-400 hover:bg-white/50 dark:hover:bg-white/5 transition rounded-xl">
                         <span className="material-symbols-outlined text-[20px]">chat_bubble_outline</span>
                         Messages
                     </Link>
@@ -138,7 +151,7 @@ function PatientDashboard() {
                     </Link>
                 </nav>
                 <div className="space-y-2 mt-auto pt-6 border-t border-white/20 dark:border-slate-800/50">
-                    <Link to="#" className="flex items-center gap-3 px-4 py-3 text-slate-500 dark:text-slate-400 hover:bg-white/50 dark:hover:bg-white/5 transition rounded-xl">
+                    <Link to="/patient/support" className="flex items-center gap-3 px-4 py-3 text-slate-500 dark:text-slate-400 hover:bg-white/50 dark:hover:bg-white/5 transition rounded-xl">
                         <span className="material-symbols-outlined text-[20px]">favorite_border</span>
                         Support
                     </Link>
@@ -164,9 +177,11 @@ function PatientDashboard() {
                         </div>
                         <div className="flex items-center gap-3 glass-card px-4 py-2 rounded-2xl">
                             <div className="w-8 h-8 rounded-full bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center">
-                                <div className="w-2 h-2 rounded-full bg-emerald-500"></div>
+                                <div className={`w-2 h-2 rounded-full ${patientDetails?.status === 'active' || user?.status === 'active' ? 'bg-emerald-500' : 'bg-amber-500'}`}></div>
                             </div>
-                            <span className="text-sm font-semibold text-slate-800 dark:text-slate-100">Active Status</span>
+                            <span className="text-sm font-semibold text-slate-800 dark:text-slate-100 capitalize">
+                                {patientDetails?.status || user?.status || 'Active'} Status
+                            </span>
                         </div>
                     </div>
                     <div className="grid grid-cols-2 gap-6">
@@ -305,43 +320,50 @@ function PatientDashboard() {
             <aside className="w-80 flex-shrink-0 border-l border-slate-200 dark:border-slate-800/50 p-6 glass-panel flex flex-col h-full overflow-y-auto">
                 <h3 className="text-xl font-bold mb-6 text-slate-800 dark:text-slate-100">Search Records</h3>
                 <div className="relative mb-8">
-                    <input className="w-full bg-white dark:bg-slate-800/50 border-none rounded-2xl py-3 pl-12 pr-4 text-sm focus:ring-2 focus:ring-indigo-500 shadow-sm text-slate-800 dark:text-slate-100" placeholder="Search files, tests..." type="text" />
+                    <input
+                        className="w-full bg-white dark:bg-slate-800/50 border-none rounded-2xl py-3 pl-12 pr-4 text-sm focus:ring-2 focus:ring-indigo-500 shadow-sm text-slate-800 dark:text-slate-100"
+                        placeholder="Search files, tests..."
+                        type="text"
+                        value={dashboardSearch}
+                        onChange={(e) => setDashboardSearch(e.target.value)}
+                        onKeyDown={handleDashboardSearch}
+                    />
                     <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-slate-400">search</span>
                 </div>
                 <div className="grid grid-cols-3 gap-3 mb-10">
-                    <div className="glass-card rounded-2xl p-4 flex flex-col items-center gap-2 cursor-pointer hover:bg-white dark:hover:bg-white/10 transition">
+                    <div onClick={() => handleSpecialtyClick('General')} className="glass-card rounded-2xl p-4 flex flex-col items-center gap-2 cursor-pointer hover:bg-white dark:hover:bg-white/10 transition">
                         <span className="material-symbols-outlined text-indigo-500 text-xl">add</span>
                         <span className="text-[9px] font-bold text-slate-500 dark:text-slate-300 uppercase">General</span>
                     </div>
-                    <div className="glass-card rounded-2xl p-4 flex flex-col items-center gap-2 cursor-pointer hover:bg-white dark:hover:bg-white/10 transition">
+                    <div onClick={() => handleSpecialtyClick('Pediatrics')} className="glass-card rounded-2xl p-4 flex flex-col items-center gap-2 cursor-pointer hover:bg-white dark:hover:bg-white/10 transition">
                         <span className="material-symbols-outlined text-indigo-500 text-xl">child_care</span>
                         <span className="text-[9px] font-bold text-slate-500 dark:text-slate-300 uppercase text-center leading-none">Peds</span>
                     </div>
-                    <div className="glass-card rounded-2xl p-4 flex flex-col items-center gap-2 cursor-pointer hover:bg-white dark:hover:bg-white/10 transition">
+                    <div onClick={() => handleSpecialtyClick('OBGYN')} className="glass-card rounded-2xl p-4 flex flex-col items-center gap-2 cursor-pointer hover:bg-white dark:hover:bg-white/10 transition">
                         <span className="material-symbols-outlined text-indigo-500 text-xl">favorite</span>
                         <span className="text-[9px] font-bold text-slate-500 dark:text-slate-300 uppercase text-center leading-none">OBGYN</span>
                     </div>
-                    <div className="glass-card rounded-2xl p-4 flex flex-col items-center gap-2 cursor-pointer hover:bg-white dark:hover:bg-white/10 transition">
+                    <div onClick={() => handleSpecialtyClick('Internal Medicine')} className="glass-card rounded-2xl p-4 flex flex-col items-center gap-2 cursor-pointer hover:bg-white dark:hover:bg-white/10 transition">
                         <span className="material-symbols-outlined text-indigo-500 text-xl">monitor_heart</span>
                         <span className="text-[9px] font-bold text-slate-500 dark:text-slate-300 uppercase text-center leading-none">Internal</span>
                     </div>
-                    <div className="glass-card rounded-2xl p-4 flex flex-col items-center gap-2 cursor-pointer hover:bg-white dark:hover:bg-white/10 transition">
+                    <div onClick={() => handleSpecialtyClick('Dermatology')} className="glass-card rounded-2xl p-4 flex flex-col items-center gap-2 cursor-pointer hover:bg-white dark:hover:bg-white/10 transition">
                         <span className="material-symbols-outlined text-indigo-500 text-xl">spa</span>
                         <span className="text-[9px] font-bold text-slate-500 dark:text-slate-300 uppercase text-center leading-none">Derma</span>
                     </div>
-                    <div className="glass-card rounded-2xl p-4 flex flex-col items-center gap-2 cursor-pointer hover:bg-white dark:hover:bg-white/10 transition">
+                    <div onClick={() => handleSpecialtyClick('Mental Health')} className="glass-card rounded-2xl p-4 flex flex-col items-center gap-2 cursor-pointer hover:bg-white dark:hover:bg-white/10 transition">
                         <span className="material-symbols-outlined text-indigo-500 text-xl">psychology</span>
                         <span className="text-[9px] font-bold text-slate-500 dark:text-slate-300 uppercase text-center leading-none">Mental</span>
                     </div>
-                    <div className="glass-card rounded-2xl p-4 flex flex-col items-center gap-2 cursor-pointer hover:bg-white dark:hover:bg-white/10 transition">
+                    <div onClick={() => handleSpecialtyClick('Cardiology')} className="glass-card rounded-2xl p-4 flex flex-col items-center gap-2 cursor-pointer hover:bg-white dark:hover:bg-white/10 transition">
                         <span className="material-symbols-outlined text-indigo-500 text-xl">favorite_border</span>
                         <span className="text-[9px] font-bold text-slate-500 dark:text-slate-300 uppercase text-center leading-none">Cardio</span>
                     </div>
-                    <div className="glass-card rounded-2xl p-4 flex flex-col items-center gap-2 cursor-pointer hover:bg-white dark:hover:bg-white/10 transition">
+                    <div onClick={() => handleSpecialtyClick('Orthopedics')} className="glass-card rounded-2xl p-4 flex flex-col items-center gap-2 cursor-pointer hover:bg-white dark:hover:bg-white/10 transition">
                         <span className="material-symbols-outlined text-indigo-500 text-xl">hardware</span>
                         <span className="text-[9px] font-bold text-slate-500 dark:text-slate-300 uppercase text-center leading-none">Ortho</span>
                     </div>
-                    <div className="glass-card rounded-2xl p-4 flex flex-col items-center gap-2 cursor-pointer hover:bg-white dark:hover:bg-white/10 transition">
+                    <div onClick={() => handleSpecialtyClick('Infectious Disease')} className="glass-card rounded-2xl p-4 flex flex-col items-center gap-2 cursor-pointer hover:bg-white dark:hover:bg-white/10 transition">
                         <span className="material-symbols-outlined text-indigo-500 text-xl">security</span>
                         <span className="text-[9px] font-bold text-slate-500 dark:text-slate-300 uppercase text-center leading-none">Disease</span>
                     </div>

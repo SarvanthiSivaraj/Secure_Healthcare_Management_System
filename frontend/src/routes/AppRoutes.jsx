@@ -40,6 +40,8 @@ import Profile from '../pages/common/Profile';
 import LandingPage from '../pages/LandingPage';
 import ReceptionistVisitManagement from '../pages/receptionist/ReceptionistVisitManagement';
 import PatientRegistration from '../pages/staff/PatientRegistration';
+import Support from '../pages/patient/Support';
+import Messages from '../pages/patient/Messages';
 
 function AppRoutes() {
     return (
@@ -91,6 +93,24 @@ function AppRoutes() {
                 element={
                     <ProtectedRoute allowedRoles={['patient']}>
                         <Visits />
+                    </ProtectedRoute>
+                }
+            />
+
+            <Route
+                path="/patient/messages"
+                element={
+                    <ProtectedRoute allowedRoles={['patient']}>
+                        <Messages />
+                    </ProtectedRoute>
+                }
+            />
+
+            <Route
+                path="/patient/support"
+                element={
+                    <ProtectedRoute allowedRoles={['patient']}>
+                        <Support />
                     </ProtectedRoute>
                 }
             />

@@ -78,14 +78,15 @@ class DoctorVerificationService {
     static async getPendingVerifications() {
         try {
             const query = `
-                SELECT u.id, u.email, u.first_name, u.last_name, u.role,
+                SELECT u.id, u.email, u.first_name, u.last_name, r.name as role,
                        u.verification_status, u.created_at,
                        COUNT(vd.id) as document_count
                 FROM users u
+                JOIN roles r ON u.role_id = r.id
                 LEFT JOIN verification_documents vd ON u.id = vd.user_id
                 WHERE u.verification_status = 'pending'
-                AND u.role = 'doctor'
-                GROUP BY u.id
+                AND r.name = 'doctor'
+                GROUP BY u.id, u.email, u.first_name, u.last_name, r.name, u.verification_status, u.created_at
                 ORDER BY u.created_at ASC;
             `;
 
@@ -107,6 +108,7 @@ class DoctorVerificationService {
                 UPDATE users
                 SET verification_status = 'verified',
                     account_status = 'active',
+                    status = 'active',
                     verified_at = CURRENT_TIMESTAMP,
                     verified_by = $2,
                     verification_notes = $3
@@ -249,8 +251,9 @@ class DoctorVerificationService {
                     COUNT(*) FILTER (WHERE verification_status = 'verified') as verified,
                     COUNT(*) FILTER (WHERE verification_status = 'rejected') as rejected,
                     COUNT(*) FILTER (WHERE verification_status = 'unverified') as unverified
-                FROM users
-                WHERE role = 'doctor';
+                FROM users u
+                JOIN roles r ON u.role_id = r.id
+                WHERE r.name = 'doctor';
             `;
 
             const result = await db.query(query);

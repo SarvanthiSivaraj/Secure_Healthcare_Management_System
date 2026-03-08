@@ -101,7 +101,7 @@ function DoctorDashboard() {
                     </Link>
                     <Link to="/doctor/patients" className="flex items-center gap-3 px-4 py-3 text-slate-500 dark:text-slate-400 hover:bg-white/50 dark:hover:bg-white/5 transition rounded-xl">
                         <span className="material-symbols-outlined text-[20px]">folder_shared</span>
-                        Patient Records
+                        Records
                     </Link>
                     <Link to="/doctor/active-visits" className="flex items-center gap-3 px-4 py-3 text-slate-500 dark:text-slate-400 hover:bg-white/50 dark:hover:bg-white/5 transition rounded-xl">
                         <span className="material-symbols-outlined text-[20px]">calendar_today</span>
@@ -131,24 +131,22 @@ function DoctorDashboard() {
 
             {/* Main Content */}
             <main className="flex-grow p-8 overflow-y-auto h-full relative">
-                {/* Header */}
                 <header className="mb-10">
                     <div className="flex items-center justify-between mb-8">
                         <div>
-                            <h2 className="text-3xl font-bold text-slate-900 dark:text-white">Doctor Portal</h2>
+                            <h2 className="text-3xl font-bold text-slate-900 dark:text-white">Doctor Portals</h2>
                             <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">
-                                Dr. {user?.firstName || 'Doctor'} {user?.lastName || ''} • License: {user?.licenseNumber || 'N/A'}
+                                Dr. {user?.firstName} {user?.lastName} • License: {user?.licenseNumber || 'N/A'}
                             </p>
                         </div>
                         <div className="flex items-center gap-3 doctor-glass-card px-4 py-2 rounded-2xl">
                             <div className="w-8 h-8 rounded-full bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center">
-                                <div className="w-2 h-2 rounded-full bg-emerald-500"></div>
+                                <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
                             </div>
-                            <span className="text-sm font-semibold text-slate-800 dark:text-slate-100">Active Physician</span>
+                            <span className="text-sm font-semibold text-slate-800 dark:text-slate-100 uppercase tracking-tighter">Active Physician</span>
                         </div>
                     </div>
 
-                    {/* Clinical Services Cards */}
                     <div className="grid grid-cols-2 gap-6">
                         {NAV_CARDS.map((card) => {
                             const c = COLOR_MAP[card.color];
@@ -167,46 +165,100 @@ function DoctorDashboard() {
                                     <h4 className="text-lg font-bold mb-1 text-slate-800 dark:text-slate-100">{card.title}</h4>
                                     <p className="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wider font-semibold mb-4">Clinical Services</p>
                                     <div className={`${c.accent} p-4 rounded-2xl border`}>
-                                        <div className="flex items-center gap-3">
-                                            <span className="text-sm font-medium text-slate-700 dark:text-slate-200">{card.description}</span>
-                                        </div>
+                                        <p className="text-sm font-medium text-slate-700 dark:text-slate-200">{card.description}</p>
                                     </div>
                                 </div>
                             );
                         })}
                     </div>
                 </header>
+
+                <div className="grid grid-cols-2 gap-8">
+                    <section>
+                        <h4 className="text-xl font-bold text-slate-800 dark:text-slate-100 mb-4 flex items-center gap-2">
+                            <span className="w-1 h-5 bg-indigo-500 rounded-full inline-block" />
+                            Recent Patient Activity
+                        </h4>
+                        <div className="doctor-glass-card rounded-3xl p-6 space-y-4">
+                            <p className="text-sm text-slate-500 dark:text-slate-400 text-center py-8 italic">No recent patient activities reported.</p>
+                        </div>
+                    </section>
+                    <section>
+                        <h4 className="text-xl font-bold text-slate-800 dark:text-slate-100 mb-4 flex items-center gap-2">
+                            <span className="w-1 h-5 bg-teal-500 rounded-full inline-block" />
+                            Upcoming Consultations
+                        </h4>
+                        <div className="doctor-glass-card rounded-3xl p-6 text-center py-10">
+                            <span className="material-symbols-outlined text-4xl text-slate-300 dark:text-slate-600 mb-3">event_note</span>
+                            <p className="text-sm font-medium text-slate-500 dark:text-slate-400">Your schedule for today is currently clear.</p>
+                        </div>
+                    </section>
+                </div>
             </main>
 
-            {/* Right Panel */}
             <aside className="w-80 flex-shrink-0 border-l border-slate-200 dark:border-slate-800/50 p-6 doctor-glass-panel flex flex-col h-full overflow-y-auto">
-                {/* Stats */}
-                <h3 className="text-xl font-bold mb-6 text-slate-800 dark:text-slate-100">Overview</h3>
+                <div className="flex items-center justify-between mb-6">
+                    <h3 className="text-xl font-bold text-slate-800 dark:text-slate-100 uppercase tracking-tight">Clinical Pulse</h3>
+                    <div className="flex gap-1">
+                        <span className="w-1.5 h-1.5 rounded-full bg-teal-500 animate-pulse" />
+                        <span className="w-1.5 h-1.5 rounded-full bg-teal-500/40" />
+                    </div>
+                </div>
+
                 <div className="grid grid-cols-2 gap-3 mb-8">
                     {STATS.map((stat, idx) => (
-                        <div key={idx} className="doctor-glass-card rounded-2xl p-4 flex flex-col items-center gap-2">
-                            <span className="material-symbols-outlined text-indigo-500 text-xl">{stat.icon}</span>
-                            <span className="text-2xl font-bold text-slate-800 dark:text-slate-100">{stat.value}</span>
-                            <span className="text-[9px] font-bold text-slate-500 dark:text-slate-300 uppercase text-center leading-none">{stat.label}</span>
+                        <div key={idx} className="doctor-glass-card rounded-2xl p-4 flex flex-col items-center gap-2 border-b-2 border-b-teal-500/20">
+                            <span className="material-symbols-outlined text-teal-500 text-xl">{stat.icon}</span>
+                            <span className="text-2xl font-black text-slate-800 dark:text-slate-100">{stat.value}</span>
+                            <span className="text-[9px] font-bold text-slate-500 dark:text-slate-300 uppercase text-center leading-none tracking-wider">{stat.label}</span>
                         </div>
                     ))}
                 </div>
 
-                {/* Emergency Access */}
-                <h3 className="text-xl font-bold mb-4 text-slate-800 dark:text-slate-100">Emergency Access</h3>
-                <div className="doctor-glass-card rounded-2xl p-4 mb-6">
+                {/* Clinical Efficiency */}
+                <h3 className="text-sm font-black mb-4 text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                    <span className="material-symbols-outlined text-sm">analytics</span>
+                    Efficiency Metrics
+                </h3>
+                <div className="space-y-4 mb-8">
+                    <div className="doctor-glass-card p-4 rounded-2xl">
+                        <div className="flex justify-between text-[10px] font-bold text-slate-500 mb-2 uppercase tracking-wider">
+                            <span>Avg. Consultation</span>
+                            <span className="text-teal-500">14.2 min</span>
+                        </div>
+                        <div className="w-full h-1 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+                            <div className="h-full bg-teal-500 rounded-full" style={{ width: '65%' }} />
+                        </div>
+                    </div>
+                    <div className="doctor-glass-card p-4 rounded-2xl">
+                        <div className="flex justify-between text-[10px] font-bold text-slate-500 mb-2 uppercase tracking-wider">
+                            <span>Patient Satisfaction</span>
+                            <span className="text-teal-500">4.9/5.0</span>
+                        </div>
+                        <div className="w-full h-1 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+                            <div className="h-full bg-teal-500 rounded-full" style={{ width: '92%' }} />
+                        </div>
+                    </div>
+                </div>
+
+                <h3 className="text-xl font-bold mb-4 text-slate-800 dark:text-slate-100">Care Protocols</h3>
+                <div className="doctor-glass-card rounded-2xl p-6 mb-8 border-l-4 border-l-rose-500 bg-rose-50/10">
                     <EmergencyToggle
                         isActive={emergencyMode}
                         onToggle={setEmergencyMode}
                     />
+                    <p className="text-[10px] text-slate-400 mt-4 leading-relaxed font-medium tracking-tight uppercase">Emergency override grants read-access to critical patient EMRs. System-wide audit active.</p>
                 </div>
 
-                {/* Quick Info */}
-                <div className="mt-auto">
-                    <div className="bg-white/50 dark:bg-slate-800/30 rounded-2xl p-4 border border-white/50 dark:border-slate-700/50 text-center">
-                        <span className="material-symbols-outlined text-3xl text-slate-300 dark:text-slate-600 mb-2">medical_information</span>
-                        <p className="text-sm font-medium text-slate-500 dark:text-slate-400 mt-2">Patient Care &amp; Medical Records Management</p>
-                        <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">&copy; 2026 SecureHealth Systems</p>
+                <div className="mt-auto pt-6">
+                    <div className="bg-gradient-to-br from-teal-600 to-sky-700 rounded-3xl p-6 text-white relative overflow-hidden group">
+                        <div className="absolute -right-4 -top-4 w-20 h-20 bg-white/10 rounded-full group-hover:scale-150 transition-transform duration-700" />
+                        <p className="text-[10px] font-bold uppercase tracking-widest opacity-80 mb-1">Clinic Status</p>
+                        <h4 className="text-xl font-black italic mb-3">Optimal Flow</h4>
+                        <div className="flex items-center gap-2">
+                            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                            <p className="text-[10px] font-medium opacity-90">All systems verified</p>
+                        </div>
                     </div>
                 </div>
             </aside>

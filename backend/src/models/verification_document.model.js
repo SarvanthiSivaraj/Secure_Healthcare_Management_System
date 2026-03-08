@@ -62,9 +62,10 @@ class VerificationDocument {
             SELECT vd.*, 
                    u.first_name || ' ' || u.last_name as user_name,
                    u.email as user_email,
-                   u.role as user_role
+                   r.name as user_role
             FROM verification_documents vd
             JOIN users u ON vd.user_id = u.id
+            JOIN roles r ON u.role_id = r.id
             WHERE vd.status = 'pending'
             ORDER BY vd.created_at ASC;
         `;

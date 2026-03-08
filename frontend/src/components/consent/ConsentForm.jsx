@@ -48,52 +48,23 @@ function ConsentForm({ onSuccess, onCancel, initialData }) {
         }
     }, [initialData]);
 
-    // Calculate end time and update live
-    useEffect(() => {
-        const interval = setInterval(() => {
-            if (isUnlimited) {
-                setFormData(prev => {
-                    if (prev.endTime !== '') {
-                        return { ...prev, endTime: '' };
-                    }
-                    return prev;
-                });
-                return;
-            }
+    // Calculate Effective End Time for display
+    const calculateEffectiveEndTime = () => {
+        if (isUnlimited) return null;
 
-            // Let's calculate End Time first.
-            let startDate;
-            const now = new Date();
+        const now = new Date();
+        const inputDate = new Date(formData.startTime);
+        const todayDate = new Date(now.toISOString().split('T')[0]);
 
-            // Create date object from input (UTC midnight)
-            const inputDate = new Date(formData.startTime);
-            // Create date object for "today" (UTC midnight) derived from NOW
-            const todayDate = new Date(now.toISOString().split('T')[0]);
+        const startDate = inputDate.getTime() <= todayDate.getTime() ? now : inputDate;
+        const totalSeconds = (parseInt(duration.hours || 0) * 3600) +
+            (parseInt(duration.minutes || 0) * 60) +
+            (parseInt(duration.seconds || 0));
 
-            // If selected date is today (or past in case of weirdness), use NOW as start time
-            if (inputDate.getTime() <= todayDate.getTime()) {
-                startDate = now;
-            } else {
-                startDate = inputDate;
-            }
+        return new Date(startDate.getTime() + totalSeconds * 1000);
+    };
 
-            // Let's calculate target end date.
-            const totalSeconds = (parseInt(duration.hours || 0) * 3600) +
-                (parseInt(duration.minutes || 0) * 60) +
-                (parseInt(duration.seconds || 0));
-
-            const end = new Date(startDate.getTime() + totalSeconds * 1000);
-
-            setFormData(prev => {
-                const newEndTime = end.toISOString();
-                if (prev.endTime !== newEndTime) return { ...prev, endTime: newEndTime };
-                return prev;
-            });
-
-        }, 1000);
-
-        return () => clearInterval(interval);
-    }, [duration, formData.startTime, isUnlimited]);
+    const displayEndTime = calculateEffectiveEndTime();
 
     const handleDurationChange = (e) => {
         const { name, value } = e.target;
@@ -102,9 +73,11 @@ function ConsentForm({ onSuccess, onCancel, initialData }) {
             [name]: Math.max(0, parseInt(value) || 0)
         }));
     };
+
     useEffect(() => {
         loadDoctors();
     }, []);
+
     const loadDoctors = async () => {
         try {
             const data = await consentApi.getAvailableDoctors();
@@ -113,6 +86,7 @@ function ConsentForm({ onSuccess, onCancel, initialData }) {
             console.error('Failed to load doctors:', err);
         }
     };
+
     const handleChange = (e) => {
         const { name, value, type, checked } = e.target;
         setFormData({
@@ -120,47 +94,34 @@ function ConsentForm({ onSuccess, onCancel, initialData }) {
             [name]: type === 'checkbox' ? checked : value,
         });
     };
+
     const handleSubmit = async (e) => {
         e.preventDefault();
         setLoading(true);
         setError('');
 
         try {
-            // Prepare submission data
             const submitData = { ...formData };
+            const effectiveEnd = calculateEffectiveEndTime();
 
-            // If start date is today, use current time as start time
-            // This prevents issues where "Today 00:00" vs "Today 14:00" causes validation errors
-            // or where calculated endTime is properly in the future but startTime is ambiguous.
-            const now = new Date();
+            if (isUnlimited) {
+                submitData.endTime = null;
+            } else if (effectiveEnd) {
+                submitData.endTime = effectiveEnd.toISOString();
 
-            // Create date object from input (UTC midnight)
-            const inputDate = new Date(submitData.startTime);
-            // Create date object for "today" (UTC midnight) derived from NOW
-            // Create date object for "today" (UTC midnight) derived from NOW
-            const todayDate = new Date(now.toISOString().split('T')[0]);
-
-            // If selected date is today (or past), use NOW as start time
-            if (inputDate.getTime() <= todayDate.getTime()) {
-                submitData.startTime = now.toISOString();
-
-                // Recalculate endTime based on this precise start time + duration to be absolutely sure
-                if (!isUnlimited) {
-                    const totalSeconds = (parseInt(duration.hours || 0) * 3600) +
-                        (parseInt(duration.minutes || 0) * 60) +
-                        (parseInt(duration.seconds || 0));
-                    const end = new Date(now.getTime() + totalSeconds * 1000);
-                    submitData.endTime = end.toISOString();
+                // If the start date was "today", the effective calculation used "now" 
+                // which is exactly what we want to send to the backend.
+                const now = new Date();
+                const inputDate = new Date(submitData.startTime);
+                const todayDate = new Date(now.toISOString().split('T')[0]);
+                if (inputDate.getTime() <= todayDate.getTime()) {
+                    submitData.startTime = now.toISOString();
                 }
             }
 
             if (initialData) {
-                // Update existing consent
-                // Ensure we send all necessary fields, especially recipientUserId which might be disabled in UI
-                // The state `formData` should already have it, but let's be sure.
                 await consentApi.updateConsent(initialData.id, submitData);
             } else {
-                // Create new consent
                 await consentApi.grantConsent(submitData);
             }
             onSuccess();
@@ -309,9 +270,9 @@ function ConsentForm({ onSuccess, onCancel, initialData }) {
                     {isUnlimited ? (
                         <strong>♾️ Access will be valid indefinitely (Unlimited)</strong>
                     ) : (
-                        formData.endTime && (
+                        displayEndTime && (
                             <>
-                                📅 Access will expire on: <strong>{new Date(formData.endTime).toLocaleString()}</strong>
+                                📅 Access will expire on: <strong>{displayEndTime.toLocaleString()}</strong>
                                 <br />
                                 ⏳ Expires in: <strong>{duration.hours}h {duration.minutes}m {duration.seconds}s</strong>
                             </>

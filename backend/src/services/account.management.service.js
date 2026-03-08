@@ -133,15 +133,10 @@ class AccountManagementService {
     static async getAccountStatus(userId) {
         try {
             const query = `
-                SELECT u.id, u.email, u.first_name, u.last_name, u.role,
-                       u.account_status, u.verification_status,
-                       u.suspended_at, u.suspension_reason,
-                       u.verified_at, u.verification_notes,
-                       su.first_name || ' ' || su.last_name as suspended_by_name,
-                       vu.first_name || ' ' || vu.last_name as verified_by_name
+                SELECT u.id, u.email, u.first_name, u.last_name, r.name as role,
+                       u.status, u.is_verified, u.created_at
                 FROM users u
-                LEFT JOIN users su ON u.suspended_by = su.id
-                LEFT JOIN users vu ON u.verified_by = vu.id
+                JOIN roles r ON u.role_id = r.id
                 WHERE u.id = $1;
             `;
 

@@ -47,7 +47,7 @@ const VisitController = {
                 organizationId: organization.id,
                 reason,
                 symptoms,
-                type: 'walk_in', // Default for code entry
+                type: doctorId ? 'appointment' : 'walk_in',
                 priority: 'normal',
                 doctorId
             });

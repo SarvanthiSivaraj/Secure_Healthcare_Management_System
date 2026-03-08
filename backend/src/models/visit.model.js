@@ -14,28 +14,25 @@ class VisitModel {
             symptoms,
             type,
             priority,
-            doctorId // newly extracted
+            doctorId
         } = visitData;
-
-        const combinedSymptoms = reason && symptoms
-            ? `Reason: ${reason} | Symptoms: ${symptoms}`
-            : (reason || symptoms || null);
 
         // Generate a random 8-character alphanumeric visit code
         const visitCode = 'V-' + Math.random().toString(36).substring(2, 8).toUpperCase() + Math.floor(Math.random() * 10);
 
         const query = `
             INSERT INTO visits (
-                patient_id, organization_id, symptoms, type, priority, status, assigned_doctor_id, visit_code
+                patient_id, organization_id, reason, symptoms, type, priority, status, assigned_doctor_id, visit_code
             )
-            VALUES ($1, $2, $3, $4, $5, 'pending', $6, $7)
+            VALUES ($1, $2, $3, $4, $5, $6, 'pending', $7, $8)
             RETURNING *
         `;
 
         const values = [
             patientId,
             organizationId,
-            combinedSymptoms,
+            reason || null,
+            symptoms || null,
             type || 'walk_in',
             priority || 'normal',
             doctorId || null,
@@ -303,18 +300,21 @@ class VisitModel {
             SELECT 
                 v.*,
                 u.first_name as patient_first_name,
-                u.last_name as patient_last_name,
-                u.email as patient_email,
+                u_p.first_name as patient_first_name,
+                u_p.last_name as patient_last_name,
+                u_p.email as patient_email,
                 p.unique_health_id,
-                d.first_name as doctor_first_name,
-                d.last_name as doctor_last_name,
-                o.name as organization_name
+                u_s.first_name as doctor_first_name,
+                u_s.last_name as doctor_last_name,
+                r_u.name as user_role
             FROM visits v
-            JOIN users u ON v.patient_id = u.id
-            LEFT JOIN patient_profiles p ON u.id = p.user_id
-            LEFT JOIN users d ON v.assigned_doctor_id = d.id
-            LEFT JOIN organizations o ON v.organization_id = o.id
-            WHERE v.id = $1
+            JOIN patient_profiles p ON v.patient_id = p.id
+            JOIN users u_p ON p.user_id = u_p.id
+            LEFT JOIN staff_profiles s ON v.assigned_doctor_id = s.id
+            LEFT JOIN users u_s ON s.user_id = u_s.id
+            LEFT JOIN users u ON v.created_by = u.id
+            LEFT JOIN roles r_u ON u.role_id = r_u.id
+            WHERE v.id = $1;
         `;
 
         const result = await pool.query(query, [visitId]);
