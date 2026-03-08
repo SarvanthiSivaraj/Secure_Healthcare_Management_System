@@ -1,18 +1,68 @@
 import React, { useContext, useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { AuthContext } from '../../context/AuthContext';
+import ThemeToggle from '../../components/common/ThemeToggle';
 import apiClient from '../../api/client';
-import './HospitalAdminDashboard.css';
+import '../patient/Dashboard.css';
 
-function HospitalAdminDashboard() {
-    const { user, logout } = useContext(AuthContext);
+// ─── Shared Admin Sidebar ─────────────────────────────────────────────────────
+export function AdminSidebar({ active }) {
     const navigate = useNavigate();
-    const [stats, setStats] = useState({
-        totalStaff: 0,
-        activeDoctors: 0,
-        pendingVisits: 0,
-        totalPatients: 0,
-    });
+    const { logout } = useContext(AuthContext);
+
+    const links = [
+        { to: '/admin/dashboard', icon: 'grid_view', label: 'Overview' },
+        { to: '/admin/staff', icon: 'manage_accounts', label: 'Staff Management' },
+        { to: '/admin/doctor-verification', icon: 'verified_user', label: 'Doctor Verification' },
+        { to: '/admin/users', icon: 'group', label: 'User Management' },
+        { to: '/admin/audit-logs', icon: 'receipt_long', label: 'Audit Logs' },
+    ];
+
+    return (
+        <aside className="w-64 flex-shrink-0 border-r border-slate-200 dark:border-slate-800/50 p-6 flex flex-col h-full overflow-y-auto z-20">
+            <div className="flex items-center gap-3 mb-10 px-2 cursor-pointer group" onClick={() => navigate('/admin/dashboard')}>
+                <div className="relative">
+                    <div className="absolute inset-0 bg-violet-500 blur-lg opacity-0 group-hover:opacity-60 transition-opacity duration-500 rounded-full" />
+                    <div className="relative w-10 h-10 bg-violet-600 rounded-xl flex items-center justify-center text-white shadow-lg transform transition-all duration-500 group-hover:scale-110 group-hover:-rotate-3">
+                        <span className="material-symbols-outlined text-xl">local_hospital</span>
+                    </div>
+                </div>
+                <h1 className="text-xl font-bold tracking-tight text-slate-800 dark:text-white group-hover:text-violet-600 dark:group-hover:text-violet-400 transition-colors">Medicare</h1>
+            </div>
+
+            <nav className="space-y-1 flex-grow">
+                {links.map(link => {
+                    const isActive = active === link.to;
+                    return (
+                        <Link
+                            key={link.to}
+                            to={link.to}
+                            className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all ${isActive
+                                ? 'sidebar-item-active text-slate-800 dark:text-slate-800 shadow-sm'
+                                : 'text-slate-500 dark:text-slate-400 hover:bg-white/50 dark:hover:bg-white/5'
+                                }`}
+                        >
+                            <span className="material-symbols-outlined text-[20px]">{link.icon}</span>
+                            {link.label}
+                        </Link>
+                    );
+                })}
+            </nav>
+
+            <div className="mt-auto pt-6 border-t border-slate-200 dark:border-slate-800/50">
+                <button onClick={logout} className="w-full flex items-center justify-start gap-3 px-4 py-3 text-rose-500 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-900/20 transition rounded-xl font-medium text-sm">
+                    <span className="material-symbols-outlined text-[20px]">logout</span>Sign Out
+                </button>
+            </div>
+        </aside>
+    );
+}
+
+// ─── Main Dashboard ────────────────────────────────────────────────────────────
+function HospitalAdminDashboard() {
+    const { user } = useContext(AuthContext);
+    const navigate = useNavigate();
+    const [stats, setStats] = useState({ totalStaff: 0, activeDoctors: 0, pendingVisits: 0, totalPatients: 0 });
     const [statsLoading, setStatsLoading] = useState(true);
 
     useEffect(() => {
@@ -30,172 +80,102 @@ function HospitalAdminDashboard() {
         fetchStats();
     }, []);
 
+    const navCards = [
+        { path: '/admin/staff', icon: 'manage_accounts', color: 'indigo', title: 'Staff Management', desc: 'Invite staff members and manage invitations' },
+        { path: '/admin/doctor-verification', icon: 'verified_user', color: 'teal', title: 'Doctor Verification', desc: 'Review and approve doctor registrations' },
+        { path: '/admin/users', icon: 'group', color: 'violet', title: 'User Management', desc: 'Manage accounts, roles and access permissions' },
+        { path: '/admin/audit-logs', icon: 'receipt_long', color: 'rose', title: 'Audit Logs', desc: 'Review system activity and security trails' },
+    ];
+
+    const statCards = [
+        { label: 'Total Staff', value: stats.totalStaff, icon: 'manage_accounts', color: 'indigo' },
+        { label: 'Active Doctors', value: stats.activeDoctors, icon: 'stethoscope', color: 'teal' },
+        { label: 'Pending Visits', value: stats.pendingVisits, icon: 'pending_actions', color: 'amber', onClick: () => navigate('/admin/visits', { state: { activeTab: 'pending' } }) },
+        { label: 'Total Patients', value: stats.totalPatients, icon: 'favorite', color: 'rose' },
+    ];
+
     return (
-        <div className="ha-container">
+        <div className="patient-dashboard-wrapper bg-[var(--background-light)] dark:bg-[var(--background-dark)] text-slate-800 dark:text-slate-100 flex h-screen w-full overflow-hidden">
+            <div className="absolute top-4 right-4 z-50"><ThemeToggle /></div>
 
-            {/* ── Header ── */}
-            <header className="ha-header">
-                <div className="ha-header-inner">
-                    <div className="ha-header-left">
-                        <div className="ha-header-icon">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l8.78-8.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>
+            <AdminSidebar active="/admin/dashboard" />
+
+            <main className="flex-grow p-4 md:p-8 overflow-y-auto h-full relative">
+                {/* Header */}
+                <header className="mb-8">
+                    <div className="flex items-center justify-between mb-8">
+                        <div>
+                            <h2 className="text-3xl font-bold text-slate-900 dark:text-white">Hospital Admin Portal</h2>
+                            <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">Hospital Administration &amp; Staff Management</p>
                         </div>
-                        <div className="ha-header-text">
-                            <h1 className="ha-header-title">Hospital Admin Dashboard</h1>
-                            <p className="ha-header-subtitle">Hospital Administration & Staff Management</p>
+                        <div className="flex items-center gap-3 glass-card px-4 py-2 rounded-2xl">
+                            <div className="w-8 h-8 rounded-full bg-violet-100 dark:bg-violet-900/30 flex items-center justify-center">
+                                <div className="w-2 h-2 rounded-full bg-violet-500 animate-pulse" />
+                            </div>
+                            <div>
+                                <p className="text-sm font-semibold text-slate-800 dark:text-slate-100">{user?.firstName} {user?.lastName}</p>
+                                <p className="text-xs text-slate-500 dark:text-slate-400">Hospital Administrator · Full Access</p>
+                            </div>
                         </div>
                     </div>
-                    <div className="ha-header-right">
-                        <button className="ha-header-profile-btn" onClick={() => navigate('/profile')} title="View Profile">
-                            <svg className="w-5 h-5" fill="none" stroke="#fff" viewBox="0 0 24 24" strokeWidth="2">
-                                <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                            </svg>
-                        </button>
-                        <button className="ha-header-signout" onClick={logout}>Sign Out</button>
+
+                    {/* Stat Cards */}
+                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
+                        <div className="glass-card p-6 rounded-3xl bg-indigo-50/50 dark:bg-indigo-900/10 border border-indigo-100 dark:border-indigo-900/30">
+                            <div className="w-12 h-12 rounded-2xl bg-indigo-100 dark:bg-indigo-900/30 flex items-center justify-center text-indigo-600 dark:text-indigo-400 mb-4">
+                                <span className="material-symbols-outlined text-2xl">manage_accounts</span>
+                            </div>
+                            <p className="text-4xl font-black text-indigo-600 dark:text-indigo-400">{statsLoading ? '—' : stats.totalStaff}</p>
+                            <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 mt-1 uppercase tracking-wider">Total Staff</p>
+                        </div>
+                        <div className="glass-card p-6 rounded-3xl bg-teal-50/50 dark:bg-teal-900/10 border border-teal-100 dark:border-teal-900/30">
+                            <div className="w-12 h-12 rounded-2xl bg-teal-100 dark:bg-teal-900/30 flex items-center justify-center text-teal-600 dark:text-teal-400 mb-4">
+                                <span className="material-symbols-outlined text-2xl">stethoscope</span>
+                            </div>
+                            <p className="text-4xl font-black text-teal-600 dark:text-teal-400">{statsLoading ? '—' : stats.activeDoctors}</p>
+                            <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 mt-1 uppercase tracking-wider">Active Doctors</p>
+                        </div>
+                        <div className="glass-card p-6 rounded-3xl bg-amber-50/50 dark:bg-amber-900/10 border border-amber-100 dark:border-amber-900/30 cursor-pointer hover:bg-amber-50 dark:hover:bg-amber-900/20 transition-colors" onClick={() => navigate('/admin/visits', { state: { activeTab: 'pending' } })}>
+                            <div className="w-12 h-12 rounded-2xl bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center text-amber-600 dark:text-amber-400 mb-4">
+                                <span className="material-symbols-outlined text-2xl">pending_actions</span>
+                            </div>
+                            <p className="text-4xl font-black text-amber-600 dark:text-amber-400">{statsLoading ? '—' : stats.pendingVisits}</p>
+                            <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 mt-1 uppercase tracking-wider">Pending Visits</p>
+                        </div>
+                        <div className="glass-card p-6 rounded-3xl bg-rose-50/50 dark:bg-rose-900/10 border border-rose-100 dark:border-rose-900/30">
+                            <div className="w-12 h-12 rounded-2xl bg-rose-100 dark:bg-rose-900/30 flex items-center justify-center text-rose-600 dark:text-rose-400 mb-4">
+                                <span className="material-symbols-outlined text-2xl">favorite</span>
+                            </div>
+                            <p className="text-4xl font-black text-rose-600 dark:text-rose-400">{statsLoading ? '—' : stats.totalPatients}</p>
+                            <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 mt-1 uppercase tracking-wider">Total Patients</p>
+                        </div>
+                    </div>
+                </header>
+
+                {/* Nav Cards */}
+                <div>
+                    <h3 className="text-lg font-bold text-slate-700 dark:text-slate-300 mb-4 flex items-center gap-2">
+                        <span className="w-1 h-5 bg-violet-500 rounded-full inline-block" />
+                        Hospital Administration
+                    </h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {navCards.map(card => (
+                            <div key={card.path} onClick={() => navigate(card.path)} className="glass-card p-6 rounded-3xl cursor-pointer hover:bg-white/80 dark:hover:bg-slate-800/80 transition-all group flex items-center justify-between border border-slate-200 dark:border-slate-800">
+                                <div className="flex items-center gap-4">
+                                    <div className={`w-12 h-12 rounded-2xl bg-${card.color}-50 dark:bg-${card.color}-900/30 flex items-center justify-center text-${card.color}-600 dark:text-${card.color}-400 flex-shrink-0`}>
+                                        <span className="material-symbols-outlined text-2xl">{card.icon}</span>
+                                    </div>
+                                    <div>
+                                        <h4 className="font-bold text-slate-800 dark:text-slate-100">{card.title}</h4>
+                                        <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">{card.desc}</p>
+                                    </div>
+                                </div>
+                                <span className="material-symbols-outlined text-slate-300 dark:text-slate-600 group-hover:text-violet-500 transition-colors flex-shrink-0 ml-4">arrow_forward</span>
+                            </div>
+                        ))}
                     </div>
                 </div>
-            </header>
-
-            {/* ── Page Content ── */}
-            <div className="ha-content">
-
-                {/* User Info Bar */}
-                <div className="ha-info-bar">
-                    <div className="ha-user-details">
-                        <div className="ha-user-name">
-                            {user?.firstName || 'System'} {user?.lastName || 'Admin'}
-                        </div>
-                        <div className="ha-user-role">Role: Hospital Administrator</div>
-                    </div>
-                    <div className="ha-status-pill">
-                        <span className="ha-status-dot"></span>
-                        Full Access
-                    </div>
-                </div>
-
-                {/* Stat Cards */}
-                <div className="ha-stats-grid">
-                    <div className="ha-stat">
-                        <div className="ha-stat-icon">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
-                        </div>
-                        <div className="ha-stat-num">{statsLoading ? '—' : stats.totalStaff}</div>
-                        <div className="ha-stat-lbl">TOTAL STAFF</div>
-                    </div>
-                    <div className="ha-stat">
-                        <div className="ha-stat-icon">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="8.5" cy="7" r="4"></circle><polyline points="17 11 19 13 23 9"></polyline></svg>
-                        </div>
-                        <div className="ha-stat-num">{statsLoading ? '—' : stats.activeDoctors}</div>
-                        <div className="ha-stat-lbl">ACTIVE DOCTORS</div>
-                    </div>
-                    <div className="ha-stat clickable" onClick={() => navigate('/admin/visits', { state: { activeTab: 'pending' } })}>
-                        <div className="ha-stat-icon">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
-                        </div>
-                        <div className="ha-stat-num">{statsLoading ? '—' : stats.pendingVisits}</div>
-                        <div className="ha-stat-lbl">PENDING VISITS</div>
-                    </div>
-                    <div className="ha-stat">
-                        <div className="ha-stat-icon">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l8.78-8.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>
-                        </div>
-                        <div className="ha-stat-num">{statsLoading ? '—' : stats.totalPatients}</div>
-                        <div className="ha-stat-lbl">TOTAL PATIENTS</div>
-                    </div>
-                </div>
-
-                <div className="ha-nav-section">
-                    <h2 className="ha-section-title">Healthcare Management</h2>
-                    <div className="ha-nav-grid">
-
-                        <div className="ha-nav-card" onClick={() => navigate('/admin/doctor-verification')}>
-                            <div className="ha-nav-card-main">
-                                <div className="ha-nav-icon">
-                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="8.5" cy="7" r="4"></circle><polyline points="17 11 19 13 23 9"></polyline></svg>
-                                </div>
-                                <div className="ha-nav-text">
-                                    <h3>Doctor Verification</h3>
-                                    <p>Review and approve new doctor registrations and medical credentials</p>
-                                </div>
-                            </div>
-                            <span className="ha-arrow">
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
-                            </span>
-                        </div>
-
-                    </div>
-                </div>
-
-                {/* Nav Section */}
-                <div className="ha-nav-section">
-                    <h2 className="ha-section-title">Hospital Administration</h2>
-                    <div className="ha-nav-grid">
-
-                        <div className="ha-nav-card" onClick={() => navigate('/admin/staff')}>
-                            <div className="ha-nav-card-main">
-                                <div className="ha-nav-icon">
-                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
-                                </div>
-                                <div className="ha-nav-text">
-                                    <h3>Staff Management</h3>
-                                    <p>Invite staff members and manage staff invitations across the organisation</p>
-                                </div>
-                            </div>
-                            <span className="ha-arrow">
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
-                            </span>
-                        </div>
-
-
-                        <div className="ha-nav-card" onClick={() => navigate('/admin/visits')}>
-                            <div className="ha-nav-card-main">
-                                <div className="ha-nav-icon">
-                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path><rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect></svg>
-                                </div>
-                                <div className="ha-nav-text">
-                                    <h3>Visit Management</h3>
-                                    <p>View and manage patient visit requests, approve visits and assign staff</p>
-                                </div>
-                            </div>
-                            <span className="ha-arrow">
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
-                            </span>
-                        </div>
-
-                        <div className="ha-nav-card" onClick={() => navigate('/admin/users')}>
-                            <div className="ha-nav-card-main">
-                                <div className="ha-nav-icon">
-                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
-                                </div>
-                                <div className="ha-nav-text">
-                                    <h3>User Management</h3>
-                                    <p>Manage user accounts, roles and access permissions within your organisation</p>
-                                </div>
-                            </div>
-                            <span className="ha-arrow">
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
-                            </span>
-                        </div>
-
-                        <div className="ha-nav-card" onClick={() => navigate('/admin/audit-logs')}>
-                            <div className="ha-nav-card-main">
-                                <div className="ha-nav-icon">
-                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>
-                                </div>
-                                <div className="ha-nav-text">
-                                    <h3>Audit Logs</h3>
-                                    <p>Review comprehensive system activity and security audit trails</p>
-                                </div>
-                            </div>
-                            <span className="ha-arrow">
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
-                            </span>
-                        </div>
-
-                    </div>
-                </div>
-            </div>
+            </main>
         </div>
     );
 }

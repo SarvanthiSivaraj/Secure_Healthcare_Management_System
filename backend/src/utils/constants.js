@@ -5,6 +5,7 @@ const ROLES = {
     PATIENT: 'patient',
     DOCTOR: 'doctor',
     NURSE: 'nurse',
+    RECEPTIONIST: 'receptionist',
     LAB_TECHNICIAN: 'lab_technician',
     RADIOLOGIST: 'radiologist',
     PHARMACIST: 'pharmacist',

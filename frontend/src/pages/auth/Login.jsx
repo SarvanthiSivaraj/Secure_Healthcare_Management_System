@@ -61,8 +61,14 @@ function Login() {
             login(user, accessToken);
             navigateByRole(user.role);
         } catch (err) {
-            const errorMsg = err.response?.data?.message || err.message || 'Login failed';
-            setError(errorMsg);
+            if (err.response?.status === 403 && err.response?.data?.message?.includes('not verified')) {
+                setError('Your account is not verified yet. Please check your email/phone for the OTP or contact support.');
+                // Optionally redirect to a verification page if one exists, 
+                // but since Register.jsx handles it for now, we just inform them.
+            } else {
+                const errorMsg = err.response?.data?.message || err.message || 'Login failed';
+                setError(errorMsg);
+            }
         } finally {
             setLoading(false);
         }
@@ -70,7 +76,7 @@ function Login() {
 
     const handlePasskeyLogin = async () => {
         if (!formData.email) {
-            setError('Please enter your email address first');
+            setError('Please enter your email or phone first');
             return;
         }
 
@@ -179,19 +185,19 @@ function Login() {
                     <div className={`absolute top-0 left-0 w-full transition-all duration-500 transform ${activeTab === 'password' ? 'translate-x-0 opacity-100' : '-translate-x-full opacity-0 pointer-events-none'}`}>
                         <form onSubmit={handleSubmit} className="space-y-5">
                             <div>
-                                <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1.5 ml-1">Email Address</label>
+                                <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1.5 ml-1">Email or Phone</label>
                                 <div className="relative">
                                     <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400 z-10">
-                                        <span className="material-symbols-outlined text-[20px]">mail</span>
+                                        <span className="material-symbols-outlined text-[20px]">alternate_email</span>
                                     </div>
                                     <input
-                                        type="email"
+                                        type="text"
                                         name="email"
                                         value={formData.email}
                                         onChange={handleChange}
                                         required={activeTab === 'password'}
                                         className="block w-full pl-12 pr-4 py-3.5 border-none rounded-2xl bg-white/60 dark:bg-slate-800/60 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-indigo-500 transition-all duration-200 text-sm shadow-inner backdrop-blur-sm"
-                                        placeholder="Enter your email"
+                                        placeholder="email@example.com or +91..."
                                     />
                                 </div>
                             </div>

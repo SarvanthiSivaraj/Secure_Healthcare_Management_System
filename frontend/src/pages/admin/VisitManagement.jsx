@@ -1,11 +1,13 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { visitApi } from '../../api/visitApi';
 import Button from '../../components/common/Button';
+import DoctorSelectionPopup from '../../components/visit/DoctorSelectionPopup';
 import './VisitManagement.css';
 
 function VisitManagement() {
     const location = useLocation();
+    const navigate = useNavigate();
     const [activeTab, setActiveTab] = useState(location.state?.activeTab || 'pending');
     const [visits, setVisits] = useState([]);
     const [loading, setLoading] = useState(false);
@@ -15,6 +17,36 @@ function VisitManagement() {
     const [doctors, setDoctors] = useState([]);
     const [nurses, setNurses] = useState([]);
     const [approvalData, setApprovalData] = useState({ doctorId: '', nurseId: '' });
+    const [showDoctorPopup, setShowDoctorPopup] = useState(false);
+
+    const handleScheduleVisit = () => {
+        navigate('/patient/visits/schedule');
+    };
+
+    const handleDoctorSelect = async (doctor) => {
+        try {
+            setLoading(true);
+            // Defaulting request flow to use current logged-in user context
+            // or we ask for the patient ID explicitly for admins?
+            // Assuming this acts like requesting for self if no other ID specified for now
+            const reason = prompt(`Briefly describe reason for scheduling Dr. ${doctor.firstName} ${doctor.lastName}:`);
+            if (!reason) return;
+
+            await visitApi.requestVisit({
+                doctorId: doctor.id,
+                reason: reason,
+                type: 'scheduled',
+                status: 'approved' // Automatically approve if requested by admin? Let's leave as pending to be safe
+            });
+            setShowDoctorPopup(false);
+            alert(`Visit request sent/approved to Dr. ${doctor.firstName} ${doctor.lastName}`);
+            loadVisits();
+        } catch (error) {
+            alert(error.response?.data?.message || 'Failed to request visit');
+        } finally {
+            setLoading(false);
+        }
+    };
 
     const loadVisits = useCallback(async () => {
         setLoading(true);
@@ -142,12 +174,15 @@ function VisitManagement() {
         const diffMs = now - date;
         const diffMins = Math.floor(diffMs / 60000);
         const diffHours = Math.floor(diffMins / 60);
-        const diffDays = Math.floor(diffHours / 24);
+        const remMins = diffMins % 60;
 
-        if (diffMins < 60) return `${diffMins} minutes ago`;
-        if (diffHours < 24) return `${diffHours} hours ago`;
-        if (diffDays < 7) return `${diffDays} days ago`;
-        return date.toLocaleDateString();
+        if (diffMins < 1) return 'Just now';
+
+        const hoursText = diffHours > 0 ? `${diffHours} hr${diffHours > 1 ? 's' : ''}` : '';
+        const minsText = remMins > 0 ? `${remMins} min${remMins > 1 ? 's' : ''}` : '';
+        const timeAgo = [hoursText, minsText].filter(Boolean).join(' ') + ' ago';
+
+        return timeAgo || 'Just now';
     };
 
     return (
@@ -163,6 +198,36 @@ function VisitManagement() {
             </div>
 
             <div className="visit-management-content">
+                {/* Schedule / Walk-in section */}
+                <div className="bg-[#1E293B] p-6 md:p-8 rounded-2xl mb-8 flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+                    <div>
+                        <h3 className="text-xl font-bold text-white mb-2">Schedule or Check In</h3>
+                        <p className="text-slate-400 text-sm max-w-md">Have a scheduled visit? Enter the code provided by your doctor or nurse to check in.</p>
+                    </div>
+                    <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
+                        <button
+                            className="bg-indigo-500 hover:bg-indigo-600 text-white px-6 py-3 rounded-xl text-sm font-semibold transition-all whitespace-nowrap"
+                            onClick={handleScheduleVisit}
+                        >
+                            Schedule a Visit
+                        </button>
+                        <button
+                            className="bg-teal-500 hover:bg-teal-600 text-white px-6 py-3 rounded-xl text-sm font-semibold transition-all whitespace-nowrap"
+                            onClick={() => navigate('/patient/visits/new')} // NOTE: This assumes the admin can also navigate to the walk-in point
+                        >
+                            Walk-In Visit
+                        </button>
+                    </div>
+                </div>
+
+                {showDoctorPopup && (
+                    <DoctorSelectionPopup
+                        doctors={doctors}
+                        onClose={() => setShowDoctorPopup(false)}
+                        onSelect={handleDoctorSelect}
+                    />
+                )}
+
                 <div className="visit-tabs">
                     <button
                         className={`tab ${activeTab === 'pending' ? 'active' : ''}`}

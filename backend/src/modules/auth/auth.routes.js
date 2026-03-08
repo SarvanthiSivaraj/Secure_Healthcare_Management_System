@@ -128,7 +128,7 @@ router.get(
                 email: req.user.email,
                 firstName: req.user.firstName,
                 lastName: req.user.lastName,
-                role: req.user.role
+                role: req.user.roleName // Use roleName to populate 'role' for frontend
             }
         });
     })

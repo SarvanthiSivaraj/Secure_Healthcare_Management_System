@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from 'react';
+import { getDoctorMockImage } from '../../utils/mockImages';
 
 const DoctorProfilePopup = ({ doctor, onBack, onBook }) => {
 
@@ -125,9 +126,8 @@ const DoctorProfilePopup = ({ doctor, onBack, onBook }) => {
                     <div className="flex w-full flex-col gap-5 items-center">
                         <div className="relative">
                             <div className="bg-center bg-no-repeat aspect-square bg-cover rounded-xl shadow-lg border-4 border-white dark:border-slate-800 min-h-40 w-40 flex items-center justify-center bg-slate-200 dark:bg-slate-700 overflow-hidden"
-                                style={doctor.profileImage ? { backgroundImage: `url(${doctor.profileImage})` } : {}}
+                                style={{ backgroundImage: `url(${doctor.profileImage || getDoctorMockImage(doctor.id)})` }}
                             >
-                                {!doctor.profileImage && <span className="material-symbols-outlined text-6xl text-slate-400">person</span>}
                             </div>
                             <div className="absolute -bottom-2 -right-2 bg-emerald-400 p-1.5 rounded-full shadow-md flex items-center justify-center border-2 border-white dark:border-slate-800">
                                 <span className="material-symbols-outlined text-white text-sm">verified</span>

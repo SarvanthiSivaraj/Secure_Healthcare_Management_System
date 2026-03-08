@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import Button from '../../components/common/Button';
 import AddMedicalRecordForm from '../../components/emr/AddMedicalRecordForm';
+import OrderTestsModal from '../../components/clinical/OrderTestsModal';
+import ThemeToggle from '../../components/common/ThemeToggle';
 import { getToken } from '../../utils/tokenManager';
 import './PatientRecords.css';
 
@@ -17,6 +18,7 @@ function PatientMedicalRecords() {
     const [expandedRecords, setExpandedRecords] = useState(new Set());
     const [hasWriteAccess, setHasWriteAccess] = useState(false);
     const [hasReadAccess, setHasReadAccess] = useState(false);
+    const [orderModalTab, setOrderModalTab] = useState(null);
 
     useEffect(() => {
         fetchPatientRecords();
@@ -28,41 +30,28 @@ function PatientMedicalRecords() {
         try {
             const token = getToken();
             const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:5003/api';
-
-            // Get doctor's patient list which includes consent info
             const response = await axios.get(
                 `${apiUrl}/consent/doctor/patients`,
-                {
-                    headers: { Authorization: `Bearer ${token}` }
-                }
+                { headers: { Authorization: `Bearer ${token}` } }
             );
-
             if (response.data.success) {
                 const patients = response.data.data || [];
-
-                // Filter all entries for this patient (one entry per consent category)
-                // Note: The API returns 'id' for the user ID, not 'patient_id'
                 const patientConsents = patients.filter(p => p.id === patientId);
-
-                // Check for medical_records specific consent OR all_medical_data
                 const medicalConsent = patientConsents.find(p =>
                     p.data_category === 'medical_records' ||
                     p.data_category === 'all_medical_data' ||
                     p.data_category === '*'
                 );
-
                 if (medicalConsent) {
                     setHasReadAccess(true);
                     setHasWriteAccess(medicalConsent.access_level === 'write');
                 } else {
-                    // No valid consent found
                     setHasReadAccess(false);
                     setHasWriteAccess(false);
                 }
             }
         } catch (err) {
             console.error('Failed to check consent access:', err);
-            // If we can't check consent, disable write access to be safe
             setHasWriteAccess(false);
             setHasReadAccess(false);
         }
@@ -72,181 +61,242 @@ function PatientMedicalRecords() {
         try {
             const token = getToken();
             const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:5003/api';
-
             const response = await axios.get(
                 `${apiUrl}/emr/patients/${patientId}/medical-records`,
-                {
-                    headers: { Authorization: `Bearer ${token}` }
-                }
+                { headers: { Authorization: `Bearer ${token}` } }
             );
-
             if (response.data.success) {
-                // The response has structure: { success, data: { records, pagination } }
                 const recordsData = response.data.data.records || [];
                 setRecords(recordsData);
-
-                // Extract patient info from first record if available
                 if (recordsData.length > 0) {
                     setPatientInfo({
                         name: `${recordsData[0].patient_first_name || ''} ${recordsData[0].patient_last_name || ''}`.trim(),
-                        healthId: recordsData[0].patient_health_id
+                        healthId: recordsData[0].patient_health_id,
+                        firstName: recordsData[0].patient_first_name,
                     });
                 }
             }
             setLoading(false);
         } catch (err) {
             console.error('Failed to fetch patient records:', err);
-            const errorMessage = err.response?.data?.message || err.message || 'Failed to load medical records.';
-            setError(errorMessage);
+            setError(err.response?.data?.message || err.message || 'Failed to load medical records.');
             setLoading(false);
         }
     };
 
-    const formatDate = (dateString) => {
-        if (!dateString) return 'N/A';
-        return new Date(dateString).toLocaleDateString('en-US', {
-            year: 'numeric',
-            month: 'short',
-            day: 'numeric'
-        });
+    const formatDate = (ds) => {
+        if (!ds) return 'N/A';
+        return new Date(ds).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
     };
 
-    const formatRecordType = (type) => {
-        const types = {
-            'consultation': 'Consultation',
-            'diagnosis': 'Diagnosis',
-            'prescription': 'Prescription',
-            'lab_result': 'Lab Result',
-            'imaging': 'Imaging Report',
-            'procedure': 'Procedure',
-            'note': 'Clinical Note',
-            'other': 'Other'
-        };
-        return types[type] || type;
-    };
+    const formatRecordType = (type) => ({
+        consultation: 'Consultation', diagnosis: 'Diagnosis', prescription: 'Prescription',
+        lab_result: 'Lab Result', imaging: 'Imaging Report', procedure: 'Procedure',
+        note: 'Clinical Note', other: 'Other'
+    }[type] || type);
 
-    const toggleExpand = (recordId) => {
+    const toggleExpand = (id) => {
         setExpandedRecords(prev => {
-            const newSet = new Set(prev);
-            if (newSet.has(recordId)) {
-                newSet.delete(recordId);
-            } else {
-                newSet.add(recordId);
-            }
-            return newSet;
+            const next = new Set(prev);
+            next.has(id) ? next.delete(id) : next.add(id);
+            return next;
         });
-    };
-
-    const handleAddSuccess = () => {
-        setShowAddForm(false);
-        fetchPatientRecords(); // Refresh the records list
-    };
-
-    const handleAddCancel = () => {
-        setShowAddForm(false);
     };
 
     return (
-        <div className="patient-records-page">
-            <header className="page-header">
-                <div className="header-left">
-                    <h1>Medical Records</h1>
-                    {patientInfo && (
-                        <p className="page-subtitle">
-                            Patient: {patientInfo.name} | Health ID: {patientInfo.healthId}
-                        </p>
-                    )}
-                </div>
-                <div className="header-actions">
-                    <Button
-                        variant="primary"
-                        onClick={() => setShowAddForm(!showAddForm)}
-                        disabled={!hasWriteAccess || loading || error}
-                        title={!hasWriteAccess ? "Write access required to add records" : ""}
-                    >
-                        {showAddForm ? 'Cancel' : 'Add Record'}
-                    </Button>
-                    <Button variant="secondary" onClick={() => navigate('/doctor/patients')}>
-                        Back to Patient List
-                    </Button>
-                </div>
-            </header>
+        <div className="pr-wrapper">
+            {/* Theme Toggle */}
+            <div style={{ position: 'absolute', top: 16, right: 16, zIndex: 50 }}>
+                <ThemeToggle />
+            </div>
 
-            <div className="page-content">
-                {!hasWriteAccess && hasReadAccess && !loading && (
-                    <div className="info-message">
-                        <p style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#54ACBF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" /></svg>
-                            <strong>Read-Only Access</strong> - You can view records but need write permission to add new records.
-                        </p>
+            {/* Top Bar */}
+            <div className="pr-topbar">
+                <div className="pr-topbar-left">
+                    <div className="pr-topbar-icon">
+                        <span className="material-symbols-outlined" style={{ fontSize: 22 }}>medical_information</span>
+                    </div>
+                    <div>
+                        <h1 className="pr-topbar-title">Medical Records</h1>
+                        {patientInfo && (
+                            <p className="pr-topbar-subtitle">
+                                {patientInfo.name} &nbsp;·&nbsp; Health ID: {patientInfo.healthId}
+                            </p>
+                        )}
+                    </div>
+                </div>
+                <div className="pr-topbar-actions">
+                    {hasWriteAccess && !loading && !error && (
+                        <button
+                            className="pr-btn-primary"
+                            onClick={() => setShowAddForm(v => !v)}
+                        >
+                            <span className="material-symbols-outlined" style={{ fontSize: 16 }}>
+                                {showAddForm ? 'close' : 'add'}
+                            </span>
+                            {showAddForm ? 'Cancel' : 'Add Record'}
+                        </button>
+                    )}
+                    <button className="pr-btn-back" onClick={() => navigate('/doctor/patients')}>
+                        <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7" />
+                        </svg>
+                        Back to Patients
+                    </button>
+                </div>
+            </div>
+
+            <div className="pr-body">
+
+                {/* Patient Profile Card */}
+                {patientInfo && !loading && (
+                    <div className="pr-profile-card pr-glass-card">
+                        <div className="pr-profile-avatar-row">
+                            <div className="pr-avatar">
+                                {(patientInfo.firstName || patientInfo.name || '?')[0].toUpperCase()}
+                            </div>
+                            <div>
+                                <p className="pr-profile-name">{patientInfo.name}</p>
+                                <p className="pr-profile-meta">
+                                    Health ID: {patientInfo.healthId}&nbsp;&nbsp;·&nbsp;&nbsp;Patient ID: {patientId}
+                                </p>
+                            </div>
+                        </div>
+
+                        {/* Quick Action Buttons */}
+                        <div className="pr-quick-actions">
+                            <button
+                                className="pr-action-btn"
+                                style={{ borderColor: '#e5e7eb', color: '#374151', background: '#f9fafb' }}
+                                onClick={() => setShowAddForm(false)}
+                            >
+                                <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" />
+                                </svg>
+                                View History
+                            </button>
+                            <button
+                                className="pr-action-btn"
+                                style={{ borderColor: '#bfdbfe', color: '#2563eb', background: '#eff6ff' }}
+                                onClick={() => navigate(`/doctor/notes?patientId=${patientId}`)}
+                            >
+                                <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                </svg>
+                                Clinical Notes
+                            </button>
+                            <button
+                                className="pr-action-btn"
+                                style={{ borderColor: '#bbf7d0', color: '#16a34a', background: '#f0fdf4' }}
+                                onClick={() => setOrderModalTab('lab')}
+                            >
+                                <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 3v11a3 3 0 006 0V3" /><line x1="6" y1="3" x2="18" y2="3" />
+                                </svg>
+                                Order Lab Test
+                            </button>
+                            <button
+                                className="pr-action-btn"
+                                style={{ borderColor: '#e9d5ff', color: '#9333ea', background: '#fdf4ff' }}
+                                onClick={() => setOrderModalTab('imaging')}
+                            >
+                                <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <rect x="3" y="3" width="18" height="18" rx="2" /><circle cx="8.5" cy="8.5" r="1.5" /><polyline points="21 15 16 10 5 21" />
+                                </svg>
+                                Order Imaging
+                            </button>
+                        </div>
                     </div>
                 )}
 
+                {/* Read-only banner */}
+                {!hasWriteAccess && hasReadAccess && !loading && (
+                    <div className="pr-info-banner">
+                        <svg width="15" height="15" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" />
+                        </svg>
+                        <span><strong>Read-Only Access</strong> – You can view records but need write permission to add new records.</span>
+                    </div>
+                )}
+
+                {/* Add Record Form */}
                 {showAddForm && (
                     <AddMedicalRecordForm
                         patientId={patientId}
-                        onSuccess={handleAddSuccess}
-                        onCancel={handleAddCancel}
+                        onSuccess={() => { setShowAddForm(false); fetchPatientRecords(); }}
+                        onCancel={() => setShowAddForm(false)}
                     />
                 )}
 
+                {/* States */}
                 {loading ? (
-                    <div className="loading-state">Loading medical records...</div>
+                    <div className="pr-loading">
+                        <div className="pr-spinner" />
+                        <p>Loading medical records…</p>
+                    </div>
                 ) : error ? (
-                    <div className="error-message">
-                        {error}
-                        <br />
-                        <small>You may not have consent to view this patient's records.</small>
+                    <div className="pr-error-banner">
+                        {error}<br />
+                        <small style={{ opacity: 0.7 }}>You may not have consent to view this patient's records.</small>
                     </div>
                 ) : records.length === 0 ? (
-                    <div className="empty-state">
+                    <div className="pr-empty-state pr-glass-card">
+                        <svg width="52" height="52" fill="none" stroke="#a5b4fc" strokeWidth="1.5" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                        </svg>
                         <p>No medical records found for this patient.</p>
                     </div>
                 ) : (
-                    <div className="records-list">
-                        {records.map(record => {
-                            const isExpanded = expandedRecords.has(record.id);
-                            const shouldShowToggle = record.description && record.description.length > 150;
-
-                            return (
-                                <div key={record.id} className="record-card">
-                                    <div className="record-header">
-                                        <div>
-                                            <span className="record-type-badge">
-                                                {formatRecordType(record.type)}
-                                            </span>
-                                            <h3>{record.title}</h3>
+                    <>
+                        <h2 className="pr-section-heading">Medical Records</h2>
+                        <div className="pr-records-list">
+                            {records.map(record => {
+                                const isExpanded = expandedRecords.has(record.id);
+                                const shouldShowToggle = record.description && record.description.length > 150;
+                                return (
+                                    <div key={record.id} className="pr-record-card pr-glass-card">
+                                        <div className="pr-record-header">
+                                            <div>
+                                                <span className="pr-record-type-badge">{formatRecordType(record.type)}</span>
+                                                <h3 className="pr-record-title">{record.title}</h3>
+                                            </div>
+                                            <span className="pr-record-date">{formatDate(record.created_at)}</span>
                                         </div>
-                                        <span className="record-date">{formatDate(record.created_at)}</span>
-                                    </div>
-                                    <div className="record-body">
-                                        <div className="record-field">
-                                            <strong>Description:</strong>
-                                            <p className={isExpanded ? 'expanded' : 'collapsed'}>
-                                                {record.description}
-                                            </p>
-                                            {shouldShowToggle && (
-                                                <button
-                                                    className="expand-btn"
-                                                    onClick={() => toggleExpand(record.id)}
-                                                >
-                                                    {isExpanded ? 'Show Less' : 'Show More'}
-                                                </button>
+                                        <div className="pr-record-body">
+                                            <div className="pr-record-field">
+                                                <strong>Description</strong>
+                                                <p className={isExpanded ? '' : 'collapsed'}>{record.description}</p>
+                                                {shouldShowToggle && (
+                                                    <button className="pr-expand-btn" onClick={() => toggleExpand(record.id)}>
+                                                        {isExpanded ? 'Show Less ↑' : 'Show More ↓'}
+                                                    </button>
+                                                )}
+                                            </div>
+                                            {record.created_by_name && (
+                                                <div className="pr-record-field">
+                                                    <strong>Created by</strong>
+                                                    <p>{record.created_by_name} ({record.created_by_role})</p>
+                                                </div>
                                             )}
                                         </div>
-                                        {record.created_by_name && (
-                                            <div className="record-field">
-                                                <strong>Created by:</strong>
-                                                <p>{record.created_by_name} ({record.created_by_role})</p>
-                                            </div>
-                                        )}
                                     </div>
-                                </div>
-                            );
-                        })}
-                    </div>
+                                );
+                            })}
+                        </div>
+                    </>
                 )}
             </div>
+
+            {/* Order Tests Modal */}
+            {orderModalTab && (
+                <OrderTestsModal
+                    patientId={patientId}
+                    patientName={patientInfo?.name}
+                    visitId={null}
+                    initialTab={orderModalTab}
+                    onClose={() => setOrderModalTab(null)}
+                />
+            )}
         </div>
     );
 }
