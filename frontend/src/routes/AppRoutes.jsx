@@ -27,6 +27,21 @@ import LabDashboard from '../pages/lab/Dashboard';
 import RadiologistDashboard from '../pages/radiology/Dashboard';
 import ImagingQueue from '../pages/radiology/ImagingQueue';
 import ReportUpload from '../pages/radiology/ReportUpload';
+import RadiologistProfile from '../pages/radiology/RadiologistProfile';
+import RadiologistAuditLogs from '../pages/radiology/RadiologistAuditLogs';
+import PharmacistDashboard from '../pages/pharmacist/Dashboard';
+import PharmacistPrescriptionQueue from '../pages/pharmacist/PrescriptionQueue';
+import PharmacistInventory from '../pages/pharmacist/Inventory';
+import PharmacistProfile from '../pages/pharmacist/PharmacistProfile';
+import PharmacistAuditLogs from '../pages/pharmacist/PharmacistAuditLogs';
+
+// Compliance Officer Pages
+import ComplianceDashboard from '../pages/compliance/Dashboard';
+import GlobalAuditLogs from '../pages/compliance/GlobalAuditLogs';
+import Incidents from '../pages/compliance/Incidents';
+import ConsentOverrides from '../pages/compliance/ConsentOverrides';
+import ComplianceProfile from '../pages/compliance/Profile';
+
 import NewVisit from '../pages/patient/NewVisit';
 import ScheduleNewVisit from '../pages/patient/ScheduleNewVisit';
 import GrantConsent from '../pages/patient/GrantConsent';
@@ -406,6 +421,108 @@ function AppRoutes() {
                 element={
                     <ProtectedRoute allowedRoles={['patient', 'doctor', 'staff', 'nurse', 'lab_tech', 'lab_technician', 'radiologist', 'admin', 'hospital_admin', 'system_admin']}>
                         <Profile />
+                    </ProtectedRoute>
+                }
+            />
+
+            <Route
+                path="/radiology/profile"
+                element={
+                    <ProtectedRoute allowedRoles={['radiologist']}>
+                        <RadiologistProfile />
+                    </ProtectedRoute>
+                }
+            />
+
+            <Route
+                path="/radiology/audit-logs"
+                element={
+                    <ProtectedRoute allowedRoles={['radiologist']}>
+                        <RadiologistAuditLogs />
+                    </ProtectedRoute>
+                }
+            />
+
+            {/* Pharmacist Routes */}
+            <Route
+                path="/pharmacist/dashboard"
+                element={
+                    <ProtectedRoute allowedRoles={['pharmacist']}>
+                        <PharmacistDashboard />
+                    </ProtectedRoute>
+                }
+            />
+            <Route
+                path="/pharmacist/prescriptions"
+                element={
+                    <ProtectedRoute allowedRoles={['pharmacist']}>
+                        <PharmacistPrescriptionQueue />
+                    </ProtectedRoute>
+                }
+            />
+            <Route
+                path="/pharmacist/inventory"
+                element={
+                    <ProtectedRoute allowedRoles={['pharmacist']}>
+                        <PharmacistInventory />
+                    </ProtectedRoute>
+                }
+            />
+            <Route
+                path="/pharmacist/profile"
+                element={
+                    <ProtectedRoute allowedRoles={['pharmacist']}>
+                        <PharmacistProfile />
+                    </ProtectedRoute>
+                }
+            />
+            <Route
+                path="/pharmacist/audit-logs"
+                element={
+                    <ProtectedRoute allowedRoles={['pharmacist']}>
+                        <PharmacistAuditLogs />
+                    </ProtectedRoute>
+                }
+            />
+
+            {/* Compliance Officer Routes */}
+            <Route
+                path="/compliance/dashboard"
+                element={
+                    <ProtectedRoute allowedRoles={['compliance_officer']}>
+                        <ComplianceDashboard />
+                    </ProtectedRoute>
+                }
+            />
+            <Route
+                path="/compliance/global-audits"
+                element={
+                    <ProtectedRoute allowedRoles={['compliance_officer']}>
+                        <GlobalAuditLogs />
+                    </ProtectedRoute>
+                }
+            />
+            <Route
+                path="/compliance/incidents"
+                element={
+                    <ProtectedRoute allowedRoles={['compliance_officer']}>
+                        <Incidents />
+                    </ProtectedRoute>
+                }
+            />
+            <Route
+                path="/compliance/consent-overrides"
+                element={
+                    <ProtectedRoute allowedRoles={['compliance_officer']}>
+                        <ConsentOverrides />
+                    </ProtectedRoute>
+                }
+            />
+            <Route
+                path="/compliance/profile"
+                element={
+                    <ProtectedRoute allowedRoles={['compliance_officer']}>
+                        <ComplianceProfile />
                     </ProtectedRoute>
                 }
             />

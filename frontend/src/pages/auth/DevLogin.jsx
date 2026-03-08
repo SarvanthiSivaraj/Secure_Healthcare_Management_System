@@ -10,7 +10,7 @@ function DevLogin() {
 
     const mockLogin = (role) => {
         // Create a mock JWT token (just for development)
-        const nameMap = { PATIENT: 'John', DOCTOR: 'Dr. Smith', ADMIN: 'Admin', STAFF: 'Staff', RADIOLOGIST: 'Dr. Ray' };
+        const nameMap = { PATIENT: 'John', DOCTOR: 'Dr. Smith', ADMIN: 'Admin', STAFF: 'Staff', RADIOLOGIST: 'Dr. Ray', PHARMACIST: 'Aisha Patel', COMPLIANCE_OFFICER: 'Robert Oppenheimer' };
         const mockUser = {
             id: '123',
             email: `${role.toLowerCase()}@test.com`,
@@ -21,7 +21,8 @@ function DevLogin() {
             professionalId: role === 'DOCTOR' ? 'DOC-123456' : undefined,
             organizationName: role === 'ADMIN' ? 'City Hospital' : undefined,
             staffRole: role === 'STAFF' ? 'Nurse' : undefined,
-            licenseNumber: role === 'RADIOLOGIST' ? 'RAD-2024-001' : role === 'DOCTOR' ? 'MD-2024-789456' : undefined,
+            licenseNumber: role === 'RADIOLOGIST' ? 'RAD-2024-001' : role === 'DOCTOR' ? 'MD-2024-789456' : role === 'PHARMACIST' ? 'PH-99887766' : undefined,
+            employeeId: role === 'COMPLIANCE_OFFICER' ? 'CCO-2015-001' : undefined
         };
 
         // Create a fake JWT token
@@ -49,6 +50,12 @@ function DevLogin() {
                 break;
             case 'RADIOLOGIST':
                 navigate('/radiology/dashboard');
+                break;
+            case 'PHARMACIST':
+                navigate('/pharmacist/dashboard');
+                break;
+            case 'COMPLIANCE_OFFICER':
+                navigate('/compliance/dashboard');
                 break;
             default:
                 navigate('/');
@@ -82,6 +89,14 @@ function DevLogin() {
 
                     <Button onClick={() => mockLogin('RADIOLOGIST')} variant="primary">
                         Login as Radiologist
+                    </Button>
+
+                    <Button onClick={() => mockLogin('PHARMACIST')} variant="primary">
+                        Login as Pharmacist
+                    </Button>
+
+                    <Button onClick={() => mockLogin('COMPLIANCE_OFFICER')} variant="primary">
+                        Login as Compliance
                     </Button>
                 </div>
 

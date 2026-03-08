@@ -83,6 +83,57 @@ app.post('/api/v1/auth/login', (req, res) => {
             }
         });
     }
+
+    if (emailOrPhone === 'radiologist@medicare.com') {
+        const MOCK_RAD = {
+            id: "rad-789",
+            email: "radiologist@medicare.com",
+            role: "radiologist",
+            firstName: "David",
+            lastName: "Chen"
+        };
+        return res.json({
+            success: true,
+            data: {
+                user: MOCK_RAD,
+                accessToken: MOCK_TOKEN
+            }
+        });
+    }
+
+    if (emailOrPhone === 'pharmacist@medicare.com') {
+        const MOCK_PHARM = {
+            id: "pharm-456",
+            email: "pharmacist@medicare.com",
+            role: "pharmacist",
+            firstName: "Aisha",
+            lastName: "Patel"
+        };
+        return res.json({
+            success: true,
+            data: {
+                user: MOCK_PHARM,
+                accessToken: MOCK_TOKEN
+            }
+        });
+    }
+
+    if (emailOrPhone === 'compliance@medicare.com') {
+        const MOCK_COMP_OFFICER = {
+            id: "comp-999",
+            email: "compliance@medicare.com",
+            role: "COMPLIANCE_OFFICER",
+            firstName: "Robert",
+            lastName: "Oppenheimer"
+        };
+        return res.json({
+            success: true,
+            data: {
+                user: MOCK_COMP_OFFICER,
+                accessToken: MOCK_TOKEN
+            }
+        });
+    }
     
     // Accept any password for mock user
     if (emailOrPhone === 'patient@medicare.com' || emailOrPhone === 'test@test.com') {
@@ -152,6 +203,22 @@ app.get('/api/v1/auth/verify', (req, res) => {
             role: "NURSE",
             firstName: "Sarah",
             lastName: "Jenkins"
+        };
+    } else if (referer.includes('radiology')) {
+        userToReturn = {
+            id: "rad-789",
+            email: "radiologist@medicare.com",
+            role: "radiologist",
+            firstName: "David",
+            lastName: "Chen"
+        };
+    } else if (referer.includes('pharmacist')) {
+        userToReturn = {
+            id: "pharm-456",
+            email: "pharmacist@medicare.com",
+            role: "pharmacist",
+            firstName: "Aisha",
+            lastName: "Patel"
         };
     }
 
@@ -777,6 +844,420 @@ app.put('/api/v1/nurse/profile', (req, res) => {
         }
     });
 });
+
+// ==========================================
+// RADIOLOGY PORTAL API ENDPOINTS
+// ==========================================
+
+// Radiology Dashboard Stats
+app.get('/api/v1/radiology/stats', (req, res) => {
+    res.json({
+        success: true,
+        data: {
+            pendingReads: 14,
+            inProgress: 3,
+            completedToday: 28,
+            priorityCases: 2
+        }
+    });
+});
+
+// Radiology Imaging Orders (Queue)
+app.get('/api/v1/radiology/orders', (req, res) => {
+    const statusFilter = req.query.status;
+    const priorityFilter = req.query.priority;
+
+    let orders = [
+        {
+            id: 'img-req-001', visitId: 'VST-2024-0891', patientName: 'Anjali Mehta', patientInitial: 'A',
+            imagingType: 'MRI', bodyPart: 'Brain', priority: 'stat', status: 'pending',
+            orderedBy: 'Dr. Sharma', orderedAt: new Date(Date.now() - 1800000).toISOString(),
+            clinicalNotes: 'Sudden onset severe headache, rule out hemorrhage.'
+        },
+        {
+            id: 'img-req-002', visitId: 'VST-2024-0892', patientName: 'Ravi Patel', patientInitial: 'R',
+            imagingType: 'CT Scan', bodyPart: 'Chest', priority: 'urgent', status: 'in_progress',
+            orderedBy: 'Dr. Kapoor', orderedAt: new Date(Date.now() - 3600000).toISOString(),
+            clinicalNotes: 'Persistent cough, shortness of breath.'
+        },
+        {
+            id: 'img-req-003', visitId: 'VST-2024-0893', patientName: 'Priya Singh', patientInitial: 'P',
+            imagingType: 'X-Ray', bodyPart: 'Left Ankle', priority: 'routine', status: 'pending',
+            orderedBy: 'Dr. Verma', orderedAt: new Date(Date.now() - 7200000).toISOString(),
+            clinicalNotes: 'Twisted ankle during sports, swelling present.'
+        },
+        {
+            id: 'img-req-004', visitId: 'VST-2024-0894', patientName: 'Suresh Kumar', patientInitial: 'S',
+            imagingType: 'Ultrasound', bodyPart: 'Abdomen', priority: 'routine', status: 'completed',
+            orderedBy: 'Dr. Gupta', orderedAt: new Date(Date.now() - 86400000).toISOString(),
+            clinicalNotes: 'Routine check for kidney stones.'
+        },
+        {
+            id: 'img-req-005', visitId: 'VST-2024-0895', patientName: 'Meera Reddy', patientInitial: 'M',
+            imagingType: 'MRI', bodyPart: 'Lumbar Spine', priority: 'stat', status: 'pending',
+            orderedBy: 'Dr. Nair', orderedAt: new Date(Date.now() - 900000).toISOString(),
+            clinicalNotes: 'Severe lower back pain radiating to legs, numbing sensation.'
+        }
+    ];
+
+    if (statusFilter && statusFilter !== 'all') {
+        orders = orders.filter(o => o.status === statusFilter);
+    }
+    
+    if (priorityFilter === 'stat') {
+        orders = orders.filter(o => o.priority === 'stat');
+    }
+
+    res.json({
+        success: true,
+        count: orders.length,
+        data: orders
+    });
+});
+
+// Radiology Report Upload (Simulation)
+app.post('/api/v1/radiology/upload', (req, res) => {
+    // We are simulating a multipart/form-data upload.
+    // Realistically, multer would parse req.file and req.body.
+    // In this mock, we just accept the request and return success.
+    res.json({
+        success: true,
+        message: 'Imaging report securely uploaded and cryptographically signed.',
+        reportId: 'rep-' + Date.now()
+    });
+});
+
+// Radiology Profile (GET)
+app.get('/api/v1/radiology/profile', (req, res) => {
+    res.json({
+        success: true,
+        data: {
+            id: "rad-101",
+            firstName: "Rajesh",
+            lastName: "Khanna",
+            role: "Senior Radiologist",
+            employeeId: "RAD-2024-88990",
+            department: "Imaging & Diagnostics",
+            email: "radiologist@medicare.com",
+            phone: "+1 (555) 321-7654",
+            status: "Active",
+            joinedDate: "2018-06-12",
+            licenseNumber: "MD-RAD-112233",
+            subSpecialty: "Neuro & MSK Radiology",
+            modalities: ["MRI", "CT Scan", "X-Ray"],
+            shiftPreference: "Day Shift (08:00 - 18:00)",
+            address: "456 Diagnostics Blvd, Medical City, NY 10002",
+            emergencyContact: {
+                name: "Priya Khanna",
+                relationship: "Spouse",
+                phone: "+1 (555) 876-5432"
+            }
+        }
+    });
+});
+
+// Radiology Profile (PUT)
+app.put('/api/v1/radiology/profile', (req, res) => {
+    const incomingData = req.body;
+    res.json({
+        success: true,
+        message: "Profile updated successfully",
+        data: {
+            id: "rad-101",
+            firstName: "Rajesh",
+            lastName: "Khanna",
+            role: "Senior Radiologist",
+            employeeId: "RAD-2024-88990",
+            department: "Imaging & Diagnostics",
+            email: "radiologist@medicare.com",
+            status: "Active",
+            joinedDate: "2018-06-12",
+            licenseNumber: "MD-RAD-112233",
+            subSpecialty: "Neuro & MSK Radiology",
+            modalities: ["MRI", "CT Scan", "X-Ray"],
+            shiftPreference: "Day Shift (08:00 - 18:00)",
+            phone: incomingData.phone || "+1 (555) 321-7654",
+            address: incomingData.address || "456 Diagnostics Blvd, Medical City, NY 10002",
+            emergencyContact: incomingData.emergencyContact || {
+                name: "Priya Khanna",
+                relationship: "Spouse",
+                phone: "+1 (555) 876-5432"
+            }
+        }
+    });
+});
+
+// Radiology Audit Logs
+app.get('/api/v1/radiology/audit-logs', (req, res) => {
+    res.json({
+        success: true,
+        data: [
+            { id: "AL-1004", timestamp: new Date().toISOString(), action: "REPORT_SIGNED", ip: "192.168.1.55", details: "Signed MRI report for Order ORD-4829" },
+            { id: "AL-1003", timestamp: new Date(Date.now() - 3600000).toISOString(), action: "LOGIN_SUCCESS", ip: "192.168.1.55", details: "Secure authentication" },
+            { id: "AL-1002", timestamp: new Date(Date.now() - 86400000).toISOString(), action: "IMAGE_VIEWED", ip: "192.168.1.55", details: "Viewed CT Scan images for Order ORD-3991" },
+            { id: "AL-1001", timestamp: new Date(Date.now() - 90000000).toISOString(), action: "PROFILE_UPDATED", ip: "192.168.1.55", details: "Updated emergency contact info" },
+            { id: "AL-1000", timestamp: new Date(Date.now() - 172800000).toISOString(), action: "REPORT_UPLOADED", ip: "192.168.1.55", details: "Uploaded X-Ray report for Order ORD-3882" }
+        ]
+    });
+});
+
+// ==========================================
+// PHARMACIST PORTAL API ENDPOINTS
+// ==========================================
+
+// Pharmacist Dashboard Stats
+app.get('/api/v1/pharmacist/stats', (req, res) => {
+    res.json({
+        success: true,
+        data: {
+            pendingPrescriptions: 12,
+            dispensedToday: 48,
+            lowStockAlerts: 3,
+            refillRequests: 5
+        }
+    });
+});
+
+let mockPrescriptions = [
+    {
+        id: 'rx-2024-001',
+        patientName: 'Robert Fox',
+        patientId: 'PAT-8819',
+        medication: 'Amoxicillin 500mg',
+        dosage: '1 capsule three times daily for 7 days',
+        prescribedBy: 'Dr. Sarah Smith',
+        prescribedAt: new Date(Date.now() - 3600000).toISOString(),
+        status: 'pending' // 'pending', 'dispensed'
+    },
+    {
+        id: 'rx-2024-002',
+        patientName: 'Emily Chen',
+        patientId: 'PAT-8820',
+        medication: 'Lisinopril 10mg',
+        dosage: '1 tablet daily',
+        prescribedBy: 'Dr. James Lee',
+        prescribedAt: new Date(Date.now() - 7200000).toISOString(),
+        status: 'pending'
+    },
+    {
+        id: 'rx-2024-003',
+        patientName: 'Michael Ross',
+        patientId: 'PAT-8821',
+        medication: 'Metformin 500mg',
+        dosage: '1 tablet twice daily with meals',
+        prescribedBy: 'Dr. Sarah Smith',
+        prescribedAt: new Date(Date.now() - 86400000).toISOString(),
+        status: 'dispensed'
+    }
+];
+
+// Pharmacist Prescriptions Queue
+app.get('/api/v1/pharmacist/prescriptions', (req, res) => {
+    const statusFilter = req.query.status;
+    let results = mockPrescriptions;
+    
+    if (statusFilter && statusFilter !== 'all') {
+        results = results.filter(p => p.status === statusFilter);
+    }
+    
+    res.json({
+        success: true,
+        data: results
+    });
+});
+
+// Pharmacist Dispense Prescription
+app.put('/api/v1/pharmacist/prescriptions/:id/dispense', (req, res) => {
+    const { id } = req.params;
+    const rx = mockPrescriptions.find(p => p.id === id);
+    if (rx) {
+        rx.status = 'dispensed';
+        res.json({ success: true, message: `Prescription ${id} marked as dispensed.` });
+    } else {
+        res.status(404).json({ success: false, message: 'Prescription not found.' });
+    }
+});
+
+// Pharmacist Inventory
+app.get('/api/v1/pharmacist/inventory', (req, res) => {
+    res.json({
+        success: true,
+        data: [
+            { id: 'inv-101', name: 'Amoxicillin 500mg', genericName: 'Amoxicillin', category: 'Antibiotic', stock: 450, status: 'In Stock', location: 'Aisle 2, Shelf B' },
+            { id: 'inv-102', name: 'Lisinopril 10mg', genericName: 'Lisinopril', category: 'Cardiovascular', stock: 12, status: 'Low Stock', location: 'Aisle 3, Shelf A' },
+            { id: 'inv-103', name: 'Metformin 500mg', genericName: 'Metformin', category: 'Antidiabetic', stock: 850, status: 'In Stock', location: 'Aisle 1, Shelf C' },
+            { id: 'inv-104', name: 'Atorvastatin 20mg', genericName: 'Atorvastatin', category: 'Cardiovascular', stock: 0, status: 'Out of Stock', location: 'Aisle 3, Shelf B' },
+            { id: 'inv-105', name: 'Ibuprofen 400mg', genericName: 'Ibuprofen', category: 'Analgesic', stock: 1200, status: 'In Stock', location: 'Aisle 4, Shelf A' }
+        ]
+    });
+});
+
+// Pharmacist Profile (GET)
+app.get('/api/v1/pharmacist/profile', (req, res) => {
+    res.json({
+        success: true,
+        data: {
+            id: "pharm-456",
+            firstName: "Aisha",
+            lastName: "Patel",
+            role: "Lead Pharmacist",
+            employeeId: "PHM-2023-55667",
+            department: "Pharmacy",
+            email: "pharmacist@medicare.com",
+            phone: "+1 (555) 777-8899",
+            status: "Active",
+            joinedDate: "2020-03-15",
+            licenseNumber: "PH-99887766",
+            shiftPreference: "Morning Shift (06:00 - 14:00)",
+            address: "789 Healthway Drive, Medical City, NY 10003"
+        }
+    });
+});
+
+// Pharmacist Profile (PUT)
+app.put('/api/v1/pharmacist/profile', (req, res) => {
+    const incomingData = req.body;
+    res.json({
+        success: true,
+        message: "Profile updated successfully",
+        data: {
+            id: "pharm-456",
+            firstName: "Aisha",
+            lastName: "Patel",
+            role: "Lead Pharmacist",
+            employeeId: "PHM-2023-55667",
+            department: "Pharmacy",
+            email: "pharmacist@medicare.com",
+            status: "Active",
+            joinedDate: "2020-03-15",
+            licenseNumber: "PH-99887766",
+            shiftPreference: "Morning Shift (06:00 - 14:00)",
+            phone: incomingData.phone || "+1 (555) 777-8899",
+            address: incomingData.address || "789 Healthway Drive, Medical City, NY 10003"
+        }
+    });
+});
+
+// Pharmacist Audit Logs
+app.get('/api/v1/pharmacist/audit-logs', (req, res) => {
+    res.json({
+        success: true,
+        data: [
+            { id: "PAL-2005", timestamp: new Date().toISOString(), action: "RX_DISPENSED", ip: "192.168.1.60", details: "Dispensed Amoxicillin 500mg for Patient PAT-8819" },
+            { id: "PAL-2004", timestamp: new Date(Date.now() - 3600000).toISOString(), action: "LOGIN_SUCCESS", ip: "192.168.1.60", details: "Secure authentication" },
+            { id: "PAL-2003", timestamp: new Date(Date.now() - 86400000).toISOString(), action: "INVENTORY_UPDATED", ip: "192.168.1.60", details: "Received stock for Ibuprofen 400mg" },
+            { id: "PAL-2002", timestamp: new Date(Date.now() - 90000000).toISOString(), action: "PROFILE_UPDATED", ip: "192.168.1.60", details: "Updated contact phone number" },
+            { id: "PAL-2001", timestamp: new Date(Date.now() - 172800000).toISOString(), action: "RX_DISPENSED", ip: "192.168.1.60", details: "Dispensed Metformin 500mg for Patient PAT-8821" }
+        ]
+    });
+});
+
+// ==========================================
+// COMPLIANCE OFFICER PORTAL API ENDPOINTS
+// ==========================================
+
+// Display High Level Stats
+app.get('/api/v1/compliance/dashboard', (req, res) => {
+    res.json({
+        success: true,
+        data: {
+            authAnomalies: 3,
+            openIncidents: 5,
+            activeOverrides: 2,
+            pendingReviews: 12
+        }
+    });
+});
+
+// Mock Data for Incidents
+let mockIncidents = [
+    { id: "INC-2024-001", date: new Date(Date.now() - 86400000).toISOString(), type: "Unauthorized Access", reporter: "Automated System", status: "Investigating", description: "Multiple failed login attempts detected from IP 192.168.1.45." },
+    { id: "INC-2024-002", date: new Date(Date.now() - 172800000).toISOString(), type: "Data Breach Suspected", reporter: "Sarah Jenkins", status: "Open", description: "Nurse reported finding printed patient records left unattended at Station C." },
+    { id: "INC-2024-003", date: new Date(Date.now() - 432000000).toISOString(), type: "Policy Violation", reporter: "Dr. Smith", status: "Resolved", description: "Staff member used unsecured personal device to view schedules." }
+];
+
+app.get('/api/v1/compliance/incidents', (req, res) => {
+    res.json({
+        success: true,
+        data: mockIncidents
+    });
+});
+
+app.put('/api/v1/compliance/incidents/:id', (req, res) => {
+    const { id } = req.params;
+    const { status } = req.body;
+    const incident = mockIncidents.find(inc => inc.id === id);
+    if (incident) {
+        incident.status = status;
+        res.json({ success: true, message: `Incident ${id} updated to ${status}.` });
+    } else {
+        res.status(404).json({ success: false, message: 'Incident not found.' });
+    }
+});
+
+app.get('/api/v1/compliance/global-audits', (req, res) => {
+    res.json({
+        success: true,
+        data: [
+            { id: "AUD-9905", timestamp: new Date().toISOString(), user: "Sarah Jenkins (NURSE)", action: "VIEW_RECORD", details: "Accessed vitals history for PAT-8819", status: "Success" },
+            { id: "AUD-9904", timestamp: new Date(Date.now() - 60000).toISOString(), user: "Unknown (NULL)", action: "LOGIN_FAILED", details: "Invalid password attempt for admin", status: "Failed" },
+            { id: "AUD-9903", timestamp: new Date(Date.now() - 3600000).toISOString(), user: "Dr. Smith (DOCTOR)", action: "OVERRIDE_CONSENT", details: "Emergency access to PAT-9002 (Consent Denied flag ignored)", status: "Warning" },
+            { id: "AUD-9902", timestamp: new Date(Date.now() - 86400000).toISOString(), user: "Aisha Patel (PHARMACIST)", action: "RX_DISPENSED", details: "Dispensed Rx rx-2024-001", status: "Success" },
+            { id: "AUD-9901", timestamp: new Date(Date.now() - 90000000).toISOString(), user: "Admin (ADMIN)", action: "USER_INVITED", details: "Invited new staff member (radiologist)", status: "Success" }
+        ]
+    });
+});
+
+app.get('/api/v1/compliance/consent-overrides', (req, res) => {
+    res.json({
+        success: true,
+        data: [
+            { id: "OVR-501", date: new Date(Date.now() - 3600000).toISOString(), doctor: "Dr. Sarah Smith", patientId: "PAT-9002", reason: "Medical Emergency (Cardiac Arrest)", status: "Pending Review" },
+            { id: "OVR-502", date: new Date(Date.now() - 86400000).toISOString(), doctor: "Dr. James Lee", patientId: "PAT-1120", reason: "Patient unresponsive in ER", status: "Approved" }
+        ]
+    });
+});
+
+app.get('/api/v1/compliance/profile', (req, res) => {
+    res.json({
+        success: true,
+        data: {
+            id: "comp-999",
+            firstName: "Robert",
+            lastName: "Oppenheimer",
+            role: "Chief Compliance Officer",
+            employeeId: "CCO-2015-001",
+            department: "Legal & Security",
+            email: "compliance@medicare.com",
+            phone: "+1 (555) 999-0000",
+            status: "Active",
+            joinedDate: "2015-08-01",
+            address: "100 Security Blvd, MedTech Park, CA"
+        }
+    });
+});
+
+app.put('/api/v1/compliance/profile', (req, res) => {
+    const incomingData = req.body;
+    res.json({
+        success: true,
+        message: "Profile updated successfully",
+        data: {
+            id: "comp-999",
+            firstName: "Robert",
+            lastName: "Oppenheimer",
+            role: "Chief Compliance Officer",
+            employeeId: "CCO-2015-001",
+            department: "Legal & Security",
+            email: "compliance@medicare.com",
+            status: "Active",
+            joinedDate: "2015-08-01",
+            phone: incomingData.phone || "+1 (555) 999-0000",
+            address: incomingData.address || "100 Security Blvd, MedTech Park, CA"
+        }
+    });
+});
+
 
 // --- Catch all for unhandled routes ---
 app.use((req, res) => {
