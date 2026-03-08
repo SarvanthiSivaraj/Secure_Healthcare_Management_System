@@ -2,6 +2,7 @@ import React, { useState, useEffect, useContext } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { AuthContext } from '../../context/AuthContext';
 import { visitApi } from '../../api/visitApi';
+import { emrApi } from '../../api/emrApi';
 import ClinicalNotesEditor from '../../components/clinical/ClinicalNotesEditor';
 import PrescriptionForm from '../../components/clinical/PrescriptionForm';
 import DiagnosisSelector from '../../components/clinical/DiagnosisSelector';
@@ -57,15 +58,31 @@ function ClinicalNotes() {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
-    const handleSelectVisit = (visit) => {
+    const handleSelectVisit = async (visit) => {
         setSelectedVisit(visit);
-        setVisitId(visit.id || visit.visit_id || '');
-        setPatientId(visit.patient_id || visit.patientId || '');
+        const vId = visit.id || visit.visit_id || '';
+        const pId = visit.patient_id || visit.patientId || '';
+        setVisitId(vId);
+        setPatientId(pId);
         setActiveTab('notes');
         setPrescriptions([]);
         setDiagnoses([]);
         setShowPrescriptionForm(false);
         setShowDiagnosisForm(false);
+
+        // Fetch existing records for this visit
+        if (vId) {
+            try {
+                const [rxRes, dxRes] = await Promise.all([
+                    emrApi.getVisitPrescriptions(vId),
+                    emrApi.getVisitDiagnoses(vId)
+                ]);
+                if (rxRes.success) setPrescriptions(rxRes.data || []);
+                if (dxRes.success) setDiagnoses(dxRes.data || []);
+            } catch (error) {
+                console.error('Failed to fetch visit records:', error);
+            }
+        }
     };
 
     const handleChangePatient = () => {
@@ -79,18 +96,42 @@ function ClinicalNotes() {
         console.log('Saved notes:', notes);
     };
 
-    const handleAddPrescription = (prescription) => {
-        setPrescriptions([...prescriptions, { ...prescription, id: Date.now() }]);
-        setShowPrescriptionForm(false);
+    const handleAddPrescription = async (prescription) => {
+        try {
+            const res = await emrApi.createPrescription({
+                ...prescription,
+                visitId,
+                patientId,
+                recordId: selectedVisit?.record_id // Usually needs a recordId from the visit
+            });
+            if (res.success) {
+                setPrescriptions([...prescriptions, res.data]);
+                setShowPrescriptionForm(false);
+            }
+        } catch (error) {
+            alert(error.response?.data?.message || 'Failed to add prescription');
+        }
     };
 
     const handleRemovePrescription = (id) => {
         setPrescriptions(prescriptions.filter(p => p.id !== id));
     };
 
-    const handleAddDiagnosis = (diagnosis) => {
-        setDiagnoses([...diagnoses, { ...diagnosis, id: Date.now() }]);
-        setShowDiagnosisForm(false);
+    const handleAddDiagnosis = async (diagnosis) => {
+        try {
+            const res = await emrApi.createDiagnosis({
+                ...diagnosis,
+                visitId,
+                patientId,
+                recordId: selectedVisit?.record_id
+            });
+            if (res.success) {
+                setDiagnoses([...diagnoses, res.data]);
+                setShowDiagnosisForm(false);
+            }
+        } catch (error) {
+            alert(error.response?.data?.message || 'Failed to add diagnosis');
+        }
     };
 
     const handleRemoveDiagnosis = (id) => {

@@ -1,6 +1,8 @@
-import React, { useContext, useState } from 'react';
+import React, { useContext, useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { AuthContext } from '../../context/AuthContext';
+import { visitApi } from '../../api/visitApi';
+import { consentApi } from '../../api/consentApi';
 import EmergencyToggle from '../../components/emergency/EmergencyToggle';
 import ThemeToggle from '../../components/common/ThemeToggle';
 import './Dashboard.css';
@@ -63,17 +65,44 @@ const COLOR_MAP = {
     },
 };
 
-const STATS = [
-    { label: "Today's Patients", value: '0', icon: 'groups' },
-    { label: 'Pending Consents', value: '0', icon: 'assignment' },
-    { label: 'Active Cases', value: '0', icon: 'favorite' },
-    { label: 'Consultations', value: '0', icon: 'chat_bubble_outline' },
-];
-
 function DoctorDashboard() {
     const navigate = useNavigate();
     const { user, logout } = useContext(AuthContext);
     const [emergencyMode, setEmergencyMode] = useState(false);
+    const [stats, setStats] = useState([
+        { label: "Today's Patients", value: '0', icon: 'groups' },
+        { label: 'Pending Consents', value: '0', icon: 'assignment' },
+        { label: 'Active Cases', value: '0', icon: 'favorite' },
+        { label: 'Consultations', value: '0', icon: 'chat_bubble_outline' },
+    ]);
+
+    useEffect(() => {
+        const fetchStats = async () => {
+            try {
+                const [visitRes, consentRes] = await Promise.all([
+                    visitApi.getActiveVisits(),
+                    consentApi.getDoctorPatients()
+                ]);
+
+                if (visitRes.success) {
+                    const visits = visitRes.data || [];
+                    const activeCount = visits.filter(v => ['checked_in', 'in_progress'].includes(v.status)).length;
+                    const consultationCount = visits.filter(v => v.status === 'in_progress').length;
+                    const pendingConsents = consentRes.success ? (consentRes.data?.length || 0) : 0;
+
+                    setStats([
+                        { label: "Today's Patients", value: visits.length.toString(), icon: 'groups' },
+                        { label: 'Pending Consents', value: pendingConsents.toString(), icon: 'assignment' },
+                        { label: 'Active Cases', value: activeCount.toString(), icon: 'favorite' },
+                        { label: 'Consultations', value: consultationCount.toString(), icon: 'chat_bubble_outline' },
+                    ]);
+                }
+            } catch (error) {
+                console.error('Failed to fetch stats:', error);
+            }
+        };
+        fetchStats();
+    }, []);
 
     return (
         <div className="doctor-dashboard-wrapper bg-[var(--background-light)] dark:bg-[var(--background-dark)] text-slate-800 dark:text-slate-100 flex h-screen w-full overflow-hidden">
@@ -206,7 +235,7 @@ function DoctorDashboard() {
                 </div>
 
                 <div className="grid grid-cols-2 gap-3 mb-8">
-                    {STATS.map((stat, idx) => (
+                    {stats.map((stat, idx) => (
                         <div key={idx} className="doctor-glass-card rounded-2xl p-4 flex flex-col items-center gap-2 border-b-2 border-b-teal-500/20">
                             <span className="material-symbols-outlined text-teal-500 text-xl">{stat.icon}</span>
                             <span className="text-2xl font-black text-slate-800 dark:text-slate-100">{stat.value}</span>

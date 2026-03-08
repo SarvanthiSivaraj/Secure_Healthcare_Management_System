@@ -466,6 +466,15 @@ function AppRoutes() {
             />
 
             <Route
+                path="/profile"
+                element={
+                    <ProtectedRoute allowedRoles={['patient', 'doctor', 'staff', 'nurse', 'lab_tech', 'lab_technician', 'radiologist', 'admin', 'hospital_admin', 'system_admin', 'pharmacist', 'receptionist']}>
+                        <Profile />
+                    </ProtectedRoute>
+                }
+            />
+
+            <Route
                 path="/radiology/profile"
                 element={
                     <ProtectedRoute allowedRoles={['radiologist']}>

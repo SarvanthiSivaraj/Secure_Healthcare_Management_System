@@ -1,0 +1,16 @@
+[
+  {
+    "id": "622247b5-0968-427f-8f2b-ca0517330cd2",
+    "email": "raj@healthcare.com",
+    "first_name": "Raj",
+    "last_name": "Kumar",
+    "role_id": 2
+  },
+  {
+    "id": "068f587c-b124-48be-8734-c76dc2815afc",
+    "email": "dr.patel@hospital.com",
+    "first_name": "Raj",
+    "last_name": "Patel",
+    "role_id": 2
+  }
+]
