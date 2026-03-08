@@ -23,6 +23,8 @@ function StaffManagement() {
     const [showInviteForm, setShowInviteForm] = useState(false);
     const [submitting, setSubmitting] = useState(false);
     const [error, setError] = useState('');
+    const [emailError, setEmailError] = useState('');
+    const [checkingEmail, setCheckingEmail] = useState(false);
     const [formData, setFormData] = useState({ email: '', role: 'NURSE', organizationId: '' });
 
     const loadData = useCallback(async () => {
@@ -43,10 +45,55 @@ function StaffManagement() {
 
     useEffect(() => { loadData(); }, [loadData]);
 
-    const handleChange = (e) => { setFormData({ ...formData, [e.target.name]: e.target.value }); setError(''); };
+    const handleChange = (e) => {
+        setFormData({ ...formData, [e.target.name]: e.target.value });
+        setError('');
+        if (e.target.name === 'email') setEmailError('');
+    };
+
+    const handleEmailBlur = async () => {
+        if (!formData.email) {
+            setEmailError('');
+            return;
+        }
+
+        // Email validity check
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(formData.email)) {
+            setEmailError('Please enter a valid email address.');
+            return;
+        }
+
+        setCheckingEmail(true);
+        setEmailError('');
+        try {
+            const res = await staffApi.checkEmail(formData.email);
+            if (res.success && res.exists) {
+                setEmailError(res.message || 'This email is already registered or invited.');
+            }
+        } catch (err) {
+            console.error('Check email failed:', err);
+        } finally {
+            setCheckingEmail(false);
+        }
+    };
 
     const handleInviteSubmit = async (e) => {
         e.preventDefault(); setError(''); setSubmitting(true);
+
+        // Final email validity check before submit
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(formData.email)) {
+            setEmailError('Please enter a valid email address.');
+            setSubmitting(false);
+            return;
+        }
+
+        if (emailError) {
+            setSubmitting(false);
+            return;
+        }
+
         try {
             const response = await staffApi.inviteStaff(formData);
             if (response.success) { setShowInviteForm(false); setFormData({ email: '', role: 'NURSE', organizationId: '' }); loadData(); }
@@ -65,7 +112,7 @@ function StaffManagement() {
     };
 
     return (
-        <div className="patient-dashboard-wrapper bg-[var(--background-light)] dark:bg-[var(--background-dark)] text-slate-800 dark:text-slate-100 flex h-screen w-full overflow-hidden">
+        <div className="admin-dashboard-wrapper bg-[var(--background-light)] dark:bg-[var(--background-dark)] text-slate-800 dark:text-slate-100 flex h-screen w-full overflow-hidden">
             <div className="absolute top-4 right-4 z-50"><ThemeToggle /></div>
             <AdminSidebar active="/admin/staff" />
 
@@ -76,7 +123,13 @@ function StaffManagement() {
                         <h2 className="text-3xl font-bold text-slate-900 dark:text-white">Staff Management</h2>
                         <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">Invite and manage staff members across the organisation</p>
                     </div>
-                    <Button onClick={() => navigate('/admin/dashboard')} variant="secondary">← Back</Button>
+                    <button
+                        onClick={() => navigate('/admin/dashboard')}
+                        className="flex items-center gap-2 px-5 py-2.5 rounded-2xl bg-white/50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-white dark:hover:bg-slate-800 transition-all text-sm font-bold shadow-sm group"
+                    >
+                        <span className="material-symbols-outlined text-[20px] transition-transform group-hover:-translate-x-1">arrow_back</span>
+                        Back to Dashboard
+                    </button>
                 </div>
 
                 {/* Stats */}
@@ -113,7 +166,11 @@ function StaffManagement() {
                     <div className="glass-card rounded-3xl p-6 mb-6 border border-slate-200 dark:border-slate-800">
                         <h3 className="text-lg font-bold text-slate-800 dark:text-white mb-4">Send Staff Invitation</h3>
                         <form onSubmit={handleInviteSubmit} className="invite-form space-y-4 max-w-lg">
-                            <Input label="Email Address" type="email" name="email" value={formData.email} onChange={handleChange} required />
+                            <div>
+                                <Input label="Email Address" type="email" name="email" value={formData.email} onChange={handleChange} onBlur={handleEmailBlur} required />
+                                {checkingEmail && <p className="text-xs text-indigo-500 mt-1">Verifying email...</p>}
+                                {emailError && <p className="text-xs text-rose-500 mt-1 font-semibold">{emailError}</p>}
+                            </div>
                             <div className="form-group">
                                 <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Role</label>
                                 <select name="role" value={formData.role} onChange={handleChange} className="form-select w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-white" required>
@@ -122,7 +179,7 @@ function StaffManagement() {
                                     <option value="RADIOLOGIST">Radiologist</option>
                                     <option value="PHARMACIST">Pharmacist</option>
                                     <option value="RECEPTIONIST">Receptionist</option>
-                                    <option value="ADMIN">Admin</option>
+                                    <option value="HOSPITAL_ADMIN">Admin</option>
                                 </select>
                             </div>
                             <Input label="Organization ID (Optional)" type="text" name="organizationId" value={formData.organizationId} onChange={handleChange} placeholder="Leave blank for default organization" />

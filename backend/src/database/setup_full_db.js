@@ -157,6 +157,7 @@ const setupWithSeeds = async () => {
         await runFile(client, path.join(__dirname, 'migrations/add_visit_otp_access_level.sql'), 'Migration: Visit OTP & Access Level');
         await runFile(client, path.join(__dirname, 'migrations/add_medical_records_immutability.sql'), 'Migration: Medical Records Immutability');
         await runFile(client, path.join(__dirname, 'migrations/add_passkey_credentials.sql'), 'Migration: Passkey Credentials (WebAuthn)');
+        await runFile(client, path.join(__dirname, 'migrations/add_org_to_invitations.sql'), 'Migration: Staff Invitations Organization ID');
 
         await client.end(); // Close connection before spawning seeds to avoid connection limit issues if seeds also connect
 

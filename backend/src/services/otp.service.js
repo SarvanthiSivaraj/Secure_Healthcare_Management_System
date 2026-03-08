@@ -41,7 +41,13 @@ const generateAndSendOTP = async ({ email, phone, userId, purpose }) => {
         }
 
         // Generate OTP
-        const otp = generateOTP(config.otp.length);
+        let otp = generateOTP(config.otp.length);
+
+        // Use fixed OTP in development for easier testing if requested or as a fallback
+        if (process.env.NODE_ENV === 'development') {
+            otp = '123456';
+        }
+
         const otpHash = hashOTP(otp);
 
         // Calculate expiry time
@@ -66,12 +72,24 @@ const generateAndSendOTP = async ({ email, phone, userId, purpose }) => {
         // Send OTP via email (or SMS if phone)
         if (email) {
             if (process.env.NODE_ENV === 'development') {
-                logger.info('------------------------------------------');
+                console.log('\n\n' + '='.repeat(50));
+                console.log('🌟 DEVELOPMENT MODE OTP GENERATED 🌟');
+                console.log(`📧 Recipient: ${email}`);
+                console.log(`🔑 OTP CODE:  ${otp}`);
+                console.log('='.repeat(50) + '\n\n');
+
                 logger.info(`🔑 DEV MODE OTP: ${otp} (for ${email})`);
-                logger.info('------------------------------------------');
             }
-            await sendOTPEmail(email, otp, purpose);
-            logger.info('OTP sent via email', { email, purpose });
+            try {
+                await sendOTPEmail(email, otp, purpose);
+                logger.info('OTP sent via email', { email, purpose });
+            } catch (err) {
+                if (process.env.NODE_ENV === 'development') {
+                    logger.warn(`⚠️ Email delivery failed in Dev: ${err.message}. Use ${otp} from console.`);
+                } else {
+                    throw err;
+                }
+            }
         } else if (phone) {
             // TODO: Implement SMS sending
             logger.info('OTP generated for phone (SMS not implemented)', { phone, purpose, otp });
@@ -128,6 +146,34 @@ const verifyOTP = async ({ email, phone, otp, purpose }) => {
         const result = await query(findQuery, [email || phone, otpHash, purpose]);
 
         if (result.rows.length === 0) {
+            // Development bypass: allow 123456 for any purpose if in development mode
+            if (process.env.NODE_ENV === 'development' && otp === '123456') {
+                logger.info('Development OTP bypass used', { email, phone, purpose });
+
+                // Get the latest valid record for this user/purpose even if hash doesn't match
+                const fallbackQuery = `
+                    SELECT id, user_id, expires_at 
+                    FROM otp_verifications 
+                    WHERE ${email ? 'email = $1' : 'phone = $1'}
+                    AND purpose = $2
+                    AND is_verified = false
+                    ORDER BY created_at DESC
+                    LIMIT 1
+                `;
+                const fallbackRes = await query(fallbackQuery, [email || phone, purpose]);
+
+                if (fallbackRes.rows.length > 0) {
+                    const otpRecord = fallbackRes.rows[0];
+                    const updateQuery = `UPDATE otp_verifications SET is_verified = true WHERE id = $1 RETURNING user_id`;
+                    const updateResult = await query(updateQuery, [otpRecord.id]);
+                    return {
+                        success: true,
+                        message: 'OTP verified (Dev Bypass)',
+                        userId: updateResult.rows[0].user_id,
+                    };
+                }
+            }
+
             // Increment failed attempts
             const updateAttemptsQuery = `
         UPDATE otp_verifications

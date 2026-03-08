@@ -22,6 +22,14 @@ class StaffController {
             });
         }
 
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(email)) {
+            return res.status(400).json({
+                success: false,
+                message: 'Invalid email address format'
+            });
+        }
+
         // Handle Organization ID
         let targetOrgId = organizationId;
         const db = require('../../config/db'); // Import db for query
@@ -55,10 +63,24 @@ class StaffController {
 
         const inviterName = `${req.user.firstName} ${req.user.lastName}`;
 
+        // Map common role names to database roles
+        const roleMap = {
+            'ADMIN': 'hospital_admin',
+            'HOSPITAL_ADMIN': 'hospital_admin',
+            'DOCTOR': 'doctor',
+            'NURSE': 'nurse',
+            'LAB_TECHNICIAN': 'lab_technician',
+            'RADIOLOGIST': 'radiologist',
+            'PHARMACIST': 'pharmacist',
+            'RECEPTIONIST': 'receptionist'
+        };
+
+        const targetRole = roleMap[role.toUpperCase()] || role.toLowerCase();
+
         try {
             const invitation = await StaffInvitationService.inviteStaff({
                 email,
-                role,
+                role: targetRole,
                 organizationId: targetOrgId,
                 invitedBy: req.user.id,
                 invitationMessage,
@@ -78,8 +100,50 @@ class StaffController {
                     message: error.message
                 });
             }
+            if (error.message.includes('Invalid role')) {
+                return res.status(400).json({
+                    success: false,
+                    message: error.message
+                });
+            }
             throw error;
         }
+    });
+
+    /**
+     * Check if email exists
+     * GET /api/staff/check-email?email=test@example.com
+     */
+    static checkEmail = asyncHandler(async (req, res) => {
+        const { email } = req.query;
+        if (!email) {
+            return res.status(400).json({ success: false, message: 'Email is required' });
+        }
+
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(email)) {
+            return res.json({ success: true, exists: false, error: 'Invalid email format' });
+        }
+
+        const db = require('../../config/db');
+
+        // Check users
+        const userCheck = await db.query('SELECT id FROM users WHERE email = $1', [email]);
+        if (userCheck.rows.length > 0) {
+            return res.json({ success: true, exists: true, message: 'A user with this email already exists' });
+        }
+
+        // Check pending invitations
+        const invCheck = await db.query(`
+            SELECT id FROM staff_invitations 
+            WHERE email = $1 AND status = 'pending' AND expires_at > CURRENT_TIMESTAMP
+        `, [email]);
+
+        if (invCheck.rows.length > 0) {
+            return res.json({ success: true, exists: true, message: 'A pending invitation already exists for this email' });
+        }
+
+        return res.json({ success: true, exists: false });
     });
 
     /**

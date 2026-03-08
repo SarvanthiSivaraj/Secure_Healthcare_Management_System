@@ -16,6 +16,7 @@ const logger = require('../../utils/logger');
 const config = require('../../config/env');
 const { verifyAadhaar, verifyDoctorReg } = require('../../services/mockVerification.service');
 const { sendDoctorRegistrationNotification } = require('../../config/mail');
+const DoctorVerificationService = require('../../services/doctor.verification.service');
 
 /**
  * Register patient
@@ -609,7 +610,7 @@ const login = async (req, res) => {
             });
         }
 
-        // Check if user is verified
+        // Check if user is verified (for OTP flow like patients)
         if (!user.is_verified) {
             return res.status(HTTP_STATUS.FORBIDDEN).json({
                 success: false,
@@ -619,6 +620,16 @@ const login = async (req, res) => {
                     email: user.email,
                     phone: user.phone
                 }
+            });
+        }
+
+        // Check if account is active (for admin approval flow like doctors)
+        if (user.status === 'pending') {
+            return res.status(HTTP_STATUS.FORBIDDEN).json({
+                success: true, // success true but forbidden status code? Maybe success false but with custom status
+                success: false,
+                message: 'Your account is pending administrator approval. Please check your email for updates.',
+                data: { status: 'pending' }
             });
         }
 
@@ -855,7 +866,7 @@ const registerDoctor = async (req, res) => {
             throw new Error('Doctor role not found in database');
         }
 
-        // Create user
+        // Create user with isVerified: true to bypass OTP for doctors
         const user = await createUser({
             email,
             phone: phone || null,
@@ -863,14 +874,43 @@ const registerDoctor = async (req, res) => {
             roleId: doctorRole.id,
             firstName,
             lastName,
+            isVerified: true,
+            status: 'pending',
+            verificationStatus: 'pending',
+            accountStatus: 'pending_verification'
         });
 
-        // Generate and send OTP
-        await generateAndSendOTP({
-            email,
-            userId: user.id,
-            purpose: OTP_PURPOSE.REGISTRATION,
-        });
+        // Handle File Uploads (Credentials)
+        // Check if degree and medical reg certificate files exist
+        if (req.files && req.files.degreeCertificate && req.files.degreeCertificate[0]) {
+            await DoctorVerificationService.uploadLicenseDocument(user.id, {
+                documentType: 'degree_certificate',
+                path: req.files.degreeCertificate[0].path,
+                filename: req.files.degreeCertificate[0].filename,
+                size: req.files.degreeCertificate[0].size,
+                mimetype: req.files.degreeCertificate[0].mimetype,
+                expiresAt: null
+            });
+        }
+
+        if (req.files && req.files.medicalRegCertificate && req.files.medicalRegCertificate[0]) {
+            await DoctorVerificationService.uploadLicenseDocument(user.id, {
+                documentType: 'medical_license',
+                path: req.files.medicalRegCertificate[0].path,
+                filename: req.files.medicalRegCertificate[0].filename,
+                size: req.files.medicalRegCertificate[0].size,
+                mimetype: req.files.medicalRegCertificate[0].mimetype,
+                expiresAt: null
+            });
+        }
+
+        // Submit for verification (Sets verification_status to 'pending')
+        try {
+            await DoctorVerificationService.submitForVerification(user.id, user.id);
+        } catch (e) {
+            // It might fail if no medical_license was uploaded as per logic, log it but don't hard stop the registration
+            logger.warn(`Failed to submit doctor ${user.id} for verification immediately: ${e.message}`);
+        }
 
         // Audit log
         await createAuditLog({
@@ -898,11 +938,12 @@ const registerDoctor = async (req, res) => {
 
         res.status(HTTP_STATUS.CREATED).json({
             success: true,
-            message: SUCCESS_MESSAGES.USER_REGISTERED + '. Please verify your OTP.',
+            message: 'Registration successful! Your credentials have been submitted for administrator review. You will be notified via email once your account is active.',
             data: {
                 userId: user.id,
                 email: user.email,
                 phone: user.phone,
+                status: 'pending'
             },
         });
     } catch (error) {

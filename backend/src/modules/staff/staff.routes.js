@@ -21,6 +21,13 @@ router.post(
 );
 
 router.get(
+    '/check-email',
+    authenticate,
+    requireAdmin,
+    StaffController.checkEmail
+);
+
+router.get(
     '/invitations',
     authenticate,
     requireAdmin,
