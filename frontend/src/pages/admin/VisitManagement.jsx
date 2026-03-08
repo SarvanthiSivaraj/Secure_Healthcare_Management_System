@@ -3,7 +3,6 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { visitApi } from '../../api/visitApi';
 import { AdminSidebar } from './HospitalAdminDashboard';
 import ThemeToggle from '../../components/common/ThemeToggle';
-import DoctorSelectionPopup from '../../components/visit/DoctorSelectionPopup';
 import '../patient/Dashboard.css';
 import './VisitManagement.css';
 
@@ -19,36 +18,6 @@ function VisitManagement() {
     const [doctors, setDoctors] = useState([]);
     const [nurses, setNurses] = useState([]);
     const [approvalData, setApprovalData] = useState({ doctorId: '', nurseId: '' });
-    const [showDoctorPopup, setShowDoctorPopup] = useState(false);
-
-    const handleScheduleVisit = () => {
-        navigate('/patient/visits/schedule');
-    };
-
-    const handleDoctorSelect = async (doctor) => {
-        try {
-            setLoading(true);
-            // Defaulting request flow to use current logged-in user context
-            // or we ask for the patient ID explicitly for admins?
-            // Assuming this acts like requesting for self if no other ID specified for now
-            const reason = prompt(`Briefly describe reason for scheduling Dr. ${doctor.firstName} ${doctor.lastName}:`);
-            if (!reason) return;
-
-            await visitApi.requestVisit({
-                doctorId: doctor.id,
-                reason: reason,
-                type: 'scheduled',
-                status: 'approved' // Automatically approve if requested by admin? Let's leave as pending to be safe
-            });
-            setShowDoctorPopup(false);
-            alert(`Visit request sent/approved to Dr. ${doctor.firstName} ${doctor.lastName}`);
-            loadVisits();
-        } catch (error) {
-            alert(error.response?.data?.message || 'Failed to request visit');
-        } finally {
-            setLoading(false);
-        }
-    };
 
     const loadVisits = useCallback(async () => {
         setLoading(true);
@@ -128,7 +97,7 @@ function VisitManagement() {
         try {
             const response = await visitApi.approveVisit(
                 selectedVisit.id,
-                null, // backend picks up existing doctor
+                approvalData.doctorId || selectedVisit.assigned_doctor_id || selectedVisit.doctor_id || null, // Pass selected or existing doctor
                 approvalData.nurseId || null
             );
             // Close modal and show success with code
@@ -357,9 +326,21 @@ function VisitManagement() {
                                     </div>
                                 </div>
 
-                                <div>
-                                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Assigned Medical Lead</p>
-                                    <p className="text-sm font-bold text-indigo-600 dark:text-indigo-400">Dr. {selectedVisit?.doctor_first_name} {selectedVisit?.doctor_last_name}</p>
+                                <div className="form-group">
+                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 block">Assign Medical Lead</label>
+                                    <select
+                                        value={approvalData.doctorId || selectedVisit?.assigned_doctor_id || selectedVisit?.doctor_id || ''}
+                                        onChange={(e) => setApprovalData({ ...approvalData, doctorId: e.target.value })}
+                                        className="w-full px-4 py-3 rounded-2xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-800 dark:text-white text-sm focus:ring-2 focus:ring-indigo-500 outline-none transition-all"
+                                        required
+                                    >
+                                        <option value="">Select a doctor</option>
+                                        {doctors.map(doctor => (
+                                            <option key={doctor.id} value={doctor.id}>
+                                                Dr. {doctor.name || `${doctor.first_name || doctor.firstName} ${doctor.last_name || doctor.lastName}`}
+                                            </option>
+                                        ))}
+                                    </select>
                                 </div>
 
                                 <div className="form-group">

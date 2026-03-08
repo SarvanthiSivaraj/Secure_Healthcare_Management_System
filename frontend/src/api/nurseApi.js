@@ -45,6 +45,16 @@ export const nurseApi = {
     updateProfile: async (payload) => {
         const response = await apiClient.put('/nurse/profile', payload);
         return response.data;
+    },
+    // Get clinical vitals
+    getVitals: async () => {
+        const response = await apiClient.get('/nurse/vitals');
+        return response.data;
+    },
+    // Get shift schedule
+    getSchedule: async () => {
+        const response = await apiClient.get('/nurse/schedule');
+        return response.data;
     }
 };
 

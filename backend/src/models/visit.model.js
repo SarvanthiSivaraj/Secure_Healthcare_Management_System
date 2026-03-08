@@ -22,7 +22,7 @@ class VisitModel {
 
         const query = `
             INSERT INTO visits (
-                patient_id, organization_id, reason, symptoms, type, priority, status, assigned_doctor_id, visit_code
+                patient_id, organization_id, chief_complaint, symptoms, type, priority, status, assigned_doctor_id, visit_code
             )
             VALUES ($1, $2, $3, $4, $5, $6, 'pending', $7, $8)
             RETURNING *
@@ -299,21 +299,19 @@ class VisitModel {
         const query = `
             SELECT 
                 v.*,
-                u.first_name as patient_first_name,
                 u_p.first_name as patient_first_name,
                 u_p.last_name as patient_last_name,
                 u_p.email as patient_email,
                 p.unique_health_id,
                 u_s.first_name as doctor_first_name,
                 u_s.last_name as doctor_last_name,
-                r_u.name as user_role
+                o.name as organization_name
             FROM visits v
-            JOIN patient_profiles p ON v.patient_id = p.id
+            LEFT JOIN patient_profiles p ON v.patient_id = p.user_id
             JOIN users u_p ON p.user_id = u_p.id
-            LEFT JOIN staff_profiles s ON v.assigned_doctor_id = s.id
+            LEFT JOIN doctor_profiles s ON v.assigned_doctor_id = s.user_id
             LEFT JOIN users u_s ON s.user_id = u_s.id
-            LEFT JOIN users u ON v.created_by = u.id
-            LEFT JOIN roles r_u ON u.role_id = r_u.id
+            LEFT JOIN organizations o ON v.organization_id = o.id
             WHERE v.id = $1;
         `;
 
@@ -543,13 +541,11 @@ class VisitModel {
      */
     static async assignStaff(visitId, staffUserId, role) {
         const query = `
-            INSERT INTO visit_staff_assignments(visit_id, staff_user_id, role, access_level)
-        VALUES($1, $2, $3, 'full')
+            INSERT INTO visit_staff_assignments(visit_id, staff_user_id, role)
+        VALUES($1, $2, $3)
             ON CONFLICT(visit_id, staff_user_id) 
             DO UPDATE SET
-        role = EXCLUDED.role,
-            access_level = 'full',
-            revoked_at = NULL
+        role = EXCLUDED.role
         RETURNING *
             `;
 

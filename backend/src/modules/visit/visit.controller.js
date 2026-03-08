@@ -264,7 +264,7 @@ const VisitController = {
                 await sendVisitApprovalEmail(visitDetails.patient_email, {
                     visit_code: visitDetails.otp_code,
                     hospital_name: visitDetails.organization_name,
-                    reason: visitDetails.reason,
+                    reason: visitDetails.chief_complaint || 'Protocol Assigned',
                     scheduled_date: visitDetails.created_at
                 });
                 logger.info(`Visit approval email sent to ${visitDetails.patient_email}`);

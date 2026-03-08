@@ -176,8 +176,22 @@ const NurseProfile = () => {
 
                             {/* Identity Card */}
                             <div className="md:col-span-1 border border-slate-200/80 dark:border-slate-800/80 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl rounded-3xl p-6 shadow-sm flex flex-col items-center text-center">
-                                <div className="w-24 h-24 rounded-full bg-teal-100 dark:bg-teal-900/50 text-teal-600 dark:text-teal-400 flex items-center justify-center text-3xl font-bold mb-4 border-4 border-white dark:border-slate-800 shadow-lg">
-                                    {profile.firstName.charAt(0)}{profile.lastName.charAt(0)}
+                                <div className="w-24 h-24 rounded-full bg-teal-100 dark:bg-teal-900/50 text-teal-600 dark:text-teal-400 flex items-center justify-center text-3xl font-bold mb-4 border-4 border-white dark:border-slate-800 shadow-lg overflow-hidden">
+                                    {profile.profilePhoto ? (
+                                        <img
+                                            src={profile.profilePhoto}
+                                            alt={`${profile.firstName} ${profile.lastName}`}
+                                            className="w-full h-full object-cover"
+                                            onError={(e) => {
+                                                e.target.onerror = null;
+                                                e.target.src = ''; // Clear src to show fallback
+                                                e.target.style.display = 'none';
+                                                // We can't easily trigger the initials from here without state change
+                                            }}
+                                        />
+                                    ) : (
+                                        <span>{profile.firstName.charAt(0)}{profile.lastName.charAt(0)}</span>
+                                    )}
                                 </div>
                                 <h2 className="text-xl font-bold text-slate-800 dark:text-white mb-1">{profile.firstName} {profile.lastName}</h2>
                                 <p className="text-teal-600 dark:text-teal-400 font-medium text-sm mb-4">{profile.role}</p>
@@ -286,7 +300,7 @@ const NurseProfile = () => {
                                     Professional Credentials
                                 </h3>
 
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
                                     <div>
                                         <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">License Number</p>
                                         <p className="text-slate-800 dark:text-slate-200 font-semibold font-mono bg-slate-100 dark:bg-slate-800 px-2 py-1 rounded inline-block">{profile.licenseNumber}</p>
@@ -294,6 +308,26 @@ const NurseProfile = () => {
                                     <div>
                                         <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">Joined Date</p>
                                         <p className="text-slate-800 dark:text-slate-200 font-medium">{new Date(profile.joinedDate).toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' })}</p>
+                                    </div>
+                                </div>
+
+                                <h3 className="text-lg font-bold text-slate-800 dark:text-white mb-6 flex items-center gap-2 border-t border-slate-100 dark:border-slate-800 pt-6">
+                                    <span className="material-symbols-outlined text-rose-500">contact_emergency</span>
+                                    Emergency Contact
+                                </h3>
+
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                    <div>
+                                        <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">Name</p>
+                                        <p className="text-slate-800 dark:text-slate-200 font-medium">{profile.emergencyContact?.name || 'Not Provided'}</p>
+                                    </div>
+                                    <div>
+                                        <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">Relationship</p>
+                                        <p className="text-slate-800 dark:text-slate-200 font-medium">{profile.emergencyContact?.relationship || 'Not Provided'}</p>
+                                    </div>
+                                    <div>
+                                        <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">Phone</p>
+                                        <p className="text-slate-800 dark:text-slate-200 font-medium">{profile.emergencyContact?.phone || 'Not Provided'}</p>
                                     </div>
                                 </div>
                             </div>

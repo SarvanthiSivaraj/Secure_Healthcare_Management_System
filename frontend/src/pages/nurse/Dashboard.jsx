@@ -95,7 +95,7 @@ function NurseDashboard() {
                         <span className="material-symbols-outlined text-[20px]">medication</span>
                         Medications
                     </Link>
-                    <Link to="#" className="flex items-center gap-3 px-4 py-3 text-slate-500 dark:text-slate-400 hover:bg-white/50 dark:hover:bg-white/5 transition rounded-xl">
+                    <Link to="/nurse/schedule" className="flex items-center gap-3 px-4 py-3 text-slate-500 dark:text-slate-400 hover:bg-white/50 dark:hover:bg-white/5 transition rounded-xl">
                         <span className="material-symbols-outlined text-[20px]">calendar_month</span>
                         Shift Schedule
                     </Link>
@@ -208,19 +208,31 @@ function NurseDashboard() {
                 </div>
 
                 <div className="grid grid-cols-2 gap-3 mb-8">
-                    <button className="glass-card rounded-2xl p-4 flex flex-col items-center gap-2 hover:bg-white dark:hover:bg-white/10 transition">
+                    <button
+                        onClick={() => navigate('/nurse/vitals')}
+                        className="glass-card rounded-2xl p-4 flex flex-col items-center gap-2 hover:bg-white dark:hover:bg-white/10 transition"
+                    >
                         <span className="material-symbols-outlined text-teal-500 text-xl">monitor_heart</span>
                         <span className="text-[10px] font-bold text-slate-500 dark:text-slate-300 uppercase leading-none">Add Vitals</span>
                     </button>
-                    <button className="glass-card rounded-2xl p-4 flex flex-col items-center gap-2 hover:bg-white dark:hover:bg-white/10 transition">
+                    <button
+                        onClick={() => navigate('/nurse/vitals')}
+                        className="glass-card rounded-2xl p-4 flex flex-col items-center gap-2 hover:bg-white dark:hover:bg-white/10 transition"
+                    >
                         <span className="material-symbols-outlined text-teal-500 text-xl">edit_note</span>
                         <span className="text-[10px] font-bold text-slate-500 dark:text-slate-300 uppercase leading-none">Quick Note</span>
                     </button>
-                    <button className="glass-card rounded-2xl p-4 flex flex-col items-center gap-2 hover:bg-white dark:hover:bg-white/10 transition">
+                    <button
+                        onClick={() => navigate('/nurse/medications')}
+                        className="glass-card rounded-2xl p-4 flex flex-col items-center gap-2 hover:bg-white dark:hover:bg-white/10 transition"
+                    >
                         <span className="material-symbols-outlined text-indigo-500 text-xl">medication</span>
                         <span className="text-[10px] font-bold text-slate-500 dark:text-slate-300 uppercase leading-none">Record Meds</span>
                     </button>
-                    <button className="glass-card rounded-2xl p-4 flex flex-col items-center gap-2 hover:bg-white dark:hover:bg-white/10 transition">
+                    <button
+                        onClick={() => navigate('/nurse/patients')}
+                        className="glass-card rounded-2xl p-4 flex flex-col items-center gap-2 hover:bg-white dark:hover:bg-white/10 transition"
+                    >
                         <span className="material-symbols-outlined text-rose-500 text-xl">warning</span>
                         <span className="text-[10px] font-bold text-slate-500 dark:text-slate-300 uppercase leading-none">Alert Doctor</span>
                     </button>
