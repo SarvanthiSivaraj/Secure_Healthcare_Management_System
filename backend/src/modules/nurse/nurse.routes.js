@@ -52,6 +52,34 @@ router.get(
 );
 
 router.get(
+    '/medications',
+    authenticate,
+    requireRole(['nurse']),
+    NurseController.getMedications
+);
+
+router.put(
+    '/medications/:medicationId/status',
+    authenticate,
+    requireRole(['nurse']),
+    NurseController.updateMedicationStatus
+);
+
+router.get(
+    '/patients/:patientId/records',
+    authenticate,
+    requireRole(['nurse']),
+    NurseController.getPatientRecords
+);
+
+router.post(
+    '/patients/:patientId/records',
+    authenticate,
+    requireRole(['nurse']),
+    NurseController.addPatientRecord
+);
+
+router.get(
     '/schedule',
     authenticate,
     requireRole(['nurse']),

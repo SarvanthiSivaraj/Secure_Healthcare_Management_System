@@ -11,14 +11,13 @@ class NurseController {
         const userId = req.user.id;
 
         try {
-            // 1. Assigned Patients (Active visits where this nurse is assigned in care_team_assignments)
+            // 1. Assigned Patients (Active visits where this nurse is assigned in visit_staff_assignments)
             const patientCountQuery = `
                 SELECT COUNT(DISTINCT v.patient_id) 
                 FROM visits v
-                JOIN care_team_assignments cta ON v.id = cta.visit_id
+                JOIN visit_staff_assignments cta ON v.id = cta.visit_id
                 WHERE cta.staff_user_id = $1 
-                AND cta.removed_at IS NULL
-                AND v.state NOT IN ('cancelled', 'completed')
+                AND v.status NOT IN ('cancelled', 'completed')
             `;
             const patientCount = await query(patientCountQuery, [userId]);
 
@@ -36,9 +35,8 @@ class NurseController {
             const tasksCountQuery = `
                 SELECT COUNT(*) 
                 FROM medication_orders mo
-                JOIN care_team_assignments cta ON mo.visit_id = cta.visit_id
+                JOIN visit_staff_assignments cta ON mo.visit_id = cta.visit_id
                 WHERE cta.staff_user_id = $1 
-                AND cta.removed_at IS NULL
                 AND mo.status = 'pending'
             `;
             const tasksCount = await query(tasksCountQuery, [userId]);
@@ -76,9 +74,10 @@ class NurseController {
         const userId = req.user.id;
         const sql = `
             SELECT u.id, u.first_name as "firstName", u.last_name as "lastName", u.email, u.phone, 
-                   u.role, som.employee_id as "employeeId", som.department, som.status, som.license_number as "licenseNumber",
+                   u.role_id, r.name as "role", som.employee_id as "employeeId", som.department, som.status, som.license_number as "licenseNumber",
                    som.assigned_wards as "assignedWards", som.shift_preference as "shiftPreference", u.created_at
             FROM users u
+            LEFT JOIN roles r ON u.role_id = r.id
             LEFT JOIN staff_org_mapping som ON u.id = som.user_id
             WHERE u.id = $1
         `;
@@ -93,11 +92,11 @@ class NurseController {
             data: {
                 ...profile,
                 joinedDate: profile.created_at,
-                address: "123 Healthcare Ave, Medical District, NY 10001",
+                address: profile.address || "123 Healthcare Ave, Medical District, NY 10001",
                 emergencyContact: {
-                    name: "Michael Jenkins",
-                    relationship: "Spouse",
-                    phone: "+1 (555) 987-6543"
+                    name: profile.emergency_contact_name || "Michael Jenkins",
+                    relationship: profile.emergency_contact_relation || "Spouse",
+                    phone: profile.emergency_contact_phone || "+1 (555) 987-6543"
                 }
             }
         });
@@ -151,12 +150,12 @@ class NurseController {
         const userId = req.user.id;
         const sql = `
             SELECT DISTINCT v.id, v.patient_id as "patientId", u.first_name as "firstName", u.last_name as "lastName",
-                   v.reason as "admissionReason", v.state as "status", v.scheduled_time
+                   v.chief_complaint as "admissionReason", v.status as "status", v.check_in_time as "scheduled_time"
             FROM visits v
             JOIN users u ON v.patient_id = u.id
-            JOIN care_team_assignments cta ON v.id = cta.visit_id
-            WHERE cta.staff_user_id = $1 AND cta.removed_at IS NULL
-            AND v.state NOT IN ('cancelled', 'completed')
+            JOIN visit_staff_assignments cta ON v.id = cta.visit_id
+            WHERE cta.staff_user_id = $1
+            AND v.status NOT IN ('cancelled', 'completed')
         `;
         const result = await query(sql, [userId]);
 
@@ -212,7 +211,7 @@ class NurseController {
             FROM medical_records mr
             JOIN visits v ON mr.visit_id = v.id
             JOIN users u ON v.patient_id = u.id
-            JOIN care_team_assignments cta ON v.id = cta.visit_id
+            JOIN visit_staff_assignments cta ON v.id = cta.visit_id
             WHERE cta.staff_user_id = $1 AND mr.type = 'vital_signs'
             ORDER BY mr.created_at DESC
         `;
@@ -229,11 +228,104 @@ class NurseController {
             SELECT som.shift_start, som.shift_end, som.assigned_wards as "assignedWards",
                    som.shift_preference as "shiftPreference", o.name as "organizationName"
             FROM staff_org_mapping som
-            JOIN organizations o ON som.org_id = o.id
+            JOIN organizations o ON som.organization_id = o.id
             WHERE som.user_id = $1
         `;
         const result = await query(sql, [userId]);
-        res.json({ success: true, data: result.rows[0] });
+        res.json({ success: true, data: result.rows[0] || {} });
+    });
+
+    /**
+     * Get medications for assigned patients
+     */
+    static getMedications = asyncHandler(async (req, res) => {
+        const userId = req.user.id;
+        const sql = `
+            SELECT p.id, p.medication as "medicationName", p.dosage, p.route, 
+                   p.status, p.prescribed_at as "scheduledTime", p.dispensed_at as "administeredAt",
+                   u.first_name as "patientFirstName", u.last_name as "patientLastName"
+            FROM prescriptions p
+            JOIN medical_records mr ON p.record_id = mr.id
+            JOIN visits v ON mr.visit_id = v.id
+            JOIN users u ON v.patient_id = u.id
+            JOIN visit_staff_assignments cta ON v.id = cta.visit_id
+            WHERE cta.staff_user_id = $1
+            ORDER BY p.prescribed_at DESC
+        `;
+        const result = await query(sql, [userId]);
+
+        const meds = result.rows.map((m, index) => ({
+            ...m,
+            patientName: `${m.patientFirstName} ${m.patientLastName}`,
+            room: `${201 + index}-${index % 2 === 0 ? 'A' : 'B'}`
+        }));
+
+        res.json({ success: true, data: meds });
+    });
+
+    /**
+     * Update medication status
+     */
+    static updateMedicationStatus = asyncHandler(async (req, res) => {
+        const { medicationId } = req.params;
+        const { status } = req.body;
+        const userId = req.user.id;
+
+        const sql = `
+            UPDATE prescriptions 
+            SET status = $1, dispensed_at = $2, dispensed_by = $3
+            WHERE id = $4
+            RETURNING *
+        `;
+        const result = await query(sql, [
+            status,
+            status === 'administered' ? new Date() : null,
+            userId,
+            medicationId
+        ]);
+
+        if (result.rows.length === 0) {
+            return res.status(404).json({ success: false, message: 'Medication not found' });
+        }
+
+        res.json({ success: true, data: result.rows[0], message: 'Medication status updated' });
+    });
+
+    /**
+     * Get records for a specific patient
+     */
+    static getPatientRecords = asyncHandler(async (req, res) => {
+        const { patientId } = req.params;
+        const sql = `
+            SELECT mr.id, mr.title, mr.description, mr.type, mr.created_at,
+                   u.first_name || ' ' || u.last_name as "created_by_name",
+                   r.name as "created_by_role"
+            FROM medical_records mr
+            JOIN users u ON mr.created_by = u.id
+            JOIN roles r ON u.role_id = r.id
+            WHERE mr.patient_id = $1
+            ORDER BY mr.created_at DESC
+        `;
+        const result = await query(sql, [patientId]);
+        res.json({ success: true, data: result.rows });
+    });
+
+    /**
+     * Add a record for a patient
+     */
+    static addPatientRecord = asyncHandler(async (req, res) => {
+        const { patientId } = req.params;
+        const { type, title, description, visitId } = req.body;
+        const userId = req.user.id;
+
+        const sql = `
+            INSERT INTO medical_records (patient_id, visit_id, type, title, description, created_by)
+            VALUES ($1, $2, $3, $4, $5, $6)
+            RETURNING *
+        `;
+        const result = await query(sql, [patientId, visitId || null, type, title, description, userId]);
+
+        res.status(201).json({ success: true, data: result.rows[0], message: 'Record added successfully' });
     });
 }
 
