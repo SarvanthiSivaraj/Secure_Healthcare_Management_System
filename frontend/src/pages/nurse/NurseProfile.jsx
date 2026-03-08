@@ -286,7 +286,7 @@ const NurseProfile = () => {
                                     Professional Credentials
                                 </h3>
 
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
                                     <div>
                                         <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">License Number</p>
                                         <p className="text-slate-800 dark:text-slate-200 font-semibold font-mono bg-slate-100 dark:bg-slate-800 px-2 py-1 rounded inline-block">{profile.licenseNumber}</p>
@@ -294,6 +294,26 @@ const NurseProfile = () => {
                                     <div>
                                         <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">Joined Date</p>
                                         <p className="text-slate-800 dark:text-slate-200 font-medium">{new Date(profile.joinedDate).toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' })}</p>
+                                    </div>
+                                </div>
+
+                                <h3 className="text-lg font-bold text-slate-800 dark:text-white mb-6 flex items-center gap-2 border-t border-slate-100 dark:border-slate-800 pt-6">
+                                    <span className="material-symbols-outlined text-rose-500">contact_emergency</span>
+                                    Emergency Contact
+                                </h3>
+
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                    <div>
+                                        <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">Name</p>
+                                        <p className="text-slate-800 dark:text-slate-200 font-medium">{profile.emergencyContact?.name || 'Not Provided'}</p>
+                                    </div>
+                                    <div>
+                                        <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">Relationship</p>
+                                        <p className="text-slate-800 dark:text-slate-200 font-medium">{profile.emergencyContact?.relationship || 'Not Provided'}</p>
+                                    </div>
+                                    <div>
+                                        <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">Phone</p>
+                                        <p className="text-slate-800 dark:text-slate-200 font-medium">{profile.emergencyContact?.phone || 'Not Provided'}</p>
                                     </div>
                                 </div>
                             </div>
