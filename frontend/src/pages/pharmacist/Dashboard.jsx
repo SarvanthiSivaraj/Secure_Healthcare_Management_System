@@ -125,8 +125,8 @@ const PharmacistDashboard = () => {
                 {/* Header (Sticky Header) */}
                 <header className="px-8 py-6 flex items-center justify-between flex-shrink-0 z-10 sticky top-0 bg-[var(--background-light)]/80 dark:bg-[var(--background-dark)]/80 backdrop-blur-md border-b border-transparent transition-all">
                     <div>
-                        <h2 className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-slate-800 to-slate-600 dark:from-white dark:to-slate-300">Welcome, {user?.firstName}</h2>
-                        <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">Lead Pharmacist Dashboard</p>
+                        <h2 className="text-3xl font-bold text-slate-900 dark:text-white">Pharmacist Hub</h2>
+                        <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">Welcome back, {user?.firstName} • Lead Pharmacist Dashboard</p>
                     </div>
                     <div className="flex items-center gap-4">
                         <div className="flex items-center gap-2 px-3 py-1.5 bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 rounded-full text-xs font-bold border border-emerald-200 dark:border-emerald-800/50">

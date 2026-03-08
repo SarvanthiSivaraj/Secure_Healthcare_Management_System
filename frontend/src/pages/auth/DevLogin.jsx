@@ -10,7 +10,7 @@ function DevLogin() {
 
     const mockLogin = (role) => {
         // Create a mock JWT token (just for development)
-        const nameMap = { PATIENT: 'John', DOCTOR: 'Dr. Smith', ADMIN: 'Admin', STAFF: 'Staff', RADIOLOGIST: 'Dr. Ray', PHARMACIST: 'Aisha Patel', COMPLIANCE_OFFICER: 'Robert Oppenheimer' };
+        const nameMap = { PATIENT: 'John', DOCTOR: 'Dr. Smith', ADMIN: 'Admin', STAFF: 'Staff', RADIOLOGIST: 'Dr. Ray', PHARMACIST: 'Aisha Patel', COMPLIANCE_OFFICER: 'Robert Oppenheimer', INSURANCE: 'Sarah Jenkins', RESEARCHER: 'Dr. Emily Stanton' };
         const mockUser = {
             id: '123',
             email: `${role.toLowerCase()}@test.com`,
@@ -57,6 +57,12 @@ function DevLogin() {
             case 'COMPLIANCE_OFFICER':
                 navigate('/compliance/dashboard');
                 break;
+            case 'INSURANCE':
+                navigate('/insurance/dashboard');
+                break;
+            case 'RESEARCHER':
+                navigate('/researcher/dashboard');
+                break;
             default:
                 navigate('/');
         }
@@ -97,6 +103,14 @@ function DevLogin() {
 
                     <Button onClick={() => mockLogin('COMPLIANCE_OFFICER')} variant="primary">
                         Login as Compliance
+                    </Button>
+
+                    <Button onClick={() => mockLogin('INSURANCE')} variant="primary">
+                        Login as Insurance Agent
+                    </Button>
+
+                    <Button onClick={() => mockLogin('RESEARCHER')} variant="primary">
+                        Login as Researcher
                     </Button>
                 </div>
 

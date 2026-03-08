@@ -42,6 +42,18 @@ import Incidents from '../pages/compliance/Incidents';
 import ConsentOverrides from '../pages/compliance/ConsentOverrides';
 import ComplianceProfile from '../pages/compliance/Profile';
 
+// Insurance Pages
+import InsuranceDashboard from '../pages/insurance/Dashboard';
+import InsuranceClaimsManagement from '../pages/insurance/ClaimsManagement';
+import InsuranceCoverageVerification from '../pages/insurance/CoverageVerification';
+import InsurancePolicyholders from '../pages/insurance/Policyholders';
+import InsuranceProfile from '../pages/insurance/Profile';
+
+// Researcher Pages
+import ResearcherDashboard from '../pages/researcher/Dashboard';
+import ResearcherDataExplorer from '../pages/researcher/DataExplorer';
+import ResearcherProfile from '../pages/researcher/Profile';
+
 import NewVisit from '../pages/patient/NewVisit';
 import ScheduleNewVisit from '../pages/patient/ScheduleNewVisit';
 import GrantConsent from '../pages/patient/GrantConsent';
@@ -523,6 +535,74 @@ function AppRoutes() {
                 element={
                     <ProtectedRoute allowedRoles={['compliance_officer']}>
                         <ComplianceProfile />
+                    </ProtectedRoute>
+                }
+            />
+
+            {/* Insurance Routes */}
+            <Route
+                path="/insurance/dashboard"
+                element={
+                    <ProtectedRoute allowedRoles={['insurance']}>
+                        <InsuranceDashboard />
+                    </ProtectedRoute>
+                }
+            />
+            <Route
+                path="/insurance/claims"
+                element={
+                    <ProtectedRoute allowedRoles={['insurance']}>
+                        <InsuranceClaimsManagement />
+                    </ProtectedRoute>
+                }
+            />
+            <Route
+                path="/insurance/coverage"
+                element={
+                    <ProtectedRoute allowedRoles={['insurance']}>
+                        <InsuranceCoverageVerification />
+                    </ProtectedRoute>
+                }
+            />
+            <Route
+                path="/insurance/policyholders"
+                element={
+                    <ProtectedRoute allowedRoles={['insurance']}>
+                        <InsurancePolicyholders />
+                    </ProtectedRoute>
+                }
+            />
+            <Route
+                path="/insurance/profile"
+                element={
+                    <ProtectedRoute allowedRoles={['insurance']}>
+                        <InsuranceProfile />
+                    </ProtectedRoute>
+                }
+            />
+
+            {/* Researcher Routes */}
+            <Route
+                path="/researcher/dashboard"
+                element={
+                    <ProtectedRoute allowedRoles={['researcher']}>
+                        <ResearcherDashboard />
+                    </ProtectedRoute>
+                }
+            />
+            <Route
+                path="/researcher/explorer"
+                element={
+                    <ProtectedRoute allowedRoles={['researcher']}>
+                        <ResearcherDataExplorer />
+                    </ProtectedRoute>
+                }
+            />
+            <Route
+                path="/researcher/profile"
+                element={
+                    <ProtectedRoute allowedRoles={['researcher']}>
+                        <ResearcherProfile />
                     </ProtectedRoute>
                 }
             />

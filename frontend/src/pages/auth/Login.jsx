@@ -41,6 +41,8 @@ function Login() {
             case 'PHARMACIST': navigate('/pharmacist/dashboard'); break;
             case 'COMPLIANCE_OFFICER':
             case 'COMPLIANCE': navigate('/compliance/dashboard'); break;
+            case 'INSURANCE': navigate('/insurance/dashboard'); break;
+            case 'RESEARCHER': navigate('/researcher/dashboard'); break;
             default: navigate('/staff/dashboard');
         }
     };

@@ -134,6 +134,40 @@ app.post('/api/v1/auth/login', (req, res) => {
             }
         });
     }
+
+    if (emailOrPhone === 'agent@bluecross.com') {
+        const MOCK_INSURANCE_AGENT = {
+            id: "ins-202",
+            email: "agent@bluecross.com",
+            role: "INSURANCE",
+            firstName: "Sarah",
+            lastName: "Jenkins"
+        };
+        return res.json({
+            success: true,
+            data: {
+                user: MOCK_INSURANCE_AGENT,
+                accessToken: MOCK_TOKEN
+            }
+        });
+    }
+
+    if (emailOrPhone === 'researcher@medicare.com') {
+        const MOCK_RESEARCHER = {
+            id: "res-303",
+            email: "researcher@medicare.com",
+            role: "RESEARCHER",
+            firstName: "Dr. Emily",
+            lastName: "Stanton"
+        };
+        return res.json({
+            success: true,
+            data: {
+                user: MOCK_RESEARCHER,
+                accessToken: MOCK_TOKEN
+            }
+        });
+    }
     
     // Accept any password for mock user
     if (emailOrPhone === 'patient@medicare.com' || emailOrPhone === 'test@test.com') {
@@ -219,6 +253,14 @@ app.get('/api/v1/auth/verify', (req, res) => {
             role: "pharmacist",
             firstName: "Aisha",
             lastName: "Patel"
+        };
+    } else if (referer.includes('researcher')) {
+        userToReturn = {
+            id: "res-303",
+            email: "researcher@medicare.com",
+            role: "RESEARCHER",
+            firstName: "Dr. Emily",
+            lastName: "Stanton"
         };
     }
 
@@ -1254,6 +1296,207 @@ app.put('/api/v1/compliance/profile', (req, res) => {
             joinedDate: "2015-08-01",
             phone: incomingData.phone || "+1 (555) 999-0000",
             address: incomingData.address || "100 Security Blvd, MedTech Park, CA"
+        }
+    });
+});
+
+
+// ==========================================
+// INSURANCE MODULE
+// ==========================================
+
+let insuranceClaims = [
+    { id: 'CLM-001', patientName: 'John Doe', policyNumber: 'POL-123456', diagnosis: 'Hypertension', amount: 150.00, status: 'Pending', submittedAt: '2026-03-01T10:00:00Z' },
+    { id: 'CLM-002', patientName: 'Jane Smith', policyNumber: 'POL-654321', diagnosis: 'Type 2 Diabetes', amount: 350.50, status: 'Approved', submittedAt: '2026-03-02T14:30:00Z' },
+    { id: 'CLM-003', patientName: 'Robert Johnson', policyNumber: 'POL-987654', diagnosis: 'Asthma', amount: 80.00, status: 'Denied', submittedAt: '2026-03-03T09:15:00Z', notes: 'Service not covered under basic plan' },
+    { id: 'CLM-004', patientName: 'Emily Davis', policyNumber: 'POL-456789', diagnosis: 'Migraine', amount: 420.00, status: 'Pending', submittedAt: '2026-03-05T11:45:00Z' }
+];
+
+let policyholders = [
+    { id: 'PH-001', name: 'John Doe', policyNumber: 'POL-123456', type: 'Premium', status: 'Active', coverageStart: '2025-01-01', coverageEnd: '2026-12-31' },
+    { id: 'PH-002', name: 'Jane Smith', policyNumber: 'POL-654321', type: 'Basic', status: 'Active', coverageStart: '2025-06-01', coverageEnd: '2026-05-31' },
+    { id: 'PH-003', name: 'Michael Brown', policyNumber: 'POL-111222', type: 'Family', status: 'Expired', coverageStart: '2024-01-01', coverageEnd: '2024-12-31' },
+    { id: 'PH-004', name: 'Emily Davis', policyNumber: 'POL-456789', type: 'Premium', status: 'Active', coverageStart: '2025-03-01', coverageEnd: '2027-02-28' }
+];
+
+let insuranceProfile = {
+    firstName: 'Sarah',
+    lastName: 'Jenkins',
+    email: 'agent@bluecross.com',
+    phone: '+1 (555) 987-6543',
+    department: 'Claims Processing',
+    company: 'BlueCross Health',
+    agentId: 'AGT-2024-5678',
+    role: 'Senior Claims Agent'
+};
+
+const verifyToken = (req, res, next) => {
+    // Mock token verification
+    next();
+};
+
+app.get('/api/v1/insurance/dashboard', verifyToken, (req, res) => {
+    const pending = insuranceClaims.filter(c => c.status === 'Pending').length;
+    const approved = insuranceClaims.filter(c => c.status === 'Approved').length;
+    const denied = insuranceClaims.filter(c => c.status === 'Denied').length;
+    const totalPayout = insuranceClaims.filter(c => c.status === 'Approved').reduce((sum, c) => sum + c.amount, 0);
+    const activePolicies = policyholders.filter(p => p.status === 'Active').length;
+
+    res.json({
+        success: true,
+        data: {
+            pendingClaims: pending,
+            approvedClaims: approved,
+            deniedClaims: denied,
+            totalPayout: totalPayout.toFixed(2),
+            activePolicies,
+            recentClaims: insuranceClaims.slice(0, 3)
+        }
+    });
+});
+
+app.get('/api/v1/insurance/claims', verifyToken, (req, res) => {
+    res.json({
+        success: true,
+        data: insuranceClaims
+    });
+});
+
+app.put('/api/v1/insurance/claims/:id', verifyToken, (req, res) => {
+    const { id } = req.params;
+    const { status, notes } = req.body;
+    const claimIndex = insuranceClaims.findIndex(c => c.id === id);
+    if (claimIndex !== -1) {
+        insuranceClaims[claimIndex] = { ...insuranceClaims[claimIndex], status, notes: notes || insuranceClaims[claimIndex].notes };
+        res.json({ success: true, data: insuranceClaims[claimIndex] });
+    } else {
+        res.status(404).json({ success: false, message: 'Claim not found' });
+    }
+});
+
+app.get('/api/v1/insurance/coverage/verify', verifyToken, (req, res) => {
+    const { memberId, policyNumber } = req.query;
+    const holder = policyholders.find(p => p.id === memberId || p.policyNumber === policyNumber);
+    if (holder) {
+        res.json({
+            success: true,
+            data: {
+                covered: holder.status === 'Active',
+                policyDetails: holder,
+                copay: 25.00,
+                deductibleUsed: 1500.00,
+                deductibleTotal: 5000.00
+            }
+        });
+    } else {
+        res.json({
+            success: true,
+            data: { covered: false, policyDetails: null, message: "Policy not found or inactive" }
+        });
+    }
+});
+
+app.get('/api/v1/insurance/policyholders', verifyToken, (req, res) => {
+    res.json({ success: true, data: policyholders });
+});
+
+app.get('/api/v1/insurance/profile', verifyToken, (req, res) => {
+    res.json({ success: true, data: insuranceProfile });
+});
+
+app.put('/api/v1/insurance/profile', verifyToken, (req, res) => {
+    insuranceProfile = { ...insuranceProfile, ...req.body };
+    res.json({ success: true, data: insuranceProfile });
+});
+
+
+// ── Researcher Portal ──
+
+app.get('/api/v1/research/stats', verifyToken, (req, res) => {
+    res.json({
+        success: true,
+        data: {
+            totalRecords: 125430,
+            activeStudies: 12,
+            anonymizedPatients: 45200,
+            dataPointsCollected: 850024
+        }
+    });
+});
+
+app.get('/api/v1/research/symptoms', verifyToken, (req, res) => {
+    res.json({
+        success: true,
+        data: [
+            { name: "Fatigue", count: 1250, severityAvg: 4.2 },
+            { name: "Fever", count: 890, severityAvg: 6.1 },
+            { name: "Headache", count: 2100, severityAvg: 3.8 },
+            { name: "Nausea", count: 650, severityAvg: 5.5 },
+            { name: "Shortness of Breath", count: 420, severityAvg: 7.2 }
+        ]
+    });
+});
+
+app.get('/api/v1/research/treatments', verifyToken, (req, res) => {
+    res.json({
+        success: true,
+        data: [
+            { name: "Amoxicillin", successRate: 85, usageCount: 5400 },
+            { name: "Lisinopril", successRate: 72, usageCount: 8900 },
+            { name: "Metformin", successRate: 68, usageCount: 12000 },
+            { name: "Ibuprofen", successRate: 92, usageCount: 25000 },
+            { name: "Physical Therapy", successRate: 65, usageCount: 3200 }
+        ]
+    });
+});
+
+app.get('/api/v1/research/demographics', verifyToken, (req, res) => {
+    res.json({
+        success: true,
+        data: {
+            ageGroups: [
+                { range: "0-18", percentage: 15 },
+                { range: "19-35", percentage: 25 },
+                { range: "36-50", percentage: 30 },
+                { range: "51-65", percentage: 20 },
+                { range: "65+", percentage: 10 }
+            ],
+            gender: [
+                { category: "Male", percentage: 48 },
+                { category: "Female", percentage: 51 },
+                { category: "Other", percentage: 1 }
+            ]
+        }
+    });
+});
+
+app.get('/api/v1/research/profile', verifyToken, (req, res) => {
+    res.json({
+        success: true,
+        data: {
+            id: "res-303",
+            firstName: "Emily",
+            lastName: "Stanton",
+            role: "Lead Data Scientist",
+            email: "researcher@medicare.com",
+            phone: "+1 (555) 303-4040",
+            department: "Clinical Research & Informatics",
+            institution: "Medicare Global Research Setup",
+            status: "Active"
+        }
+    });
+});
+
+app.put('/api/v1/research/profile', verifyToken, (req, res) => {
+    const { phone, department } = req.body;
+    res.json({
+        success: true,
+        message: "Profile updated successfully",
+        data: {
+            id: "res-303",
+            email: "researcher@medicare.com",
+            phone: phone || "+1 (555) 303-4040",
+            department: department || "Clinical Research & Informatics"
         }
     });
 });
