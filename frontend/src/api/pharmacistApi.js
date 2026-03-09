@@ -1,100 +1,72 @@
-import axios from 'axios';
+import apiClient from './client';
 
-const API_URL = 'http://localhost:5003/api/v1';
-
-// We use the same mock token structure as the rest of the app 
-// to ensure the backend recognizes the session.
-const getAuthHeaders = () => {
-    const userStr = localStorage.getItem('user');
-    let token = '';
-    
-    if (userStr) {
-        try {
-            const user = JSON.parse(userStr);
-            // The backend mock currently accepts any string or the specific mock token
-            // In a real app, you'd store tracking tokens securely. 
-            // We use standard Bearer for the mock.
-            token = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...mock';
-        } catch(e) { console.error('Error parsing user data:', e); }
-    }
-    
-    return {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`
-    };
-};
-
+/**
+ * Pharmacist API — uses the shared apiClient (real JWT, correct base URL)
+ * All routes → /api/pharmacist/*
+ */
 export const pharmacistApi = {
+    /**
+     * GET /api/pharmacist/stats
+     * Dashboard statistics: pending Rx, dispensed today, low stock, refill requests
+     */
     getDashboardStats: async () => {
-        try {
-            const response = await axios.get(`${API_URL}/pharmacist/stats`, { headers: getAuthHeaders() });
-            return response.data;
-        } catch (error) {
-            console.error('API Error: getDashboardStats', error);
-            throw error;
-        }
+        const response = await apiClient.get('/pharmacist/stats');
+        return response.data;
     },
 
+    /**
+     * GET /api/pharmacist/prescriptions?status=pending|dispensed|all
+     * Returns prescription queue with patient and prescriber names
+     */
     getPrescriptions: async (status = 'all') => {
-        try {
-            const response = await axios.get(`${API_URL}/pharmacist/prescriptions`, { 
-                headers: getAuthHeaders(),
-                params: { status }
-            });
-            return response.data;
-        } catch (error) {
-            console.error('API Error: getPrescriptions', error);
-            throw error;
-        }
+        const response = await apiClient.get('/pharmacist/prescriptions', {
+            params: { status }
+        });
+        return response.data;
     },
 
+    /**
+     * PUT /api/pharmacist/prescriptions/:id/dispense
+     * Mark a prescription as dispensed (completed)
+     */
     dispensePrescription: async (id) => {
-        try {
-            const response = await axios.put(`${API_URL}/pharmacist/prescriptions/${id}/dispense`, {}, { headers: getAuthHeaders() });
-            return response.data;
-        } catch (error) {
-            console.error('API Error: dispensePrescription', error);
-            throw error;
-        }
+        const response = await apiClient.put(`/pharmacist/prescriptions/${id}/dispense`);
+        return response.data;
     },
 
+    /**
+     * GET /api/pharmacist/inventory
+     * Medication inventory with In Stock / Low Stock / Out of Stock status
+     */
     getInventory: async () => {
-        try {
-            const response = await axios.get(`${API_URL}/pharmacist/inventory`, { headers: getAuthHeaders() });
-            return response.data;
-        } catch (error) {
-            console.error('API Error: getInventory', error);
-            throw error;
-        }
+        const response = await apiClient.get('/pharmacist/inventory');
+        return response.data;
     },
 
+    /**
+     * GET /api/pharmacist/profile
+     */
     getProfile: async () => {
-        try {
-            const response = await axios.get(`${API_URL}/pharmacist/profile`, { headers: getAuthHeaders() });
-            return response.data;
-        } catch (error) {
-            console.error('API Error: getProfile', error);
-            throw error;
-        }
+        const response = await apiClient.get('/pharmacist/profile');
+        return response.data;
     },
 
+    /**
+     * PUT /api/pharmacist/profile
+     * @param {Object} data - { firstName, lastName, phone }
+     */
     updateProfile: async (data) => {
-        try {
-            const response = await axios.put(`${API_URL}/pharmacist/profile`, data, { headers: getAuthHeaders() });
-             return response.data;
-        } catch (error) {
-            console.error('API Error: updateProfile', error);
-            throw error;
-        }
+        const response = await apiClient.put('/pharmacist/profile', data);
+        return response.data;
     },
 
+    /**
+     * GET /api/pharmacist/audit-logs
+     */
     getAuditLogs: async () => {
-        try {
-            const response = await axios.get(`${API_URL}/pharmacist/audit-logs`, { headers: getAuthHeaders() });
-             return response.data;
-        } catch (error) {
-            console.error('API Error: getAuditLogs', error);
-            throw error;
-        }
+        const response = await apiClient.get('/pharmacist/audit-logs');
+        return response.data;
     }
 };
+
+export default pharmacistApi;

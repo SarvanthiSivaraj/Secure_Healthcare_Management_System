@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import './ClinicalNotesEditor.css';
+import { emrApi } from '../../api/emrApi';
 
 function ClinicalNotesEditor({ visitId, patientId, onSave, onCancel }) {
     const [notes, setNotes] = useState({
@@ -17,6 +18,7 @@ function ClinicalNotesEditor({ visitId, patientId, onSave, onCancel }) {
         }
     });
     const [saving, setSaving] = useState(false);
+    const [saveError, setSaveError] = useState(null);
 
     const handleVitalChange = (field, value) => {
         setNotes(prev => ({
@@ -30,12 +32,41 @@ function ClinicalNotesEditor({ visitId, patientId, onSave, onCancel }) {
 
     const handleSave = async () => {
         setSaving(true);
+        setSaveError(null);
         try {
-            // TODO: Replace with actual API call
-            await new Promise(resolve => setTimeout(resolve, 1000));
-            onSave && onSave(notes);
+            // Build a structured description from SOAP fields
+            const vitals = notes.vitalSigns;
+            const vitalsStr = [
+                vitals.temperature ? `Temp: ${vitals.temperature}°F` : '',
+                vitals.bloodPressure ? `BP: ${vitals.bloodPressure}` : '',
+                vitals.heartRate ? `HR: ${vitals.heartRate} bpm` : '',
+                vitals.respiratoryRate ? `RR: ${vitals.respiratoryRate}` : '',
+                vitals.oxygenSaturation ? `O2: ${vitals.oxygenSaturation}%` : '',
+            ].filter(Boolean).join(' | ');
+
+            const description = [
+                notes.chiefComplaint ? `Chief Complaint: ${notes.chiefComplaint}` : '',
+                vitalsStr ? `Vitals: ${vitalsStr}` : '',
+                notes.subjective ? `S (Subjective): ${notes.subjective}` : '',
+                notes.objective ? `O (Objective): ${notes.objective}` : '',
+                notes.assessment ? `A (Assessment): ${notes.assessment}` : '',
+                notes.plan ? `P (Plan): ${notes.plan}` : '',
+            ].filter(Boolean).join('\n\n');
+
+            const res = await emrApi.createMedicalRecord({
+                visitId,
+                patientId,
+                type: 'consultation',
+                title: notes.chiefComplaint
+                    ? `SOAP Note – ${notes.chiefComplaint}`
+                    : `SOAP Note – Visit ${visitId}`,
+                description,
+            });
+
+            onSave && onSave(res.data || notes);
         } catch (error) {
             console.error('Failed to save notes:', error);
+            setSaveError(error.response?.data?.message || 'Failed to save notes. Please try again.');
         } finally {
             setSaving(false);
         }
@@ -201,6 +232,17 @@ function ClinicalNotesEditor({ visitId, patientId, onSave, onCancel }) {
                     {saving ? 'Saving...' : 'Save Notes'}
                 </button>
             </div>
+            {saveError && (
+                <div style={{
+                    marginTop: 12, padding: '10px 16px',
+                    background: 'rgba(239,68,68,0.1)',
+                    border: '1px solid rgba(239,68,68,0.3)',
+                    borderRadius: 10, color: '#dc2626',
+                    fontSize: 13, fontWeight: 500,
+                }}>
+                    ⚠ {saveError}
+                </div>
+            )}
         </div>
     );
 }
