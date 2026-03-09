@@ -31,6 +31,7 @@ function ClinicalNotes() {
     const [diagnoses, setDiagnoses] = useState([]);
     const [showPrescriptionForm, setShowPrescriptionForm] = useState(false);
     const [showDiagnosisForm, setShowDiagnosisForm] = useState(false);
+    const [saveSuccess, setSaveSuccess] = useState(false);
 
     // Fetch the doctor's active/assigned visits
     useEffect(() => {
@@ -91,9 +92,14 @@ function ClinicalNotes() {
         setPatientId('');
     };
 
-    const handleSaveNotes = (notes) => {
-        alert('Clinical notes saved successfully!');
-        console.log('Saved notes:', notes);
+    const handleSaveNotes = (savedRecord) => {
+        // If the editor returned the created record, store its ID so
+        // subsequent prescriptions / diagnoses can be linked to it.
+        if (savedRecord?.id && selectedVisit) {
+            setSelectedVisit(prev => ({ ...prev, record_id: savedRecord.id }));
+        }
+        setSaveSuccess(true);
+        setTimeout(() => setSaveSuccess(false), 4000);
     };
 
     const handleAddPrescription = async (prescription) => {
@@ -151,6 +157,20 @@ function ClinicalNotes() {
             <div style={{ position: 'absolute', top: 16, right: 16, zIndex: 50 }}>
                 <ThemeToggle />
             </div>
+
+            {/* Save Success Toast */}
+            {saveSuccess && (
+                <div style={{
+                    position: 'fixed', bottom: 24, right: 24, zIndex: 999,
+                    background: '#10b981', color: '#fff',
+                    padding: '12px 20px', borderRadius: 12,
+                    fontWeight: 600, fontSize: 14,
+                    boxShadow: '0 4px 20px rgba(16,185,129,0.4)',
+                    display: 'flex', alignItems: 'center', gap: 8
+                }}>
+                    ✓ Clinical notes saved successfully!
+                </div>
+            )}
 
             {/* Top Bar */}
             <div className="cn-topbar">
