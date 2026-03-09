@@ -103,7 +103,7 @@ const NurseVitals = () => {
                                         <div className="flex gap-4">
                                             <div className="w-12 h-12 rounded-2xl bg-teal-50 dark:bg-teal-900/30 flex items-center justify-center text-teal-600 dark:text-teal-400">
                                                 <span className="material-symbols-outlined">
-                                                    {record.type === 'vital_signs' ? 'monitor_heart' : 'edit_note'}
+                                                    {record.type === 'note' ? 'monitor_heart' : 'edit_note'}
                                                 </span>
                                             </div>
                                             <div>

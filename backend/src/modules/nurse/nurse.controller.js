@@ -21,12 +21,12 @@ class NurseController {
             `;
             const patientCount = await query(patientCountQuery, [userId]);
 
-            // 2. Vitals Recorded (Medical records of type 'vital_signs')
+            // 2. Vitals Recorded (Medical records of type 'note' representing vitals/observations)
             const vitalsCountQuery = `
                 SELECT COUNT(*) 
                 FROM medical_records 
                 WHERE created_by = $1 
-                AND type = 'vital_signs'
+                AND type = 'note'
                 AND created_at >= CURRENT_DATE
             `;
             const vitalsCount = await query(vitalsCountQuery, [userId]);
@@ -34,18 +34,22 @@ class NurseController {
             // 3. Care Tasks (Pending medication orders)
             const tasksCountQuery = `
                 SELECT COUNT(*) 
-                FROM medication_orders mo
-                JOIN visit_staff_assignments cta ON mo.visit_id = cta.visit_id
+                FROM prescriptions p
+                JOIN medical_records mr ON p.record_id = mr.id
+                JOIN visits v ON mr.visit_id = v.id
+                JOIN visit_staff_assignments cta ON v.id = cta.visit_id
                 WHERE cta.staff_user_id = $1 
-                AND mo.status = 'pending'
+                AND p.status = 'pending'
             `;
             const tasksCount = await query(tasksCountQuery, [userId]);
 
-            // 4. Observations (All medical records)
+            // 4. Observations (Medical records of type 'procedure' or 'other')
             const observationsCountQuery = `
                 SELECT COUNT(*) 
                 FROM medical_records 
-                WHERE created_by = $1 AND created_at >= CURRENT_DATE
+                WHERE created_by = $1 
+                AND type IN ('procedure', 'other')
+                AND created_at >= CURRENT_DATE
             `;
             const observationsCount = await query(observationsCountQuery, [userId]);
 
@@ -167,7 +171,7 @@ class NurseController {
     static getAssignedPatients = asyncHandler(async (req, res) => {
         const userId = req.user.id;
         const sql = `
-            SELECT DISTINCT v.id, v.patient_id as "patientId", u.first_name as "firstName", u.last_name as "lastName",
+            SELECT DISTINCT v.patient_id as "id", v.patient_id as "patientId", v.id as "visitId", u.first_name as "firstName", u.last_name as "lastName",
                    v.chief_complaint as "admissionReason", v.status as "status", v.check_in_time as "nextCheck"
             FROM visits v
             JOIN users u ON v.patient_id = u.id
@@ -208,8 +212,8 @@ class NurseController {
         const activities = result.rows.map(act => ({
             ...act,
             date: act.created_at,
-            colorClass: act.type === 'vital_signs' ? 'bg-teal-500' : 'bg-indigo-500',
-            borderColorClass: act.type === 'vital_signs' ? 'border-teal-500/30' : 'border-indigo-500/30'
+            colorClass: act.type === 'note' ? 'bg-teal-500' : 'bg-indigo-500',
+            borderColorClass: act.type === 'note' ? 'border-teal-500/30' : 'border-indigo-500/30'
         }));
 
         res.json({
@@ -227,10 +231,8 @@ class NurseController {
             SELECT mr.id, mr.title, mr.description, mr.type, mr.created_at,
                    u.first_name as "patientFirstName", u.last_name as "patientLastName", u.id as "patientId"
             FROM medical_records mr
-            JOIN visits v ON mr.visit_id = v.id
-            JOIN users u ON v.patient_id = u.id
-            JOIN visit_staff_assignments cta ON v.id = cta.visit_id
-            WHERE cta.staff_user_id = $1 AND mr.type = 'vital_signs'
+            JOIN users u ON mr.patient_id = u.id
+            WHERE mr.created_by = $1 AND mr.type IN ('note', 'procedure', 'other')
             ORDER BY mr.created_at DESC
         `;
         const result = await query(sql, [userId]);

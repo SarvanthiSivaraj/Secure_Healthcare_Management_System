@@ -19,22 +19,18 @@ function VisitManagement() {
     const [nurses, setNurses] = useState([]);
     const [approvalData, setApprovalData] = useState({ doctorId: '', nurseId: '' });
 
+    const [successModal, setSuccessModal] = useState({ show: false, title: '', message: '', highlight: '' });
+
     const loadVisits = useCallback(async () => {
         setLoading(true);
         setError('');
         try {
-            console.log('🔍 Loading visits for tab:', activeTab);
             const statusFilter = activeTab === 'pending' ? 'pending' :
                 activeTab === 'active' ? null :
                     activeTab;
 
-            console.log('📡 Calling API with status filter:', statusFilter);
             const response = await visitApi.getHospitalVisits(statusFilter);
-            console.log('✅ API Response:', response);
-
-            // API returns { success: true, data: [...] }
             let filteredVisits = response.data || [];
-            console.log('📋 Filtered visits (before tab filter):', filteredVisits);
 
             if (activeTab === 'active') {
                 filteredVisits = filteredVisits.filter(v =>
@@ -46,14 +42,10 @@ function VisitManagement() {
                 );
             }
 
-            console.log('📋 Final visits:', filteredVisits);
             setVisits(filteredVisits);
         } catch (err) {
-            console.error('❌ Error loading visits:', err);
-            console.error('❌ Error response:', err.response);
             const errorMsg = err.response?.data?.message || err.message || 'Failed to load visits';
             setError(errorMsg);
-            console.error('❌ Error message:', errorMsg);
         } finally {
             setLoading(false);
         }
@@ -67,27 +59,14 @@ function VisitManagement() {
         setSelectedVisit(visit);
         setShowApprovalModal(true);
 
-        // Fetch doctors and nurses from API
         try {
-            console.log('🔍 Fetching doctors and nurses...');
             const [doctorsResponse, nursesResponse] = await Promise.all([
                 visitApi.getStaffByRole('doctor'),
                 visitApi.getStaffByRole('nurse')
             ]);
-
-            console.log('✅ Doctors response:', doctorsResponse);
-            console.log('✅ Nurses response:', nursesResponse);
-            console.log('👨‍⚕️ Doctors data:', doctorsResponse.data);
-            console.log('👩‍⚕️ Nurses data:', nursesResponse.data);
-
             setDoctors(doctorsResponse.data || []);
             setNurses(nursesResponse.data || []);
-
-            console.log('📊 Doctors state set to:', doctorsResponse.data || []);
-            console.log('📊 Nurses state set to:', nursesResponse.data || []);
         } catch (err) {
-            console.error('❌ Failed to load staff:', err);
-            console.error('❌ Error response:', err.response);
             setDoctors([]);
             setNurses([]);
         }
@@ -104,26 +83,42 @@ function VisitManagement() {
             setShowApprovalModal(false);
             const approvedCode = response.data?.otp_code || response.data?.otp;
             if (approvedCode) {
-                alert(`Visit Approved! Visit Code: ${approvedCode}\n\nThis code has been sent to the patient's email.`);
+                setSuccessModal({
+                    show: true,
+                    title: 'Protocol Approved',
+                    message: "An email with this code has been securely dispatched to the patient.",
+                    highlight: approvedCode
+                });
             } else {
-                alert('Visit Approved and assigned successfully!');
+                setSuccessModal({
+                    show: true,
+                    title: 'Protocol Approved',
+                    message: 'Visit has been approved and assigned successfully!',
+                    highlight: ''
+                });
             }
 
             setApprovalData({ doctorId: '', nurseId: '' });
             setActiveTab('active'); // Switch to active tab
             loadVisits();
         } catch (err) {
-            alert(err.response?.data?.message || 'Failed to approve visit');
+            setError(err.response?.data?.message || 'Failed to approve visit');
         }
     };
 
     const handleCloseVisit = async (visitId, status) => {
         try {
             await visitApi.closeVisit(visitId, status);
-            // Silently refresh the visits list
+            // Show success message so user knows it worked
+            setSuccessModal({
+                show: true,
+                title: status === 'cancelled' ? 'Protocol Aborted' : 'Protocol Completed',
+                message: `The visit protocol was successfully ${status}.`,
+                highlight: ''
+            });
             loadVisits();
         } catch (err) {
-            alert(err.response?.data?.message || 'Failed to close visit');
+            setError(err.response?.data?.message || 'Failed to close visit');
         }
     };
 
@@ -337,7 +332,7 @@ function VisitManagement() {
                                         <option value="">Select a doctor</option>
                                         {doctors.map(doctor => (
                                             <option key={doctor.id} value={doctor.id}>
-                                                Dr. {doctor.name || `${doctor.first_name || doctor.firstName} ${doctor.last_name || doctor.lastName}`}
+                                                Dr. {doctor.name || `${doctor.first_name || doctor.firstName} ${doctor.last_name || doctor.lastName} `}
                                             </option>
                                         ))}
                                     </select>
@@ -352,7 +347,7 @@ function VisitManagement() {
                                     >
                                         <option value="">Select a nurse</option>
                                         {nurses.map(nurse => (
-                                            <option key={nurse.id} value={nurse.id}>{nurse.name || `${nurse.firstName} ${nurse.lastName}`}</option>
+                                            <option key={nurse.id} value={nurse.id}>{nurse.name || `${nurse.firstName} ${nurse.lastName} `}</option>
                                         ))}
                                     </select>
                                 </div>
@@ -377,6 +372,38 @@ function VisitManagement() {
                                     className="flex-grow bg-indigo-600 hover:bg-indigo-700 text-white py-3 rounded-2xl text-xs font-black uppercase tracking-widest transition-all shadow-lg shadow-indigo-500/20"
                                 >
                                     Authorize Approval
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {successModal.show && (
+                    <div className="modal-overlay" onClick={() => setSuccessModal({ show: false, title: '', message: '', highlight: '' })}>
+                        <div className="modal-content text-center py-8" onClick={(e) => e.stopPropagation()}>
+                            <div className="w-16 h-16 rounded-full bg-emerald-100 dark:bg-emerald-900/40 flex items-center justify-center mx-auto mb-6">
+                                <span className="material-symbols-outlined text-3xl text-emerald-600 dark:text-emerald-400">check_circle</span>
+                            </div>
+                            <h2 className="text-2xl font-black text-slate-900 dark:text-white mb-2">{successModal.title}</h2>
+                            <p className="text-sm font-medium text-slate-500 dark:text-slate-400 mb-6 max-w-[280px] mx-auto leading-relaxed">
+                                {successModal.message}
+                            </p>
+
+                            {successModal.highlight && (
+                                <div className="bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 mb-8 inline-block shadow-inner">
+                                    <p className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400 mb-2">Secure Visit Code</p>
+                                    <p className="text-4xl font-mono font-black text-indigo-600 dark:text-indigo-400 tracking-widest">
+                                        {successModal.highlight}
+                                    </p>
+                                </div>
+                            )}
+
+                            <div>
+                                <button
+                                    onClick={() => setSuccessModal({ show: false, title: '', message: '', highlight: '' })}
+                                    className="px-8 py-3 bg-slate-900 hover:bg-slate-800 dark:bg-white dark:hover:bg-slate-100 dark:text-slate-900 text-white rounded-2xl text-xs font-black uppercase tracking-widest transition-all"
+                                >
+                                    Acknowledge
                                 </button>
                             </div>
                         </div>

@@ -212,6 +212,12 @@ class VisitModel {
                     patient_id, recipient_user_id, data_category, purpose, access_level, status, start_time, created_at, updated_at
                 ) VALUES ($1, $2, 'all_medical_data', 'Visit Care', 'write', 'active', NOW(), NOW(), NOW())
             `, [visit.patient_id, doctorId]);
+
+            // Assign Doctor to visit
+            await pool.query(`
+                INSERT INTO visit_staff_assignments (visit_id, staff_user_id, role, assigned_at)
+                VALUES ($1, $2, 'doctor', NOW())
+            `, [visitId, doctorId]).catch(e => console.error('Error assigning doctor:', e.message));
         }
 
         // Auto-grant consent to Nurse if assigned
@@ -221,6 +227,12 @@ class VisitModel {
                     patient_id, recipient_user_id, data_category, purpose, access_level, status, start_time, created_at, updated_at
                 ) VALUES ($1, $2, 'all_medical_data', 'Visit Care', 'write', 'active', NOW(), NOW(), NOW())
             `, [visit.patient_id, nurseId]);
+
+            // Assign Nurse to visit
+            await pool.query(`
+                INSERT INTO visit_staff_assignments (visit_id, staff_user_id, role, assigned_at)
+                VALUES ($1, $2, 'nurse', NOW())
+            `, [visitId, nurseId]).catch(e => console.error('Error assigning nurse:', e.message));
         }
 
         return visit;
