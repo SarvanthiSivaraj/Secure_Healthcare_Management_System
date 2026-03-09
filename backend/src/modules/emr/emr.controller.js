@@ -281,6 +281,39 @@ class EmrController {
         }
     }
 
+    /**
+     * Get diagnoses for a visit
+     */
+    static async getDiagnoses(req, res) {
+        try {
+            const { visitId } = req.params;
+
+            // First find a medical record for this visit
+            const records = await MedicalRecordModel.findByVisitId(visitId);
+            if (!records || records.length === 0) {
+                return res.json({
+                    success: true,
+                    data: []
+                });
+            }
+
+            // Get diagnoses for the most recent record of this visit
+            const recordId = records[0].id;
+            const diagnoses = await DiagnosisModel.findByRecordId(recordId);
+
+            res.json({
+                success: true,
+                data: diagnoses
+            });
+        } catch (error) {
+            console.error('Get diagnoses error:', error);
+            res.status(500).json({
+                success: false,
+                message: 'Failed to retrieve diagnoses'
+            });
+        }
+    }
+
     // ==================== Prescriptions ====================
 
     /**

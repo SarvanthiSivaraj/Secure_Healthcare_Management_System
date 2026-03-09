@@ -52,6 +52,13 @@ router.post('/diagnoses/:diagnosisId/addendum', authenticate, EmrController.crea
  */
 router.patch('/diagnoses/:diagnosisId/status', authenticate, EmrController.updateDiagnosisStatus);
 
+/**
+ * @route   GET /api/emr/visits/:visitId/diagnoses
+ * @desc    Get diagnoses for a visit
+ * @access  Private
+ */
+router.get('/visits/:visitId/diagnoses', authenticate, EmrController.getDiagnoses);
+
 // ==================== Prescriptions ====================
 
 /**

@@ -34,6 +34,11 @@ export const emrApi = {
         return response.data;
     },
 
+    getVisitDiagnoses: async (visitId) => {
+        const response = await apiClient.get(`/emr/visits/${visitId}/diagnoses`);
+        return response.data;
+    },
+
     // Prescription
     createPrescription: async (data) => {
         const response = await apiClient.post('/emr/prescriptions', data);
