@@ -62,10 +62,6 @@ function NurseDashboard() {
 
     return (
         <div className="patient-dashboard-wrapper bg-[var(--background-light)] dark:bg-[var(--background-dark)] text-slate-800 dark:text-slate-100 flex h-screen w-full overflow-hidden">
-            {/* Theme Toggle styling */}
-            <div className="absolute top-4 right-4 z-50">
-                <ThemeToggle />
-            </div>
 
             <aside className="w-64 flex-shrink-0 border-r border-slate-200 dark:border-slate-800/50 p-6 flex flex-col h-full overflow-y-auto">
                 <div className="flex items-center gap-3 mb-10 px-2 cursor-pointer group" onClick={() => navigate('/nurse/dashboard')}>
@@ -122,11 +118,14 @@ function NurseDashboard() {
                                 Welcome back, {user?.firstName || 'Nurse'} {user?.lastName || ''} • RN-2024-56789
                             </p>
                         </div>
-                        <div className="flex items-center gap-3 glass-card px-4 py-2 rounded-2xl">
-                            <div className="w-8 h-8 rounded-full bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center">
-                                <div className="w-2 h-2 rounded-full bg-emerald-500"></div>
+                        <div className="flex items-center gap-4">
+                            <div className="flex items-center gap-3 glass-card px-4 py-2 rounded-2xl">
+                                <div className="w-8 h-8 rounded-full bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center">
+                                    <div className="w-2 h-2 rounded-full bg-emerald-500"></div>
+                                </div>
+                                <span className="text-sm font-semibold text-slate-800 dark:text-slate-100">On Duty</span>
                             </div>
-                            <span className="text-sm font-semibold text-slate-800 dark:text-slate-100">On Duty</span>
+                            <ThemeToggle />
                         </div>
                     </div>
 

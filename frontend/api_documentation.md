@@ -766,3 +766,134 @@
      ```json
      { "success": true, "message": "Profile updated successfully", "data": { "id": "comp-999", "email": "compliance@medicare.com", "phone": "new phone number" } }
      ```
+
+## Insurance API
+**Base URL:** `/api/v1/insurance`
+**Headers:** `Authorization: Bearer <token>`
+
+### 1. Dashboard Stats
+**Endpoint:** `GET /dashboard`
+- **Description:** Returns aggregate claim statistics for the insurance dashboard.
+- **Response Format:**
+  ```json
+  {
+    "success": true,
+    "data": {
+      "pendingClaims": 2,
+      "approvedClaims": 1,
+      "deniedClaims": 1,
+      "totalPayout": "350.50",
+      "activePolicies": 12,
+      "recentClaims": []
+    }
+  }
+  ```
+
+### 2. Claims Management
+**Endpoint:** `GET /claims`
+- **Description:** Returns a list of all hospital claims.
+- **Response Format:**
+  ```json
+  {
+    "success": true,
+    "data": [
+      {
+        "id": "CLM-001",
+        "patientName": "John Doe",
+        "policyNumber": "POL-123456",
+        "diagnosis": "Hypertension",
+        "amount": 150.00,
+        "status": "Pending",
+        "submittedAt": "2026-03-01T10:00:00Z"
+      }
+    ]
+  }
+  ```
+
+**Endpoint:** `PUT /claims/:id`
+- **Description:** Updates the status (Approved/Denied/Pending) of a claim.
+- **Request Body:**
+  ```json
+  {
+    "status": "Approved",
+    "notes": "Optional reason for denial or approval"
+  }
+  ```
+- **Response Format:** Returns the updated claim object.
+
+### 3. Coverage Verification
+**Endpoint:** `GET /coverage/verify`
+- **Description:** Checks if a policyholder is active.
+- **Query Params:** `?memberId=PH-001` or `?policyNumber=POL-123456`
+- **Response Format:**
+  ```json
+  {
+    "success": true,
+    "data": {
+      "covered": true,
+      "policyDetails": {
+        "id": "PH-001",
+        "name": "John Doe",
+        "policyNumber": "POL-123456",
+        "type": "Premium",
+        "status": "Active",
+        "coverageStart": "2025-01-01",
+        "coverageEnd": "2026-12-31"
+      },
+      "copay": 25.00,
+      "deductibleUsed": 1500.00,
+      "deductibleTotal": 5000.00
+    }
+  }
+  ```
+
+### 4. Policyholders Directory
+**Endpoint:** `GET /policyholders`
+- **Description:** Returns a directory of all policyholders under this company.
+- **Response Format:** Array of policyholder objects.
+
+### 5. Profile Management
+**Endpoint:** `GET /profile`
+**Endpoint:** `PUT /profile`
+- **Description:** Handles retrieving and updating the logged-in agent's profile details.
+
+## Researcher Portal
+**Base URL:** `/api/v1/research`
+
+### 1. Research Stats
+**Endpoint:** `GET /stats`
+- **Description:** Overview of data volume in the system.
+- **Response Format:**
+  ```json
+  { "success": true, "data": { "totalRecords": 125430, "activeStudies": 12, "anonymizedPatients": 45200, "dataPointsCollected": 850024 } }
+  ```
+
+### 2. Symptoms Data
+**Endpoint:** `GET /symptoms`
+- **Description:** Aggregated symptom frequency across anonymized patients.
+- **Response Format:**
+  ```json
+  { "success": true, "data": [ { "name": "Fatigue", "count": 1250, "severityAvg": 4.2 } ] }
+  ```
+
+### 3. Treatments Data
+**Endpoint:** `GET /treatments`
+- **Description:** Aggregated efficacy and usage of prescribed treatments.
+- **Response Format:**
+  ```json
+  { "success": true, "data": [ { "name": "Amoxicillin", "successRate": 85, "usageCount": 5400 } ] }
+  ```
+
+### 4. Demographics
+**Endpoint:** `GET /demographics`
+- **Description:** De-identified distribution of patient age ranges and gender.
+- **Response Format:**
+  ```json
+  { "success": true, "data": { "ageGroups": [ { "range": "0-18", "percentage": 15 } ], "gender": [ { "category": "Male", "percentage": 48 } ] } }
+  ```
+
+### 5. Profile Management
+**Endpoint:** `GET /profile`
+**Endpoint:** `PUT /profile`
+- **Description:** Handles getting and updating the researcher profile details.
+
