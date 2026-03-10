@@ -75,6 +75,8 @@ import ReceptionistVisitManagement from '../pages/receptionist/ReceptionistVisit
 import PatientRegistration from '../pages/staff/PatientRegistration';
 import Support from '../pages/patient/Support';
 import Messages from '../pages/patient/Messages';
+import AIChatbot from '../pages/patient/AIChatbot';
+import TriageQueue from '../pages/doctor/TriageQueue';
 
 function AppRoutes() {
     return (
@@ -96,10 +98,28 @@ function AppRoutes() {
             />
 
             <Route
+                path="/patient/chatbot"
+                element={
+                    <ProtectedRoute allowedRoles={['patient']}>
+                        <AIChatbot />
+                    </ProtectedRoute>
+                }
+            />
+
+            <Route
                 path="/doctor/dashboard"
                 element={
                     <ProtectedRoute allowedRoles={['doctor']}>
                         <DoctorDashboard />
+                    </ProtectedRoute>
+                }
+            />
+
+            <Route
+                path="/doctor/triage-sessions"
+                element={
+                    <ProtectedRoute allowedRoles={['doctor']}>
+                        <TriageQueue />
                     </ProtectedRoute>
                 }
             />

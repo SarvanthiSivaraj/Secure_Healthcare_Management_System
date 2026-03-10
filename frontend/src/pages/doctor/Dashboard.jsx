@@ -23,6 +23,13 @@ const NAV_CARDS = [
         color: 'teal',
     },
     {
+        title: 'AI Pre-Screening',
+        description: 'Review AI-generated triage summaries and patient severity scores',
+        path: '/doctor/triage-sessions',
+        icon: 'smart_toy',
+        color: 'indigo',
+    },
+    {
         title: 'Consent Requests',
         description: 'Review and manage patient data access consent requests',
         path: '/doctor/consent',
@@ -135,6 +142,10 @@ function DoctorDashboard() {
                     <Link to="/doctor/active-visits" className="flex items-center gap-3 px-4 py-3 text-slate-500 dark:text-slate-400 hover:bg-white/50 dark:hover:bg-white/5 transition rounded-xl">
                         <span className="material-symbols-outlined text-[20px]">calendar_today</span>
                         Queue
+                    </Link>
+                    <Link to="/doctor/triage-sessions" className="flex items-center gap-3 px-4 py-3 text-indigo-500 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition rounded-xl font-medium">
+                        <span className="material-symbols-outlined text-[20px] animate-pulse">smart_toy</span>
+                        AI Pre-Screening
                     </Link>
                     <Link to="/doctor/consent" className="flex items-center gap-3 px-4 py-3 text-slate-500 dark:text-slate-400 hover:bg-white/50 dark:hover:bg-white/5 transition rounded-xl">
                         <span className="material-symbols-outlined text-[20px]">verified_user</span>
