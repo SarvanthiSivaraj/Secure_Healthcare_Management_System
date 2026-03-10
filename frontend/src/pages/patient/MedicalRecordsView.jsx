@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import axios from 'axios';
-import { getToken } from '../../utils/tokenManager';
+import apiClient from '../../api/client';
 import { useAuth } from '../../context/AuthContext';
 import '../doctor/PatientRecords.css';
 
@@ -44,16 +43,7 @@ function MedicalRecordsView() {
 
     const fetchMedicalRecords = useCallback(async () => {
         try {
-            const token = getToken();
-            const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:5004/api';
-
-            const response = await axios.get(
-                `${apiUrl}/emr/patients/${user.id}/medical-records`,
-                {
-                    headers: { Authorization: `Bearer ${token}` }
-                }
-            );
-
+            const response = await apiClient.get(`/emr/patients/${user.id}/medical-records`);
             if (response.data.success) {
                 const recordsData = response.data.data.records || [];
                 setRecords(recordsData);
