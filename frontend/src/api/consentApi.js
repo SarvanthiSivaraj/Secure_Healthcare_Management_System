@@ -31,4 +31,9 @@ export const consentApi = {
         // Handle { success: true, data: [...] } structure or direct array
         return response.data.data || response.data;
     },
+    // Get patients who have granted consent to the doctor
+    getDoctorPatients: async () => {
+        const response = await apiClient.get('/consent/doctor/patients');
+        return response.data;
+    },
 };

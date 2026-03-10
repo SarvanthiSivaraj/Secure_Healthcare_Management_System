@@ -95,7 +95,7 @@ class StaffInvitation {
         }
 
         if (organizationId) {
-            query += ` AND si.organization_id = $${paramCount}`;
+            query += ` AND (si.organization_id = $${paramCount} OR si.organization_id IS NULL)`;
             values.push(organizationId);
             paramCount++;
         }

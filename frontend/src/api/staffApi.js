@@ -6,6 +6,12 @@ export const staffApi = {
     // Invitation Management (Admin only)
     // ============================================================================
 
+    // Check if email exists
+    checkEmail: async (email) => {
+        const response = await apiClient.get(`/staff/check-email?email=${encodeURIComponent(email)}`);
+        return response.data;
+    },
+
     // Invite a new staff member
     inviteStaff: async (data) => {
         const response = await apiClient.post('/staff/invite', data);

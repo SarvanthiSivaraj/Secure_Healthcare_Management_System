@@ -14,28 +14,25 @@ class VisitModel {
             symptoms,
             type,
             priority,
-            doctorId // newly extracted
+            doctorId
         } = visitData;
-
-        const combinedSymptoms = reason && symptoms
-            ? `Reason: ${reason} | Symptoms: ${symptoms}`
-            : (reason || symptoms || null);
 
         // Generate a random 8-character alphanumeric visit code
         const visitCode = 'V-' + Math.random().toString(36).substring(2, 8).toUpperCase() + Math.floor(Math.random() * 10);
 
         const query = `
             INSERT INTO visits (
-                patient_id, organization_id, symptoms, type, priority, status, assigned_doctor_id, visit_code
+                patient_id, organization_id, chief_complaint, symptoms, type, priority, status, assigned_doctor_id, visit_code
             )
-            VALUES ($1, $2, $3, $4, $5, 'pending', $6, $7)
+            VALUES ($1, $2, $3, $4, $5, $6, 'pending', $7, $8)
             RETURNING *
         `;
 
         const values = [
             patientId,
             organizationId,
-            combinedSymptoms,
+            reason || null,
+            symptoms || null,
             type || 'walk_in',
             priority || 'normal',
             doctorId || null,
@@ -215,6 +212,12 @@ class VisitModel {
                     patient_id, recipient_user_id, data_category, purpose, access_level, status, start_time, created_at, updated_at
                 ) VALUES ($1, $2, 'all_medical_data', 'Visit Care', 'write', 'active', NOW(), NOW(), NOW())
             `, [visit.patient_id, doctorId]);
+
+            // Assign Doctor to visit
+            await pool.query(`
+                INSERT INTO visit_staff_assignments (visit_id, staff_user_id, role, assigned_at)
+                VALUES ($1, $2, 'doctor', NOW())
+            `, [visitId, doctorId]).catch(e => console.error('Error assigning doctor:', e.message));
         }
 
         // Auto-grant consent to Nurse if assigned
@@ -224,6 +227,12 @@ class VisitModel {
                     patient_id, recipient_user_id, data_category, purpose, access_level, status, start_time, created_at, updated_at
                 ) VALUES ($1, $2, 'all_medical_data', 'Visit Care', 'write', 'active', NOW(), NOW(), NOW())
             `, [visit.patient_id, nurseId]);
+
+            // Assign Nurse to visit
+            await pool.query(`
+                INSERT INTO visit_staff_assignments (visit_id, staff_user_id, role, assigned_at)
+                VALUES ($1, $2, 'nurse', NOW())
+            `, [visitId, nurseId]).catch(e => console.error('Error assigning nurse:', e.message));
         }
 
         return visit;
@@ -302,19 +311,20 @@ class VisitModel {
         const query = `
             SELECT 
                 v.*,
-                u.first_name as patient_first_name,
-                u.last_name as patient_last_name,
-                u.email as patient_email,
+                u_p.first_name as patient_first_name,
+                u_p.last_name as patient_last_name,
+                u_p.email as patient_email,
                 p.unique_health_id,
-                d.first_name as doctor_first_name,
-                d.last_name as doctor_last_name,
+                u_s.first_name as doctor_first_name,
+                u_s.last_name as doctor_last_name,
                 o.name as organization_name
             FROM visits v
-            JOIN users u ON v.patient_id = u.id
-            LEFT JOIN patient_profiles p ON u.id = p.user_id
-            LEFT JOIN users d ON v.assigned_doctor_id = d.id
+            LEFT JOIN patient_profiles p ON v.patient_id = p.user_id
+            JOIN users u_p ON p.user_id = u_p.id
+            LEFT JOIN doctor_profiles s ON v.assigned_doctor_id = s.user_id
+            LEFT JOIN users u_s ON s.user_id = u_s.id
             LEFT JOIN organizations o ON v.organization_id = o.id
-            WHERE v.id = $1
+            WHERE v.id = $1;
         `;
 
         const result = await pool.query(query, [visitId]);
@@ -543,13 +553,11 @@ class VisitModel {
      */
     static async assignStaff(visitId, staffUserId, role) {
         const query = `
-            INSERT INTO visit_staff_assignments(visit_id, staff_user_id, role, access_level)
-        VALUES($1, $2, $3, 'full')
+            INSERT INTO visit_staff_assignments(visit_id, staff_user_id, role)
+        VALUES($1, $2, $3)
             ON CONFLICT(visit_id, staff_user_id) 
             DO UPDATE SET
-        role = EXCLUDED.role,
-            access_level = 'full',
-            revoked_at = NULL
+        role = EXCLUDED.role
         RETURNING *
             `;
 

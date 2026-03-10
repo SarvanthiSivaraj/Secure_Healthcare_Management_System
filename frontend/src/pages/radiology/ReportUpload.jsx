@@ -1,29 +1,11 @@
 import React, { useState, useRef, useContext, useCallback } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams, Link } from 'react-router-dom';
 import { AuthContext } from '../../context/AuthContext';
-import { emrApi } from '../../api/emrApi';
-import './ReportUpload.css';
+import radiologyApi from '../../api/radiologyApi';
+import ThemeToggle from '../../components/common/ThemeToggle';
+import './RadiologyDashboard.css';
 
 const IMAGING_TYPES = ['X-Ray', 'CT Scan', 'MRI', 'Ultrasound', 'PET Scan', 'Mammogram', 'DICOM', 'Other'];
-
-/* ── SVG Icons ── */
-const IconShield = () => (
-    <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-    </svg>
-);
-const IconUploadCloud = () => (
-    <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-        <polyline points="16 16 12 12 8 16" /><line x1="12" y1="12" x2="12" y2="21" />
-        <path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3" />
-    </svg>
-);
-const IconFileText = () => (
-    <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-        <polyline points="14 2 14 8 20 8" /><line x1="16" y1="13" x2="8" y2="13" /><line x1="16" y1="17" x2="8" y2="17" /><polyline points="10 9 9 9 8 9" />
-    </svg>
-);
 
 function ReportUpload() {
     const navigate = useNavigate();
@@ -113,11 +95,15 @@ function ReportUpload() {
             formData.append('performedBy', user?.id || '');
             formData.append('file', file);
 
-            await emrApi.uploadImagingReport(formData);
+            const res = await radiologyApi.uploadReport(formData);
 
-            setResult({ success: true, message: 'Imaging report uploaded successfully. Access has been logged.' });
-            setForm(prev => ({ ...prev, findings: '', impression: '', radiologistNotes: '', bodyPart: '' }));
-            setFile(null);
+            if (res.success) {
+                setResult({ success: true, message: res.message || 'Imaging report uploaded successfully.' });
+                setForm(prev => ({ ...prev, findings: '', impression: '', radiologistNotes: '', bodyPart: '' }));
+                setFile(null);
+            } else {
+                setResult({ success: false, message: 'Upload failed: Server returned an error.' });
+            }
         } catch (err) {
             const msg = err?.response?.data?.message || 'Upload failed. Please check your connection and try again.';
             setResult({ success: false, message: msg });
@@ -126,145 +112,311 @@ function ReportUpload() {
         }
     };
 
+    const handleLogout = () => {
+        logout();
+        navigate('/');
+    };
+
     return (
-        <div className="ru-container">
-            {/* Header */}
-            <header className="ru-header">
-                <div className="ru-header-content">
-                    <div className="ru-header-left">
-                        <button className="ru-back-btn" onClick={() => navigate('/radiology/queue')}>
-                            ← Back to Queue
+        <div className="radiology-dashboard-wrapper bg-[var(--background-light)] dark:bg-[var(--background-dark)] text-slate-800 dark:text-slate-100 flex h-screen w-full overflow-hidden">
+            <div className="absolute top-4 right-4 z-50">
+                <ThemeToggle />
+            </div>
+
+            <aside className="w-64 flex-shrink-0 border-r border-slate-200 dark:border-slate-800/50 p-6 flex flex-col h-full overflow-y-auto z-20 bg-[var(--background-light)] dark:bg-[var(--background-dark)] relative">
+                <div className="flex items-center gap-3 mb-10 px-2 cursor-pointer group" onClick={() => navigate('/radiology/dashboard')}>
+                    <div className="relative">
+                        <div className="absolute inset-0 bg-indigo-500 blur-lg opacity-0 group-hover:opacity-60 transition-opacity duration-500 rounded-full"></div>
+                        <div className="relative w-10 h-10 bg-indigo-500 rounded-xl flex items-center justify-center text-white shadow-lg transform transition-all duration-500 group-hover:scale-110 group-hover:-rotate-3 group-hover:shadow-[0_0_15px_rgba(99,102,241,0.5)]">
+                            <span className="material-symbols-outlined text-xl transition-transform duration-500 group-hover:scale-110">local_hospital</span>
+                        </div>
+                    </div>
+                    <h1 className="text-xl font-bold tracking-tight text-slate-800 dark:text-white transition-all duration-500 drop-shadow-sm group-hover:text-indigo-600 dark:group-hover:text-indigo-400 group-hover:drop-shadow-[0_0_10px_rgba(99,102,241,0.4)]">Medicare</h1>
+                </div>
+                <nav className="space-y-2 flex-grow">
+                    <Link to="/radiology/dashboard" className="flex items-center gap-3 px-4 py-3 text-slate-500 dark:text-slate-400 hover:bg-white/50 dark:hover:bg-white/5 transition rounded-xl">
+                        <span className="material-symbols-outlined text-[20px]">grid_view</span>
+                        Dashboard
+                    </Link>
+                    <Link to="/radiology/queue" className="flex items-center gap-3 px-4 py-3 text-slate-500 dark:text-slate-400 hover:bg-white/50 dark:hover:bg-white/5 transition rounded-xl">
+                        <span className="material-symbols-outlined text-[20px]">view_list</span>
+                        Imaging Queue
+                    </Link>
+                    <Link to="/radiology/audit-logs" className="flex items-center gap-3 px-4 py-3 text-slate-500 dark:text-slate-400 hover:bg-white/50 dark:hover:bg-white/5 transition rounded-xl">
+                        <span className="material-symbols-outlined text-[20px]">history_edu</span>
+                        Audit Logs
+                    </Link>
+                </nav>
+                <div className="space-y-2 mt-auto pt-6 border-t border-slate-200 dark:border-slate-800/50">
+                    <Link to="/radiology/profile" className="flex items-center gap-3 px-4 py-3 text-slate-500 dark:text-slate-400 hover:bg-white/50 dark:hover:bg-white/5 transition rounded-xl">
+                        <span className="material-symbols-outlined text-[20px]">manage_accounts</span>
+                        Profile
+                    </Link>
+                    <button onClick={handleLogout} className="w-full flex items-center gap-3 px-4 py-3 text-rose-500 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-900/20 transition rounded-xl font-medium">
+                        <span className="material-symbols-outlined text-[20px]">logout</span>
+                        Sign Out
+                    </button>
+                </div>
+            </aside>
+
+            {/* Main Content */}
+            <main className="flex-1 flex flex-col h-full overflow-hidden relative">
+                {/* Decorative background element */}
+                <div className="absolute top-0 right-0 w-96 h-96 bg-indigo-500/5 dark:bg-indigo-400/5 rounded-full blur-3xl -z-10 transform translate-x-1/3 -translate-y-1/3 pointer-events-none"></div>
+
+                <header className="px-8 py-6 flex items-center justify-between flex-shrink-0 z-10 sticky top-0 bg-[var(--background-light)]/80 dark:bg-[var(--background-dark)]/80 backdrop-blur-md border-b border-transparent transition-all pr-[80px]">
+                    <div className="flex items-center gap-4">
+                        <button
+                            onClick={() => navigate('/radiology/queue')}
+                            className="bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 rounded-xl p-2 transition-colors flex items-center justify-center"
+                        >
+                            <span className="material-symbols-outlined text-[20px]">arrow_back</span>
                         </button>
                         <div>
-                            <h1>Upload Imaging Report</h1>
-                            <p className="ru-header-sub">Reports are securely stored and linked to the patient visit</p>
+                            <h2 className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-slate-800 to-slate-600 dark:from-white dark:to-slate-300">
+                                Upload Imaging Report
+                            </h2>
+                            <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">Reports are securely stored and linked to the patient visit</p>
                         </div>
                     </div>
-                    <button className="ru-signout-btn" onClick={logout}>Sign Out</button>
-                </div>
-            </header>
+                </header>
 
-            <div className="ru-content">
-                {/* Access Notice */}
-                <div className="ru-access-notice">
-                    <IconShield />
-                    <span>
-                        <strong>Secure Upload:</strong> This report will be cryptographically linked to the patient visit
-                        and your radiologist ID. Uploads are immutable and fully audited.
-                    </span>
-                </div>
+                <div className="flex-1 overflow-y-auto px-8 py-4 pb-20 scrollbar-hide">
 
-                {/* Success / Error Result */}
-                {result && (
-                    <div className={`ru-result-banner ${result.success ? 'success' : 'error'}`}>
-                        {result.success ? '✓' : '✕'} {result.message}
-                        {result.success && (
-                            <button className="ru-go-queue-btn" onClick={() => navigate('/radiology/queue')}>
-                                Back to Queue →
-                            </button>
+                    <div className="max-w-4xl">
+                        {/* Audit Log / Crypto Notice */}
+                        <div className="flex items-center gap-3 p-4 bg-indigo-50/50 dark:bg-indigo-500/10 border border-indigo-100 dark:border-indigo-500/20 rounded-2xl mb-6">
+                            <span className="material-symbols-outlined text-indigo-500 text-[24px]">verified_user</span>
+                            <p className="text-sm text-indigo-900 dark:text-indigo-200 leading-relaxed">
+                                <strong>Secure Upload:</strong> This report will be cryptographically linked to the patient visit
+                                and your radiologist ID. Uploads are immutable and fully audited.
+                            </p>
+                        </div>
+
+                        {/* Result Banner */}
+                        {result && (
+                            <div className={`p-4 rounded-2xl flex items-center justify-between gap-4 border shadow-sm mb-6 ${result.success
+                                ? 'bg-emerald-50 border-emerald-200 text-emerald-800 dark:bg-emerald-500/10 dark:border-emerald-500/20 dark:text-emerald-300'
+                                : 'bg-rose-50 border-rose-200 text-rose-800 dark:bg-rose-500/10 dark:border-rose-500/20 dark:text-rose-300'
+                                }`}>
+                                <div className="flex items-center gap-3">
+                                    <span className="material-symbols-outlined">
+                                        {result.success ? 'check_circle' : 'error'}
+                                    </span>
+                                    <span>{result.message}</span>
+                                </div>
+                                {result.success && (
+                                    <button
+                                        onClick={() => navigate('/radiology/queue')}
+                                        className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-sm font-medium transition-colors whitespace-nowrap"
+                                    >
+                                        Back to Queue
+                                    </button>
+                                )}
+                            </div>
                         )}
-                    </div>
-                )}
 
-                <form className="ru-form" onSubmit={handleSubmit} noValidate>
-                    {/* Two-column grid */}
-                    <div className="ru-form-grid">
-                        <div className="ru-field">
-                            <label className="ru-label">Visit ID <span className="ru-req">*</span></label>
-                            <input className={`ru-input ${errors.visitId ? 'error' : ''}`} name="visitId" value={form.visitId} onChange={handleChange} placeholder="e.g. VST-001" />
-                            {errors.visitId && <span className="ru-field-error">{errors.visitId}</span>}
-                        </div>
+                        {/* Form Body */}
+                        <form onSubmit={handleSubmit} className="glass-card rounded-3xl p-8 pb-10 shadow-sm transition-all">
 
-                        <div className="ru-field">
-                            <label className="ru-label">Imaging Order ID</label>
-                            <input className="ru-input" name="orderId" value={form.orderId} onChange={handleChange} placeholder="Auto-filled from queue" />
-                        </div>
-
-                        <div className="ru-field">
-                            <label className="ru-label">Patient Name</label>
-                            <input className="ru-input" name="patientName" value={form.patientName} onChange={handleChange} placeholder="Auto-filled from queue" />
-                        </div>
-
-                        <div className="ru-field">
-                            <label className="ru-label">Study Date</label>
-                            <input className="ru-input" type="date" name="studyDate" value={form.studyDate} onChange={handleChange} />
-                        </div>
-
-                        <div className="ru-field">
-                            <label className="ru-label">Imaging Type <span className="ru-req">*</span></label>
-                            <select className={`ru-select ${errors.imagingType ? 'error' : ''}`} name="imagingType" value={form.imagingType} onChange={handleChange}>
-                                <option value="">— Select type —</option>
-                                {IMAGING_TYPES.map(t => (<option key={t} value={t}>{t}</option>))}
-                            </select>
-                            {errors.imagingType && <span className="ru-field-error">{errors.imagingType}</span>}
-                        </div>
-
-                        <div className="ru-field">
-                            <label className="ru-label">Body Part / Region</label>
-                            <input className="ru-input" name="bodyPart" value={form.bodyPart} onChange={handleChange} placeholder="e.g. Chest, Brain, Abdomen" />
-                        </div>
-                    </div>
-
-                    {/* Findings */}
-                    <div className="ru-field ru-field-full">
-                        <label className="ru-label">Findings <span className="ru-req">*</span></label>
-                        <textarea className={`ru-textarea ${errors.findings ? 'error' : ''}`} name="findings" value={form.findings} onChange={handleChange} rows={4} placeholder="Describe the radiological findings in detail…" />
-                        {errors.findings && <span className="ru-field-error">{errors.findings}</span>}
-                    </div>
-
-                    {/* Impression */}
-                    <div className="ru-field ru-field-full">
-                        <label className="ru-label">Impression <span className="ru-req">*</span></label>
-                        <textarea className={`ru-textarea ${errors.impression ? 'error' : ''}`} name="impression" value={form.impression} onChange={handleChange} rows={3} placeholder="Clinical impression / diagnosis summary…" />
-                        {errors.impression && <span className="ru-field-error">{errors.impression}</span>}
-                    </div>
-
-                    {/* Radiologist Notes */}
-                    <div className="ru-field ru-field-full">
-                        <label className="ru-label">Additional Notes</label>
-                        <textarea className="ru-textarea" name="radiologistNotes" value={form.radiologistNotes} onChange={handleChange} rows={2} placeholder="Optional: follow-up recommendations, technical notes…" />
-                    </div>
-
-                    {/* File Upload */}
-                    <div className="ru-field ru-field-full">
-                        <label className="ru-label">Report File <span className="ru-req">*</span></label>
-                        <div
-                            className={`ru-dropzone ${dragOver ? 'drag-over' : ''} ${errors.file ? 'error' : ''} ${file ? 'has-file' : ''}`}
-                            onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
-                            onDragLeave={() => setDragOver(false)}
-                            onDrop={handleDrop}
-                            onClick={() => fileInputRef.current?.click()}
-                        >
-                            <input ref={fileInputRef} type="file" accept=".pdf,.jpg,.jpeg,.png,.dcm" style={{ display: 'none' }} onChange={(e) => handleFile(e.target.files[0])} />
-                            {file ? (
-                                <div className="ru-file-info">
-                                    <span className="ru-file-icon"><IconFileText /></span>
-                                    <div>
-                                        <div className="ru-file-name">{file.name}</div>
-                                        <div className="ru-file-size">{(file.size / 1024 / 1024).toFixed(2)} MB</div>
-                                    </div>
-                                    <button type="button" className="ru-remove-file" onClick={(e) => { e.stopPropagation(); setFile(null); }}>✕</button>
+                            <h2 className="text-xl font-bold text-slate-800 dark:text-white mb-6 pb-4 border-b border-slate-200 dark:border-slate-700">Patient & Order Information</h2>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-10">
+                                <div>
+                                    <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">Visit ID <span className="text-rose-500">*</span></label>
+                                    <input
+                                        type="text"
+                                        name="visitId"
+                                        value={form.visitId}
+                                        onChange={handleChange}
+                                        placeholder="e.g. VST-001"
+                                        className={`w-full px-4 py-3 rounded-xl bg-white/50 dark:bg-slate-900/50 border ${errors.visitId ? 'border-rose-500 shadow-sm shadow-rose-500/20' : 'border-slate-200 dark:border-slate-700'} text-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/50`}
+                                    />
+                                    {errors.visitId && <p className="text-rose-500 text-xs mt-1.5 ml-1">{errors.visitId}</p>}
                                 </div>
-                            ) : (
-                                <div className="ru-dropzone-placeholder">
-                                    <span className="ru-upload-icon"><IconUploadCloud /></span>
-                                    <strong>Drag &amp; drop or click to upload</strong>
-                                    <span>Supports PDF, JPEG, PNG, DICOM (.dcm) — max 20 MB</span>
+                                <div>
+                                    <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">Imaging Order ID</label>
+                                    <input
+                                        type="text"
+                                        name="orderId"
+                                        value={form.orderId}
+                                        onChange={handleChange}
+                                        placeholder="Auto-filled from queue"
+                                        className="w-full px-4 py-3 rounded-xl bg-slate-50 dark:bg-slate-900/30 border border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 cursor-not-allowed"
+                                        readOnly
+                                    />
                                 </div>
-                            )}
-                        </div>
-                        {errors.file && <span className="ru-field-error">{errors.file}</span>}
-                    </div>
+                                <div>
+                                    <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">Patient Name</label>
+                                    <input
+                                        type="text"
+                                        name="patientName"
+                                        value={form.patientName}
+                                        onChange={handleChange}
+                                        placeholder="Auto-filled from queue"
+                                        className="w-full px-4 py-3 rounded-xl bg-slate-50 dark:bg-slate-900/30 border border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 cursor-not-allowed"
+                                        readOnly
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">Study Date</label>
+                                    <input
+                                        type="date"
+                                        name="studyDate"
+                                        value={form.studyDate}
+                                        onChange={handleChange}
+                                        className="w-full px-4 py-3 rounded-xl bg-white/50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/50"
+                                    />
+                                </div>
+                            </div>
 
-                    {/* Submit */}
-                    <div className="ru-actions">
-                        <button type="button" className="ru-cancel-btn" onClick={() => navigate('/radiology/queue')}>Cancel</button>
-                        <button type="submit" className="ru-submit-btn" disabled={submitting}>
-                            {submitting ? (<><span className="ru-btn-spinner" /> Uploading…</>) : 'Submit Report'}
-                        </button>
+                            <h2 className="text-xl font-bold text-slate-800 dark:text-white mb-6 pb-4 border-b border-slate-200 dark:border-slate-700">Clinical Report</h2>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                                <div>
+                                    <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">Imaging Type <span className="text-rose-500">*</span></label>
+                                    <select
+                                        name="imagingType"
+                                        value={form.imagingType}
+                                        onChange={handleChange}
+                                        className={`w-full px-4 py-3 rounded-xl bg-white/50 dark:bg-slate-900/50 border ${errors.imagingType ? 'border-rose-500 shadow-sm shadow-rose-500/20' : 'border-slate-200 dark:border-slate-700'} text-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/50 appearance-none`}
+                                    >
+                                        <option value="">— Select type —</option>
+                                        {IMAGING_TYPES.map(t => (<option key={t} value={t}>{t}</option>))}
+                                    </select>
+                                    {errors.imagingType && <p className="text-rose-500 text-xs mt-1.5 ml-1">{errors.imagingType}</p>}
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">Body Part / Region</label>
+                                    <input
+                                        type="text"
+                                        name="bodyPart"
+                                        value={form.bodyPart}
+                                        onChange={handleChange}
+                                        placeholder="e.g. Chest, Brain, Abdomen"
+                                        className="w-full px-4 py-3 rounded-xl bg-white/50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/50"
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="space-y-6">
+                                <div>
+                                    <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">Findings <span className="text-rose-500">*</span></label>
+                                    <textarea
+                                        name="findings"
+                                        value={form.findings}
+                                        onChange={handleChange}
+                                        rows={4}
+                                        placeholder="Describe the radiological findings in detail…"
+                                        className={`w-full px-4 py-3 rounded-xl bg-white/50 dark:bg-slate-900/50 border ${errors.findings ? 'border-rose-500 shadow-sm shadow-rose-500/20' : 'border-slate-200 dark:border-slate-700'} text-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/50 resize-y`}
+                                    />
+                                    {errors.findings && <p className="text-rose-500 text-xs mt-1.5 ml-1">{errors.findings}</p>}
+                                </div>
+
+                                <div>
+                                    <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">Impression <span className="text-rose-500">*</span></label>
+                                    <textarea
+                                        name="impression"
+                                        value={form.impression}
+                                        onChange={handleChange}
+                                        rows={3}
+                                        placeholder="Clinical impression / diagnosis summary…"
+                                        className={`w-full px-4 py-3 rounded-xl bg-white/50 dark:bg-slate-900/50 border ${errors.impression ? 'border-rose-500 shadow-sm shadow-rose-500/20' : 'border-slate-200 dark:border-slate-700'} text-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/50 resize-y`}
+                                    />
+                                    {errors.impression && <p className="text-rose-500 text-xs mt-1.5 ml-1">{errors.impression}</p>}
+                                </div>
+
+                                <div>
+                                    <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">Additional Notes</label>
+                                    <textarea
+                                        name="radiologistNotes"
+                                        value={form.radiologistNotes}
+                                        onChange={handleChange}
+                                        rows={2}
+                                        placeholder="Optional: follow-up recommendations, technical notes…"
+                                        className="w-full px-4 py-3 rounded-xl bg-white/50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/50 resize-y"
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="mt-8">
+                                <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">Attachment <span className="text-rose-500">*</span></label>
+                                <div
+                                    className={`w-full p-8 border-2 border-dashed rounded-2xl flex flex-col items-center justify-center transition-colors cursor-pointer ${dragOver ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-500/10' :
+                                        errors.file ? 'border-rose-500 bg-rose-50 dark:bg-rose-500/10' :
+                                            file ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-500/10' :
+                                                'border-slate-300 dark:border-slate-700 bg-white/30 hover:bg-white/60 dark:bg-slate-900/30 dark:hover:bg-slate-800/80'
+                                        }`}
+                                    onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
+                                    onDragLeave={() => setDragOver(false)}
+                                    onDrop={handleDrop}
+                                    onClick={() => fileInputRef.current?.click()}
+                                >
+                                    <input
+                                        ref={fileInputRef}
+                                        type="file"
+                                        accept=".pdf,.jpg,.jpeg,.png,.dcm"
+                                        style={{ display: 'none' }}
+                                        onChange={(e) => handleFile(e.target.files[0])}
+                                    />
+
+                                    {file ? (
+                                        <div className="flex flex-col items-center">
+                                            <div className="w-16 h-16 rounded-full bg-emerald-100 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 flex items-center justify-center mb-3">
+                                                <span className="material-symbols-outlined text-[32px]">task</span>
+                                            </div>
+                                            <p className="font-bold text-slate-800 dark:text-white mb-1">{file.name}</p>
+                                            <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">{(file.size / 1024 / 1024).toFixed(2)} MB</p>
+                                            <button
+                                                type="button"
+                                                onClick={(e) => { e.stopPropagation(); setFile(null); }}
+                                                className="px-4 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-sm font-medium hover:text-rose-500 hover:border-rose-200"
+                                            >
+                                                Remove File
+                                            </button>
+                                        </div>
+                                    ) : (
+                                        <div className="flex flex-col items-center text-center">
+                                            <div className="w-16 h-16 rounded-full bg-indigo-50 dark:bg-indigo-500/10 text-indigo-500 dark:text-indigo-400 flex items-center justify-center mb-3">
+                                                <span className="material-symbols-outlined text-[32px]">cloud_upload</span>
+                                            </div>
+                                            <p className="font-bold text-slate-800 dark:text-white text-lg">Click to upload or drag & drop</p>
+                                            <p className="text-sm text-slate-500 dark:text-slate-400 mt-2">Supports PDF, JPEG, PNG, DICOM (.dcm) — max 20 MB</p>
+                                        </div>
+                                    )}
+                                </div>
+                                {errors.file && <p className="text-rose-500 text-xs mt-1.5 ml-1">{errors.file}</p>}
+                            </div>
+
+                            <div className="flex items-center justify-end gap-4 mt-10 pt-6 border-t border-slate-200 dark:border-slate-700">
+                                <button
+                                    type="button"
+                                    onClick={() => navigate('/radiology/queue')}
+                                    className="px-6 py-3 rounded-xl font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    type="submit"
+                                    disabled={submitting}
+                                    className="min-w-[160px] px-6 py-3 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-70 disabled:hover:bg-indigo-600 text-white rounded-xl font-medium shadow-sm shadow-indigo-600/20 transition-colors flex items-center justify-center gap-2"
+                                >
+                                    {submitting ? (
+                                        <>
+                                            <span className="material-symbols-outlined animate-spin text-[20px]">progress_activity</span>
+                                            Uploading...
+                                        </>
+                                    ) : (
+                                        <>
+                                            Submit Report
+                                            <span className="material-symbols-outlined text-[20px]">send</span>
+                                        </>
+                                    )}
+                                </button>
+                            </div>
+
+                        </form>
                     </div>
-                </form>
-            </div>
+                </div>
+            </main>
         </div>
     );
 }

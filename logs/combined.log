@@ -1,0 +1,1 @@
+{"error":"SASL: SCRAM-SERVER-FIRST-MESSAGE: client password must be a string","level":"error","message":"Database query error:","text":"SELECT id, first_name, last_name FROM users WHERE first_name = 'System' AND last_name = 'Admin' LIMIT 1","timestamp":"2026-03-07 23:53:55"}
