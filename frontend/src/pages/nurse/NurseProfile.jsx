@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate, Link, useLocation } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { nurseApi } from '../../api/nurseApi';
 import ThemeToggle from '../../components/common/ThemeToggle';
@@ -7,7 +7,7 @@ import ThemeToggle from '../../components/common/ThemeToggle';
 const NurseProfile = () => {
     const { logout } = useAuth();
     const navigate = useNavigate();
-    const location = useLocation();
+
 
     const [profile, setProfile] = useState(null);
     const [loading, setLoading] = useState(true);

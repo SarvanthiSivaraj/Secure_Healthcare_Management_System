@@ -58,6 +58,7 @@ function DevLogin() {
                 navigate('/compliance/dashboard');
                 break;
             case 'INSURANCE':
+            case 'INSURANCE_PROVIDER':
                 navigate('/insurance/dashboard');
                 break;
             case 'RESEARCHER':

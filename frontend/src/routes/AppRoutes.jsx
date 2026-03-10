@@ -592,7 +592,7 @@ function AppRoutes() {
             <Route
                 path="/insurance/dashboard"
                 element={
-                    <ProtectedRoute allowedRoles={['insurance']}>
+                    <ProtectedRoute allowedRoles={['insurance', 'insurance_provider']}>
                         <InsuranceDashboard />
                     </ProtectedRoute>
                 }
@@ -600,7 +600,7 @@ function AppRoutes() {
             <Route
                 path="/insurance/claims"
                 element={
-                    <ProtectedRoute allowedRoles={['insurance']}>
+                    <ProtectedRoute allowedRoles={['insurance', 'insurance_provider']}>
                         <InsuranceClaimsManagement />
                     </ProtectedRoute>
                 }
@@ -608,7 +608,7 @@ function AppRoutes() {
             <Route
                 path="/insurance/coverage"
                 element={
-                    <ProtectedRoute allowedRoles={['insurance']}>
+                    <ProtectedRoute allowedRoles={['insurance', 'insurance_provider']}>
                         <InsuranceCoverageVerification />
                     </ProtectedRoute>
                 }
@@ -616,7 +616,7 @@ function AppRoutes() {
             <Route
                 path="/insurance/policyholders"
                 element={
-                    <ProtectedRoute allowedRoles={['insurance']}>
+                    <ProtectedRoute allowedRoles={['insurance', 'insurance_provider']}>
                         <InsurancePolicyholders />
                     </ProtectedRoute>
                 }
@@ -624,7 +624,7 @@ function AppRoutes() {
             <Route
                 path="/insurance/profile"
                 element={
-                    <ProtectedRoute allowedRoles={['insurance']}>
+                    <ProtectedRoute allowedRoles={['insurance', 'insurance_provider']}>
                         <InsuranceProfile />
                     </ProtectedRoute>
                 }

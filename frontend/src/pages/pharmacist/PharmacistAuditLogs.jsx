@@ -21,10 +21,13 @@ const PharmacistAuditLogs = () => {
             setLoading(true);
             const response = await pharmacistApi.getAuditLogs();
             if (response && response.success) {
-                setLogs(response.data);
+                setLogs(Array.isArray(response.data) ? response.data : []);
+            } else {
+                setLogs([]);
             }
         } catch (error) {
             console.error("Error fetching audit logs", error);
+            setLogs([]);
         } finally {
             setLoading(false);
         }

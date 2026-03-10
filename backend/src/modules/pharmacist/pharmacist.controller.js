@@ -183,7 +183,15 @@ const getProfile = async (req, res) => {
     try {
         const userId = req.user.id;
         const result = await pool.query(
-            'SELECT id, email, first_name, last_name, phone, profile_photo FROM users WHERE id = $1',
+            `SELECT u.id, u.email, u.first_name AS "firstName", u.last_name AS "lastName", u.phone, 
+                    u.profile_photo AS "profilePhoto", r.name AS "role", som.employee_id AS "employeeId",
+                    som.department, som.status, som.professional_license AS "licenseNumber",
+                    som.assigned_wards AS "assignedWards", som.shift_preference AS "shiftPreference",
+                    u.created_at AS "joinedDate"
+             FROM users u
+             LEFT JOIN roles r ON u.role_id = r.id
+             LEFT JOIN staff_org_mapping som ON u.id = som.user_id
+             WHERE u.id = $1`,
             [userId]
         );
 
@@ -191,7 +199,21 @@ const getProfile = async (req, res) => {
             return res.status(HTTP_STATUS.NOT_FOUND).json({ success: false, message: 'User not found' });
         }
 
-        res.status(HTTP_STATUS.OK).json({ success: true, data: result.rows[0] });
+        const profile = result.rows[0];
+        res.status(HTTP_STATUS.OK).json({
+            success: true,
+            data: {
+                ...profile,
+                address: profile.address || "Add address in settings",
+                emergencyContact: {
+                    name: "Not Set",
+                    relationship: "Not Set",
+                    phone: "Not Set"
+                },
+                assignedWards: profile.assignedWards || ["Main Pharmacy"],
+                shiftPreference: profile.shiftPreference || "Day Shift"
+            }
+        });
     } catch (error) {
         logger.error('Pharmacist getProfile error:', error);
         res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ success: false, message: 'Failed to fetch profile' });
@@ -204,20 +226,45 @@ const getProfile = async (req, res) => {
 const updateProfile = async (req, res) => {
     try {
         const userId = req.user.id;
-        const { firstName, lastName, phone } = req.body;
+        const { phone } = req.body;
 
-        const result = await pool.query(
+        await pool.query(
             `UPDATE users
-             SET first_name = $1, last_name = $2, phone = $3, updated_at = NOW()
-             WHERE id = $4
-             RETURNING id, email, first_name, last_name, phone`,
-            [firstName, lastName, phone, userId]
+             SET phone = $1, updated_at = NOW()
+             WHERE id = $2`,
+            [phone, userId]
         );
+
+        // Re-fetch the profile to return updated data
+        const returnProfile = await pool.query(
+            `SELECT u.id, u.email, u.first_name AS "firstName", u.last_name AS "lastName", u.phone, 
+                    u.profile_photo AS "profilePhoto", r.name AS "role", som.employee_id AS "employeeId",
+                    som.department, som.status, som.professional_license AS "licenseNumber",
+                    som.assigned_wards AS "assignedWards", som.shift_preference AS "shiftPreference",
+                    u.created_at AS "joinedDate"
+             FROM users u
+             LEFT JOIN roles r ON u.role_id = r.id
+             LEFT JOIN staff_org_mapping som ON u.id = som.user_id
+             WHERE u.id = $1`,
+            [userId]
+        );
+
+        const profile = returnProfile.rows[0];
 
         res.status(HTTP_STATUS.OK).json({
             success: true,
             message: 'Profile updated successfully',
-            data: result.rows[0]
+            data: {
+                ...profile,
+                address: profile.address || "Add address in settings",
+                emergencyContact: {
+                    name: "Not Set",
+                    relationship: "Not Set",
+                    phone: "Not Set"
+                },
+                assignedWards: profile.assignedWards || ["Main Pharmacy"],
+                shiftPreference: profile.shiftPreference || "Day Shift"
+            }
         });
     } catch (error) {
         logger.error('Pharmacist updateProfile error:', error);
@@ -235,7 +282,7 @@ const getAuditLogs = async (req, res) => {
 
         res.status(HTTP_STATUS.OK).json({
             success: true,
-            data: logs.rows
+            data: logs
         });
     } catch (error) {
         logger.error('Pharmacist getAuditLogs error:', error);

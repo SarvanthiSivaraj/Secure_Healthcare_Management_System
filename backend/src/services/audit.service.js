@@ -248,7 +248,7 @@ const getAllAuditLogs = async (options = {}) => {
         const selectQuery = `
       SELECT 
         a.id, a.user_id, a.action, a.entity_type as resource, a.entity_id,
-        a.purpose as details, a.ip_address, a.timestamp, a.status_code,
+        a.purpose as details, a.ip_address, a.request_method, a.request_path, a.timestamp, a.status_code,
         u.email as user_email
       FROM audit_logs a
       LEFT JOIN users u ON a.user_id = u.id

@@ -1,11 +1,12 @@
 import axios from 'axios';
 
-const API_URL = 'http://localhost:5003/api/v1/compliance';
+import { getAuthHeader } from '../utils/tokenManager';
+const API_URL = 'http://localhost:5000/api/v1/compliance';
 
 export const complianceApi = {
     getDashboardStats: async () => {
         try {
-            const response = await axios.get(`${API_URL}/dashboard`);
+            const response = await axios.get(`${API_URL}/dashboard`, { headers: getAuthHeader() });
             return response.data;
         } catch (error) {
             console.error('Error fetching compliance dashboard stats:', error);
@@ -15,7 +16,7 @@ export const complianceApi = {
 
     getIncidents: async () => {
         try {
-            const response = await axios.get(`${API_URL}/incidents`);
+            const response = await axios.get(`${API_URL}/incidents`, { headers: getAuthHeader() });
             return response.data;
         } catch (error) {
             console.error('Error fetching compliance incidents:', error);
@@ -25,7 +26,7 @@ export const complianceApi = {
 
     updateIncidentStatus: async (id, status) => {
         try {
-            const response = await axios.put(`${API_URL}/incidents/${id}`, { status });
+            const response = await axios.put(`${API_URL}/incidents/${id}`, { status }, { headers: getAuthHeader() });
             return response.data;
         } catch (error) {
             console.error('Error updating incident status:', error);
@@ -35,7 +36,7 @@ export const complianceApi = {
 
     getGlobalAudits: async () => {
         try {
-            const response = await axios.get(`${API_URL}/global-audits`);
+            const response = await axios.get(`${API_URL}/global-audits`, { headers: getAuthHeader() });
             return response.data;
         } catch (error) {
             console.error('Error fetching global audits:', error);
@@ -45,7 +46,7 @@ export const complianceApi = {
 
     getConsentOverrides: async () => {
         try {
-            const response = await axios.get(`${API_URL}/consent-overrides`);
+            const response = await axios.get(`${API_URL}/consent-overrides`, { headers: getAuthHeader() });
             return response.data;
         } catch (error) {
             console.error('Error fetching consent overrides:', error);
@@ -55,7 +56,7 @@ export const complianceApi = {
 
     getProfile: async () => {
         try {
-            const response = await axios.get(`${API_URL}/profile`);
+            const response = await axios.get(`${API_URL}/profile`, { headers: getAuthHeader() });
             return response.data;
         } catch (error) {
             console.error('Error fetching compliance profile:', error);
@@ -65,7 +66,7 @@ export const complianceApi = {
 
     updateProfile: async (profileData) => {
         try {
-            const response = await axios.put(`${API_URL}/profile`, profileData);
+            const response = await axios.put(`${API_URL}/profile`, profileData, { headers: getAuthHeader() });
             return response.data;
         } catch (error) {
             console.error('Error updating compliance profile:', error);
