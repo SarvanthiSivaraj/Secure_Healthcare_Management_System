@@ -313,7 +313,7 @@ function AppRoutes() {
             />
 
             <Route
-                path="/lab/dashboard"
+                path="/dashboard/lab"
                 element={
                     <ProtectedRoute allowedRoles={['lab_tech', 'lab_technician']}>
                         <LabDashboard />
@@ -676,7 +676,11 @@ function AppRoutes() {
                 }
             />
 
+            <Route path="/lab/dashboard" element={<Navigate to="/dashboard/lab" replace />} />
+            <Route path="/unauthorized" element={<div className="p-8 text-center text-rose-500 font-bold">Unauthorized Access</div>} />
+
             {/* Default redirect */}
+            <Route path="*" element={<Navigate to="/" replace />} />
             <Route path="/" element={<LandingPage />} />
         </Routes>
     );
