@@ -5,6 +5,7 @@ const config = require('./config/env');
 const { errorHandler, notFoundHandler } = require('./middleware/error.middleware');
 const { apiLimiter } = require('./middleware/rateLimit.middleware');
 const logger = require('./utils/logger');
+const { metricsMiddleware, trackConnections, metricsEndpoint } = require('./middleware/metrics');
 
 // Import routes
 const authRoutes = require('./modules/auth/auth.routes');
@@ -39,6 +40,10 @@ app.use(cors({
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
+// Monitoring middleware
+app.use(trackConnections);
+app.use(metricsMiddleware);
+
 // Request logging middleware
 app.use((req, res, next) => {
     logger.http(`${req.method} ${req.path}`, {
@@ -57,6 +62,9 @@ app.get('/health', (req, res) => {
         environment: config.nodeEnv,
     });
 });
+
+// Prometheus metrics endpoint
+app.get('/metrics', metricsEndpoint);
 
 // API version prefix
 const API_PREFIX = `/api/${config.apiVersion}`;
