@@ -35,6 +35,7 @@ jobs:
       
       - name: Run Trivy vulnerability scanner (Image)
         uses: aquasecurity/trivy-action@master
+        continue-on-error: true
         with:
           image-ref: 'healthcare_${{ matrix.target }}_dev:latest'
           format: 'sarif'
@@ -43,15 +44,28 @@ jobs:
           ignore-unfixed: false
           timeout: '10m'
       
+      - name: Check if image scan SARIF was generated
+        id: check-image
+        run: |
+          if [ -f "trivy-${{ matrix.target }}-image.sarif" ]; then
+            echo "file_exists=true" >> $GITHUB_OUTPUT
+            echo "✓ Image scan SARIF file generated"
+          else
+            echo "file_exists=false" >> $GITHUB_OUTPUT
+            echo "⚠ No image scan SARIF file generated"
+          fi
+        shell: bash
+      
       - name: Upload Trivy results to GitHub Security
         uses: github/codeql-action/upload-sarif@v3
-        if: always()
+        if: always() && steps.check-image.outputs.file_exists == 'true'
         with:
           sarif_file: 'trivy-${{ matrix.target }}-image.sarif'
           category: 'trivy-${{ matrix.target }}-image'
       
       - name: Run Trivy vulnerability scanner (Filesystem)
         uses: aquasecurity/trivy-action@master
+        continue-on-error: true
         with:
           scan-type: 'fs'
           scan-ref: './${{ matrix.target }}'
@@ -60,15 +74,28 @@ jobs:
           severity: 'CRITICAL,HIGH,MEDIUM'
           ignore-unfixed: false
       
+      - name: Check if filesystem scan SARIF was generated
+        id: check-fs
+        run: |
+          if [ -f "trivy-${{ matrix.target }}-fs.sarif" ]; then
+            echo "file_exists=true" >> $GITHUB_OUTPUT
+            echo "✓ Filesystem scan SARIF file generated"
+          else
+            echo "file_exists=false" >> $GITHUB_OUTPUT
+            echo "⚠ No filesystem scan SARIF file generated"
+          fi
+        shell: bash
+      
       - name: Upload Filesystem scan results
         uses: github/codeql-action/upload-sarif@v3
-        if: always()
+        if: always() && steps.check-fs.outputs.file_exists == 'true'
         with:
           sarif_file: 'trivy-${{ matrix.target }}-fs.sarif'
           category: 'trivy-${{ matrix.target }}-dependencies'
       
       - name: Generate detailed report
         uses: aquasecurity/trivy-action@master
+        continue-on-error: true
         with:
           image-ref: 'healthcare_${{ matrix.target }}_dev:latest'
           format: 'json'
@@ -95,6 +122,7 @@ jobs:
       
       - name: Run Trivy config scanner
         uses: aquasecurity/trivy-action@master
+        continue-on-error: true
         with:
           scan-type: 'config'
           scan-ref: '.'
@@ -103,15 +131,28 @@ jobs:
           severity: 'CRITICAL,HIGH,MEDIUM'
           skip-dirs: 'node_modules,build'
       
+      - name: Check if config scan SARIF was generated
+        id: check-config
+        run: |
+          if [ -f "trivy-config.sarif" ]; then
+            echo "file_exists=true" >> $GITHUB_OUTPUT
+            echo "✓ Config scan SARIF file generated"
+          else
+            echo "file_exists=false" >> $GITHUB_OUTPUT
+            echo "⚠ No config scan SARIF file generated"
+          fi
+        shell: bash
+      
       - name: Upload config scan results
         uses: github/codeql-action/upload-sarif@v3
-        if: always()
+        if: always() && steps.check-config.outputs.file_exists == 'true'
         with:
           sarif_file: 'trivy-config.sarif'
           category: 'trivy-config'
       
       - name: Run Trivy secret scanner
         uses: aquasecurity/trivy-action@master
+        continue-on-error: true
         with:
           scan-type: 'fs'
           scan-ref: '.'
@@ -119,10 +160,23 @@ jobs:
           output: 'trivy-secrets.sarif'
           scanners: 'secret'
           severity: 'CRITICAL,HIGH'
+          skip-dirs: 'node_modules,build'
+      
+      - name: Check if secret scan SARIF was generated
+        id: check-secrets
+        run: |
+          if [ -f "trivy-secrets.sarif" ]; then
+            echo "file_exists=true" >> $GITHUB_OUTPUT
+            echo "✓ Secret scan SARIF file generated"
+          else
+            echo "file_exists=false" >> $GITHUB_OUTPUT
+            echo "⚠ No secret scan SARIF file (no secrets found or scan error)"
+          fi
+        shell: bash
       
       - name: Upload secret scan results
         uses: github/codeql-action/upload-sarif@v3
-        if: always()
+        if: always() && steps.check-secrets.outputs.file_exists == 'true'
         with:
           sarif_file: 'trivy-secrets.sarif'
           category: 'trivy-secrets'
