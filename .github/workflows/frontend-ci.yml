@@ -2,12 +2,12 @@ name: Frontend CI
 
 on:
   push:
-    branches: [main]
+    branches: [main, develop]
     paths:
       - 'frontend/**'
       - '.github/workflows/frontend-ci.yml'
   pull_request:
-    branches: [main]
+    branches: [main, develop]
     paths:
       - 'frontend/**'
       - '.github/workflows/frontend-ci.yml'
@@ -46,17 +46,17 @@ jobs:
           fi
         continue-on-error: true
 
-      - name: Run tests
+      - name: Run Unit & Integration Tests
         working-directory: ./frontend
         env:
           CI: true
           REACT_APP_API_URL: http://localhost:5000
           REACT_APP_ENV: test
         run: |
-          npm test -- --watchAll=false --passWithNoTests
+          npm test -- --watchAll=false --coverage --coverageReporters=lcov --coverageReporters=text-summary
 
       - name: Upload coverage reports
-        if: matrix.node-version == '20.x'
+        if: always() && matrix.node-version == '20.x'
         uses: codecov/codecov-action@v3
         with:
           files: ./frontend/coverage/lcov.info
