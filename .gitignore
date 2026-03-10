@@ -3,3 +3,5 @@
 .github\workflows\frontend-cd.yml
 backend\node_modules
 mock-backend\node_modules
+# Security scan reports (generated files)
+security-reports/
