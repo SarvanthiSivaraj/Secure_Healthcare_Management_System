@@ -1,3 +1,13 @@
+if (typeof global !== 'undefined' && !global.TextEncoder) {
+    const { TextEncoder, TextDecoder } = require('node:util');
+    global.TextEncoder = TextEncoder;
+    global.TextDecoder = TextDecoder;
+    if (typeof window !== 'undefined') {
+        window.TextEncoder = TextEncoder;
+        window.TextDecoder = TextDecoder;
+    }
+}
+
 import '@testing-library/jest-dom';
 import { server } from './mocks/server';
 
