@@ -1,90 +1,65 @@
 import apiClient from './client';
 
 export const labApi = {
+    /**
+     * GET /api/lab/orders
+     * Fetches all pending/in-progress lab orders assigned to the lab
+     */
     getAssignedLabTests: async () => {
-        try {
-            const response = await apiClient.get('/emr/lab/assigned');
-            if (response.data.success) {
-                return response.data.data;
-            }
-            return response.data;
-        } catch (error) {
-            console.error('Error fetching assigned lab tests', error);
-            // Mock data fallback if actual backend endpoint doesn't exist
-            return [
-                {
-                    id: 1,
-                    patient_id: 101,
-                    visit_id: 201,
-                    patient_name: 'John Doe',
-                    doctor: 'Dr. Smith',
-                    test_name: 'Complete Blood Count (CBC)',
-                    notes: 'Check for anemia',
-                    requested_time: new Date().toISOString(),
-                    status: 'pending'
-                },
-                {
-                    id: 2,
-                    patient_id: 102,
-                    visit_id: 202,
-                    patient_name: 'Jane Smith',
-                    doctor: 'Dr. Adams',
-                    test_name: 'Lipid Panel',
-                    notes: 'Routine checkup',
-                    requested_time: new Date().toISOString(),
-                    status: 'pending'
-                }
-            ];
+        const response = await apiClient.get('/lab/orders');
+        if (response.data.success) {
+            return response.data.data;
         }
+        throw new Error(response.data.message || 'Failed to fetch assigned lab tests');
     },
 
+    /**
+     * GET /api/lab/orders/:id
+     * Fetches full details for a specific lab order
+     */
     getLabRequestDetails: async (id) => {
-        try {
-            const response = await apiClient.get(`/emr/lab/${id}`);
-            if (response.data.success) {
-                return response.data.data;
-            }
-            return response.data;
-        } catch (error) {
-            console.error('Error fetching lab details', error);
-            return null;
+        const response = await apiClient.get(`/lab/orders/${id}`);
+        if (response.data.success) {
+            return response.data.data;
         }
+        throw new Error(response.data.message || 'Failed to fetch lab order details');
     },
 
+    /**
+     * POST /api/lab/upload
+     * Uploads a result file and marks the lab order as completed
+     * Expects FormData with: order_id, test_name, test_code, test_category, notes, file
+     */
     uploadLabResult: async (formData) => {
-        try {
-            // POST /api/emr/lab as per specifications
-            const response = await apiClient.post('/emr/lab', formData, {
-                headers: {
-                    'Content-Type': 'multipart/form-data'
-                }
-            });
-            return response.data;
-        } catch (error) {
-            console.error('Error uploading lab result', error);
-            throw error;
-        }
+        const response = await apiClient.post('/lab/upload', formData, {
+            headers: {
+                'Content-Type': 'multipart/form-data'
+            }
+        });
+        return response.data;
     },
 
+    /**
+     * GET /api/lab/results
+     * Fetches previously uploaded lab results (Test History)
+     */
     getUploadedResults: async () => {
-        try {
-            const response = await apiClient.get('/emr/lab/results');
-            if (response.data.success) {
-                return response.data.data;
-            }
-            return response.data;
-        } catch (error) {
-            console.error('Error fetching uploaded results', error);
-            // Mock data fallback
-            return [
-                {
-                    id: 1,
-                    patient_name: 'Alice Johnson',
-                    test_name: 'Thyroid Panel',
-                    uploaded_time: new Date().toISOString(),
-                    file_url: '#'
-                }
-            ];
+        const response = await apiClient.get('/lab/results');
+        if (response.data.success) {
+            return response.data.data;
         }
+        throw new Error(response.data.message || 'Failed to fetch uploaded results');
+    },
+
+    /**
+     * GET /api/lab/stats
+     * Fetches dashboard statistics for the lab technician
+     */
+    getStats: async () => {
+        const response = await apiClient.get('/lab/stats');
+        if (response.data.success) {
+            return response.data.data;
+        }
+        throw new Error(response.data.message || 'Failed to fetch lab stats');
     }
 };

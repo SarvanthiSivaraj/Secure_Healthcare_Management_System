@@ -21,18 +21,25 @@ function UploadedResultsTable({ results }) {
                                     <td className="p-3 text-sm font-medium text-slate-800 dark:text-slate-200">{result.patient_name}</td>
                                     <td className="p-3 text-sm text-slate-800 dark:text-slate-200">{result.test_name}</td>
                                     <td className="p-3 text-sm text-slate-800 dark:text-slate-200">
-                                        {result.uploaded_time ? new Date(result.uploaded_time).toLocaleString() : 'Just now'}
+                                        {result.uploaded_at ? new Date(result.uploaded_at).toLocaleString() : 'Just now'}
                                     </td>
                                     <td className="p-3">
-                                        <a
-                                            href={result.file_url}
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                            className="px-3 py-1.5 bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300 font-medium text-xs rounded-lg hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors inline-flex items-center gap-1"
-                                        >
-                                            <span className="material-symbols-outlined text-sm">download</span>
-                                            Download
-                                        </a>
+                                        {result.file_url ? (
+                                            <a
+                                                href={result.file_url}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="px-3 py-1.5 bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300 font-medium text-xs rounded-lg hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors inline-flex items-center gap-1"
+                                            >
+                                                <span className="material-symbols-outlined text-sm">download</span>
+                                                Download
+                                            </a>
+                                        ) : (
+                                            <span className="px-3 py-1.5 bg-slate-50 text-slate-400 dark:bg-slate-800/50 dark:text-slate-600 font-medium text-xs rounded-lg inline-flex items-center gap-1">
+                                                <span className="material-symbols-outlined text-sm">attach_file_off</span>
+                                                No file
+                                            </span>
+                                        )}
                                     </td>
                                 </tr>
                             ))}

@@ -25,6 +25,7 @@ const radiologyRoutes = require('./modules/radiology/radiology.routes');
 const pharmacistRoutes = require('./modules/pharmacist/pharmacist.routes');
 const insuranceRoutes = require('./modules/insurance/insurance.routes');
 const complianceRoutes = require('./modules/compliance/compliance.routes');
+const labRoutes = require('./modules/lab/lab.routes');
 
 
 
@@ -91,6 +92,7 @@ app.use(`${API_PREFIX}/workflow`, workflowRoutes);
 app.use(`${API_PREFIX}/pharmacist`, pharmacistRoutes);
 app.use(`${API_PREFIX}/insurance`, insuranceRoutes);
 app.use(`${API_PREFIX}/compliance`, complianceRoutes);
+app.use(`${API_PREFIX}/lab`, labRoutes);
 
 // Mount routes (Legacy /api support for Frontend)
 app.use('/api/auth', authRoutes);
@@ -114,6 +116,7 @@ app.use('/api/radiology', radiologyRoutes);
 app.use('/api/pharmacist', pharmacistRoutes);
 app.use('/api/insurance', insuranceRoutes);
 app.use('/api/compliance', complianceRoutes);
+app.use('/api/lab', labRoutes);
 
 
 

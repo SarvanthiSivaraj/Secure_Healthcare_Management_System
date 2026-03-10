@@ -40,11 +40,14 @@ function LabResultUpload({ test, onUploadSuccess }) {
 
         try {
             const formData = new FormData();
-            formData.append('record_id', test.id);
+            formData.append('order_id', test.id);
             formData.append('visit_id', test.visit_id);
             formData.append('patient_id', test.patient_id);
-            formData.append('file', file);
+            formData.append('test_name', test.test_name || '');
+            formData.append('test_code', test.test_code || '');
+            formData.append('test_category', test.test_category || '');
             formData.append('notes', notes);
+            formData.append('file', file);
 
             await labApi.uploadLabResult(formData);
 
