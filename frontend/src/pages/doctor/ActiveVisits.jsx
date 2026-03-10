@@ -84,9 +84,9 @@ function ActiveVisits() {
             if (action === 'view') {
                 console.log('View visit:', visitId);
             } else if (action === 'close') {
-                const notes = prompt('Enter closing notes (optional):');
-                await visitApi.closeVisit(visitId, notes || '');
-                setSuccessMessage('Visit closed successfully!');
+                if (!window.confirm('Are you sure you want to mark this visit as completed?')) return;
+                await visitApi.closeVisit(visitId, 'completed');
+                setSuccessMessage('Visit marked as completed!');
                 fetchVisits();
                 setTimeout(() => setSuccessMessage(''), 3000);
             }

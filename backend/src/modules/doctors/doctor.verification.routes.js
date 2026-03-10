@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const DoctorVerificationController = require('./doctor.verification.controller');
 const { authenticate } = require('../../middleware/auth.middleware');
-const { requireRole } = require('../../middleware/rbac.middleware');
+const { requireRole, requireAdmin } = require('../../middleware/rbac.middleware');
 const { uploadSingle } = require('../../middleware/file.upload.middleware');
 
 /**
@@ -44,28 +44,28 @@ router.get(
 router.get(
     '/pending',
     authenticate,
-    requireRole(['admin']),
+    requireAdmin,
     DoctorVerificationController.getPending
 );
 
 router.post(
     '/:userId/approve',
     authenticate,
-    requireRole(['admin']),
+    requireAdmin,
     DoctorVerificationController.approve
 );
 
 router.post(
     '/:userId/reject',
     authenticate,
-    requireRole(['admin']),
+    requireAdmin,
     DoctorVerificationController.reject
 );
 
 router.get(
     '/stats',
     authenticate,
-    requireRole(['admin']),
+    requireAdmin,
     DoctorVerificationController.getStats
 );
 

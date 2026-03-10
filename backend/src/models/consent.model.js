@@ -164,7 +164,7 @@ const revokeConsent = async (consentId, patientId) => {
 const getActiveConsents = async (patientId) => {
     try {
         const selectQuery = `
-            SELECT 
+            SELECT DISTINCT ON (c.recipient_user_id)
                 c.id,
                 c.recipient_user_id as "recipientUserId",
                 c.data_category as "dataCategory",
@@ -185,7 +185,7 @@ const getActiveConsents = async (patientId) => {
             WHERE c.patient_id = $1 
                 AND c.status = 'active'
                 AND (c.end_time IS NULL OR c.end_time > NOW())
-            ORDER BY c.created_at DESC
+            ORDER BY c.recipient_user_id, c.created_at DESC
         `;
 
         const result = await query(selectQuery, [patientId]);

@@ -11,7 +11,7 @@ const { authenticate, authorize } = require('../../middleware/auth.middleware');
 router.get(
     '/logs',
     authenticate,
-    authorize(['hospital_admin', 'system_admin']),
+    authorize(['hospital_admin', 'system_admin', 'compliance_officer']),
     AuditController.getAllAuditLogs
 );
 
@@ -23,7 +23,7 @@ router.get(
 router.get(
     '/users/:userId/logs',
     authenticate,
-    authorize(['hospital_admin', 'system_admin']),
+    authorize(['hospital_admin', 'system_admin', 'compliance_officer']),
     AuditController.getUserAuditLogs
 );
 

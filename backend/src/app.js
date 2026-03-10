@@ -5,6 +5,7 @@ const config = require('./config/env');
 const { errorHandler, notFoundHandler } = require('./middleware/error.middleware');
 const { apiLimiter } = require('./middleware/rateLimit.middleware');
 const logger = require('./utils/logger');
+const { metricsMiddleware, trackConnections, metricsEndpoint } = require('./middleware/metrics');
 
 // Import routes
 const authRoutes = require('./modules/auth/auth.routes');
@@ -19,6 +20,10 @@ const patientRoutes = require('./modules/patient/patient.routes');
 const staffRoutes = require('./modules/staff/staff.routes');
 const nurseRoutes = require('./modules/nurse/nurse.routes');
 const doctorVerificationRoutes = require('./modules/doctors/doctor.verification.routes');
+const radiologyRoutes = require('./modules/radiology/radiology.routes');
+const pharmacistRoutes = require('./modules/pharmacist/pharmacist.routes');
+const insuranceRoutes = require('./modules/insurance/insurance.routes');
+const complianceRoutes = require('./modules/compliance/compliance.routes');
 
 
 
@@ -36,6 +41,10 @@ app.use(cors({
 // Body parsers
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+
+// Monitoring middleware
+app.use(trackConnections);
+app.use(metricsMiddleware);
 
 // Request logging middleware
 app.use((req, res, next) => {
@@ -56,6 +65,9 @@ app.get('/health', (req, res) => {
     });
 });
 
+// Prometheus metrics endpoint
+app.get('/metrics', metricsEndpoint);
+
 // API version prefix
 const API_PREFIX = `/api/${config.apiVersion}`;
 
@@ -73,6 +85,10 @@ app.use(`${API_PREFIX}/visits`, require('./modules/visit/visit.routes'));
 app.use(`${API_PREFIX}/audit`, auditRoutes);
 app.use(`${API_PREFIX}/patient`, patientRoutes);
 app.use(`${API_PREFIX}/admin`, require('./modules/admin/admin.routes'));
+app.use(`${API_PREFIX}/workflow`, workflowRoutes);
+app.use(`${API_PREFIX}/pharmacist`, pharmacistRoutes);
+app.use(`${API_PREFIX}/insurance`, insuranceRoutes);
+app.use(`${API_PREFIX}/compliance`, complianceRoutes);
 
 // Mount routes (Legacy /api support for Frontend)
 app.use('/api/auth', authRoutes);
@@ -91,6 +107,10 @@ app.use('/api/staff', staffRoutes);
 app.use('/api/nurse', nurseRoutes);
 app.use('/api/doctors/verification', doctorVerificationRoutes);
 app.use('/api/visits', require('./modules/visit/visit.routes'));
+app.use('/api/radiology', radiologyRoutes);
+app.use('/api/pharmacist', pharmacistRoutes);
+app.use('/api/insurance', insuranceRoutes);
+app.use('/api/compliance', complianceRoutes);
 
 
 

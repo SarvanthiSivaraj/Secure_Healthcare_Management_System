@@ -71,7 +71,7 @@ function AuditLogs() {
     const selectCls = "px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-violet-400";
 
     return (
-        <div className="patient-dashboard-wrapper bg-[var(--background-light)] dark:bg-[var(--background-dark)] text-slate-800 dark:text-slate-100 flex h-screen w-full overflow-hidden">
+        <div className="admin-dashboard-wrapper bg-[var(--background-light)] dark:bg-[var(--background-dark)] text-slate-800 dark:text-slate-100 flex h-screen w-full overflow-hidden">
             <div className="absolute top-4 right-4 z-50"><ThemeToggle /></div>
             <AdminSidebar active="/admin/audit-logs" />
 
@@ -82,7 +82,13 @@ function AuditLogs() {
                         <h2 className="text-3xl font-bold text-slate-900 dark:text-white">System Audit Logs</h2>
                         <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">Comprehensive system activity and security audit trails</p>
                     </div>
-                    <Button onClick={() => navigate('/admin/dashboard')} variant="secondary">← Back</Button>
+                    <button
+                        onClick={() => navigate('/admin/dashboard')}
+                        className="flex items-center gap-2 px-5 py-2.5 rounded-2xl bg-white/50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-white dark:hover:bg-slate-800 transition-all text-sm font-bold shadow-sm group"
+                    >
+                        <span className="material-symbols-outlined text-[20px] transition-transform group-hover:-translate-x-1">arrow_back</span>
+                        Back to Dashboard
+                    </button>
                 </div>
 
                 {/* Filters */}

@@ -382,6 +382,38 @@ The validator checks for missing required variables, placeholder values, insecur
 
 ---
 
+## Monitoring & Security
+
+### Security Scanning
+
+```powershell
+# Install Trivy
+choco install trivy  # Windows
+brew install trivy   # macOS
+
+# Run security scan
+.\scripts\security-scan.ps1
+```
+
+Automated scans run daily in CI/CD. Results appear in GitHub Security tab.
+
+### Monitoring Stack
+
+```powershell
+# Start monitoring (Prometheus + Grafana)
+docker compose -f docker-compose.monitoring.yaml up -d
+```
+
+- **Grafana:** http://localhost:3001 (admin/admin)
+- **Prometheus:** http://localhost:9090  
+- **Metrics:** http://localhost:5000/metrics
+
+Pre-configured dashboards track API performance, database health, and HIPAA compliance metrics.
+
+See [docs/devops/README.md](docs/devops/README.md) for details.
+
+---
+
 ## Testing
 
 ### Backend Tests

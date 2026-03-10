@@ -270,7 +270,7 @@ function PatientRegistration() {
                                         <span className="material-symbols-outlined text-[16px] text-indigo-500">health_and_safety</span>
                                         Insurance Provider
                                     </label>
-                                    <input type="text" name="insuranceProvider" value={formData.insuranceProvider} onChange={handleChange} placeholder="e.g. BlueCross, Medicare" className="w-full px-4 py-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-indigo-500 text-slate-900 dark:text-white" />
+                                    <input type="text" name="insuranceProvider" value={formData.insuranceProvider} onChange={handleChange} placeholder="e.g. Medicare, Aetna" className="w-full px-4 py-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-indigo-500 text-slate-900 dark:text-white" />
                                 </div>
                                 <div>
                                     <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1 flex items-center gap-2">

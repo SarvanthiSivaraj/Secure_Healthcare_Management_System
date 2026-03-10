@@ -1,0 +1,185 @@
+# Prometheus Alert Rules for Healthcare System
+# HIPAA/Healthcare-specific alerting
+
+groups:
+  - name: healthcare_critical_alerts
+    interval: 30s
+    rules:
+      # High Error Rate
+      - alert: HighErrorRate
+        expr: |
+          (
+            sum(rate(http_requests_total{status=~"5.."}[5m])) by (service)
+            /
+            sum(rate(http_requests_total[5m])) by (service)
+          ) > 0.05
+        for: 2m
+        labels:
+          severity: critical
+          compliance: hipaa
+        annotations:
+          summary: "High error rate on {{ $labels.service }}"
+          description: "Service {{ $labels.service }} has {{ $value | humanizePercentage }} error rate"
+          action: "Check application logs and backend health immediately"
+
+      # API Response Time
+      - alert: SlowAPIResponse
+        expr: |
+          histogram_quantile(0.95, 
+            sum(rate(http_request_duration_seconds_bucket[5m])) by (le, endpoint)
+          ) > 3
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Slow API response time on {{ $labels.endpoint }}"
+          description: "95th percentile response time is {{ $value }}s"
+          action: "Investigate database queries and backend performance"
+
+      # Database Connection Issues
+      - alert: DatabaseConnectionPoolExhausted
+        expr: |
+          pg_stat_activity_count >= pg_settings_max_connections * 0.8
+        for: 2m
+        labels:
+          severity: critical
+          compliance: hipaa
+        annotations:
+          summary: "Database connection pool near exhaustion"
+          description: "{{ $value }} connections active (80% of max)"
+          action: "Check for connection leaks and scale database if needed"
+
+      # Service Down
+      - alert: ServiceDown
+        expr: up{job=~"backend-api|postgresql"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          compliance: hipaa
+        annotations:
+          summary: "Service {{ $labels.job }} is down"
+          description: "{{ $labels.job }} has been down for more than 1 minute"
+          action: "IMMEDIATE ACTION REQUIRED - Check container status and logs"
+
+      # High Memory Usage
+      - alert: HighMemoryUsage
+        expr: |
+          (1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)) > 0.85
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High memory usage detected"
+          description: "Memory usage is at {{ $value | humanizePercentage }}"
+          action: "Monitor for memory leaks, consider scaling"
+
+      # High CPU Usage
+      - alert: HighCPUUsage
+        expr: |
+          100 - (avg by (instance) (irate(node_cpu_seconds_total{mode="idle"}[5m])) * 100) > 80
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High CPU usage detected"
+          description: "CPU usage is at {{ $value }}%"
+          action: "Check for runaway processes or scale resources"
+
+      # Disk Space Low
+      - alert: DiskSpaceLow
+        expr: |
+          (node_filesystem_avail_bytes{mountpoint="/"} / node_filesystem_size_bytes{mountpoint="/"}) < 0.15
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Low disk space on {{ $labels.instance }}"
+          description: "Only {{ $value | humanizePercentage }} disk space remaining"
+          action: "Clean up logs and temporary files, expand storage"
+
+  - name: healthcare_security_alerts
+    interval: 60s
+    rules:
+      # Excessive Failed Login Attempts
+      - alert: ExcessiveFailedLogins
+        expr: |
+          sum(rate(login_attempts_total{status="failed"}[5m])) by (service) > 10
+        for: 2m
+        labels:
+          severity: critical
+          compliance: hipaa
+          security: true
+        annotations:
+          summary: "Excessive failed login attempts detected"
+          description: "{{ $value }} failed login attempts per second"
+          action: "SECURITY ALERT - Check for brute force attack, review audit logs"
+
+      # Unauthorized Access Attempts
+      - alert: UnauthorizedAccessAttempts
+        expr: |
+          sum(rate(http_requests_total{status="401"}[5m])) by (endpoint) > 5
+        for: 3m
+        labels:
+          severity: warning
+          security: true
+        annotations:
+          summary: "High rate of unauthorized access attempts"
+          description: "{{ $value }} unauthorized requests per second to {{ $labels.endpoint }}"
+          action: "Review access logs and check for credential theft"
+
+  - name: healthcare_business_alerts
+    interval: 30s
+    rules:
+      # Low Patient Record Creation (unusual pattern)
+      - alert: UnusuallyLowActivity
+        expr: |
+          sum(rate(patient_records_created_total[1h])) < 1
+        for: 2h
+        labels:
+          severity: info
+        annotations:
+          summary: "Unusually low patient record creation activity"
+          description: "Only {{ $value }} records created in the last hour"
+          action: "Verify system is accessible and staff are able to work"
+
+      # Audit Log Failures
+      - alert: AuditLogFailure
+        expr: |
+          rate(audit_log_errors_total[5m]) > 0
+        for: 1m
+        labels:
+          severity: critical
+          compliance: hipaa
+        annotations:
+          summary: "Audit logging failures detected"
+          description: "HIPAA compliance at risk - audit logs failing"
+          action: "IMMEDIATE ACTION - Fix audit logging system"
+
+  - name: healthcare_data_integrity
+    interval: 60s
+    rules:
+      # Database Replication Lag (if using replication)
+      - alert: DatabaseReplicationLag
+        expr: |
+          pg_replication_lag_seconds > 30
+        for: 5m
+        labels:
+          severity: warning
+          compliance: hipaa
+        annotations:
+          summary: "Database replication lag detected"
+          description: "Replication lag is {{ $value }}s"
+          action: "Check replica health and network connectivity"
+
+      # Backup Failures
+      - alert: BackupFailure
+        expr: |
+          time() - last_successful_backup_timestamp > 86400
+        for: 1h
+        labels:
+          severity: critical
+          compliance: hipaa
+        annotations:
+          summary: "Database backup has not completed in 24 hours"
+          description: "Last successful backup was {{ $value | humanizeDuration }} ago"
+          action: "CRITICAL - Verify backup system and restore capability"
