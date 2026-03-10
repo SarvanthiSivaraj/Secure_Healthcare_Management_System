@@ -75,7 +75,7 @@ services:
     restart: unless-stopped
     environment:
       NODE_ENV: development
-      REACT_APP_API_URL: ${REACT_APP_API_URL:-http://localhost:3000}
+      REACT_APP_API_URL: ${REACT_APP_API_URL:-http://localhost:5000}
       REACT_APP_ENV: development
       WATCHPACK_POLLING: "true"      # File watching in Docker
       CHOKIDAR_USEPOLLING: "true"    # CRA hot-reload in containers
