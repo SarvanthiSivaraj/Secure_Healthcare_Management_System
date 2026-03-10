@@ -95,7 +95,7 @@ const ScheduleNewVisit = () => {
                             <span className="material-symbols-outlined text-[20px]">calendar_today</span>
                             Appointments
                         </button>
-                        <button className="w-full flex items-center gap-3 px-4 py-3 text-slate-500 dark:text-slate-400 hover:bg-white/50 dark:hover:bg-white/5 transition rounded-xl">
+                        <button onClick={() => navigate('/patient/messages')} className="w-full flex items-center gap-3 px-4 py-3 text-slate-500 dark:text-slate-400 hover:bg-white/50 dark:hover:bg-white/5 transition rounded-xl">
                             <span className="material-symbols-outlined text-[20px]">chat_bubble_outline</span>
                             Messages
                         </button>
@@ -109,6 +109,10 @@ const ScheduleNewVisit = () => {
                         </button>
                     </nav>
                     <div className="space-y-2 mt-auto pt-6 border-t border-white/20 dark:border-slate-800/50">
+                        <button onClick={() => navigate('/patient/support')} className="w-full flex items-center gap-3 px-4 py-3 text-slate-500 dark:text-slate-400 hover:bg-white/50 dark:hover:bg-white/5 transition rounded-xl">
+                            <span className="material-symbols-outlined text-[20px]">favorite_border</span>
+                            Support
+                        </button>
                         <button onClick={toggleDarkMode} className="p-2 border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-colors flex items-center justify-center gap-2">
                             <span className="material-symbols-outlined text-indigo-500 !block dark:!hidden">dark_mode</span>
                             <span className="material-symbols-outlined text-amber-500 !hidden dark:!block">light_mode</span>

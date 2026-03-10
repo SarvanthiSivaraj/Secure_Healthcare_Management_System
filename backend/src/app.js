@@ -19,6 +19,8 @@ const patientRoutes = require('./modules/patient/patient.routes');
 const staffRoutes = require('./modules/staff/staff.routes');
 const nurseRoutes = require('./modules/nurse/nurse.routes');
 const doctorVerificationRoutes = require('./modules/doctors/doctor.verification.routes');
+const radiologyRoutes = require('./modules/radiology/radiology.routes');
+const pharmacistRoutes = require('./modules/pharmacist/pharmacist.routes');
 
 
 
@@ -73,6 +75,8 @@ app.use(`${API_PREFIX}/visits`, require('./modules/visit/visit.routes'));
 app.use(`${API_PREFIX}/audit`, auditRoutes);
 app.use(`${API_PREFIX}/patient`, patientRoutes);
 app.use(`${API_PREFIX}/admin`, require('./modules/admin/admin.routes'));
+app.use(`${API_PREFIX}/workflow`, workflowRoutes);
+app.use(`${API_PREFIX}/pharmacist`, pharmacistRoutes);
 
 // Mount routes (Legacy /api support for Frontend)
 app.use('/api/auth', authRoutes);
@@ -91,6 +95,8 @@ app.use('/api/staff', staffRoutes);
 app.use('/api/nurse', nurseRoutes);
 app.use('/api/doctors/verification', doctorVerificationRoutes);
 app.use('/api/visits', require('./modules/visit/visit.routes'));
+app.use('/api/radiology', radiologyRoutes);
+app.use('/api/pharmacist', pharmacistRoutes);
 
 
 

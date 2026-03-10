@@ -16,4 +16,74 @@ router.get(
     NurseController.getDashboardStats
 );
 
+router.get(
+    '/profile',
+    authenticate,
+    requireRole(['nurse']),
+    NurseController.getProfile
+);
+
+router.put(
+    '/profile',
+    authenticate,
+    requireRole(['nurse']),
+    NurseController.updateProfile
+);
+
+router.get(
+    '/assigned-patients',
+    authenticate,
+    requireRole(['nurse']),
+    NurseController.getAssignedPatients
+);
+
+router.get(
+    '/activities',
+    authenticate,
+    requireRole(['nurse']),
+    NurseController.getActivities
+);
+
+router.get(
+    '/vitals',
+    authenticate,
+    requireRole(['nurse']),
+    NurseController.getVitals
+);
+
+router.get(
+    '/medications',
+    authenticate,
+    requireRole(['nurse']),
+    NurseController.getMedications
+);
+
+router.put(
+    '/medications/:medicationId/status',
+    authenticate,
+    requireRole(['nurse']),
+    NurseController.updateMedicationStatus
+);
+
+router.get(
+    '/patients/:patientId/records',
+    authenticate,
+    requireRole(['nurse']),
+    NurseController.getPatientRecords
+);
+
+router.post(
+    '/patients/:patientId/records',
+    authenticate,
+    requireRole(['nurse']),
+    NurseController.addPatientRecord
+);
+
+router.get(
+    '/schedule',
+    authenticate,
+    requireRole(['nurse']),
+    NurseController.getSchedule
+);
+
 module.exports = router;

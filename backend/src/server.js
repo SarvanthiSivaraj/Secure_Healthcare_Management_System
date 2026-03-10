@@ -30,9 +30,9 @@ const startServer = async () => {
             // logger.info('✅ Session management jobs initialized');
 
             // Initialize consent scheduler
-            // const { startConsentScheduler } = require('./services/consent.scheduler');
-            // startConsentScheduler();
-            // logger.info('✅ Consent scheduler initialized');
+            const { startConsentScheduler } = require('./services/consent.scheduler');
+            startConsentScheduler();
+            logger.info('✅ Consent scheduler initialized');
         });
 
         // Graceful shutdown

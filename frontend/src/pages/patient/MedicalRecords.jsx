@@ -1,8 +1,11 @@
-import React, { useState, useEffect, useContext } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import React, { useState, useEffect, useContext, useRef } from 'react';
+import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { AuthContext } from '../../context/AuthContext';
 import { emrApi } from '../../api/emrApi';
 import ThemeToggle from '../../components/common/ThemeToggle';
+import Toast from '../../components/common/Toast';
+import jsPDF from 'jspdf';
+import html2canvas from 'html2canvas';
 import '../patient/Dashboard.css';
 import './MedicalRecords.css';
 
@@ -13,6 +16,10 @@ function MedicalRecords() {
     const [loading, setLoading] = useState(true);
     const [filter, setFilter] = useState('all');
     const [expandedRecords, setExpandedRecords] = useState(new Set());
+    const location = useLocation();
+    const [searchTerm, setSearchTerm] = useState('');
+    const [toast, setToast] = useState(null);
+    const printableRef = useRef(null);
 
     const fetchRecords = React.useCallback(async () => {
         setLoading(true);
@@ -38,9 +45,36 @@ function MedicalRecords() {
 
     useEffect(() => {
         if (user && user.id) fetchRecords();
-    }, [user, fetchRecords]);
 
-    const filterRecords = () => filter === 'all' ? records : records.filter(r => r.type === filter);
+        // Check for search query in URL
+        const params = new URLSearchParams(location.search);
+        const searchQ = params.get('search');
+        if (searchQ) {
+            setSearchTerm(searchQ);
+        }
+    }, [user, fetchRecords, location.search]);
+
+    const filterRecords = () => {
+        let filtered = records;
+
+        // Apply type filter
+        if (filter !== 'all') {
+            filtered = filtered.filter(r => r.type === filter);
+        }
+
+        // Apply search term filter
+        if (searchTerm) {
+            const term = searchTerm.toLowerCase();
+            filtered = filtered.filter(r =>
+                (r.title && r.title.toLowerCase().includes(term)) ||
+                (r.summary && r.summary.toLowerCase().includes(term)) ||
+                (r.doctor && r.doctor.toLowerCase().includes(term)) ||
+                (r.type && r.type.toLowerCase().includes(term))
+            );
+        }
+
+        return filtered;
+    };
     const filteredRecords = filterRecords();
 
     const toggleExpand = (recordId) => {
@@ -72,11 +106,127 @@ function MedicalRecords() {
         }
     };
 
+    const handlePrint = () => {
+        window.print();
+    };
+
+    const handleExportPDF = async () => {
+        setToast({ message: 'Generating your official PDF record...', type: 'info' });
+
+        try {
+            const element = printableRef.current;
+            if (!element) throw new Error('Printable element not found');
+
+            // Capture the element
+            const canvas = await html2canvas(element, {
+                scale: 2,
+                useCORS: true,
+                backgroundColor: '#ffffff',
+                logging: false,
+                width: element.scrollWidth,
+                height: element.scrollHeight,
+                windowWidth: element.scrollWidth
+            });
+
+            const imgData = canvas.toDataURL('image/png');
+            const pdf = new jsPDF('p', 'mm', 'a4');
+
+            const pdfWidth = pdf.internal.pageSize.getWidth();
+            const pdfHeight = pdf.internal.pageSize.getHeight();
+
+            const imgProps = pdf.getImageProperties(imgData);
+            const imgWidth = pdfWidth;
+            const imgHeight = (imgProps.height * imgWidth) / imgProps.width;
+
+            let heightLeft = imgHeight;
+            let position = 0;
+
+            // Add the first page
+            pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+            heightLeft -= pdfHeight;
+
+            // Add subsequent pages if content is longer than one page
+            while (heightLeft >= 0) {
+                position = heightLeft - imgHeight;
+                pdf.addPage();
+                pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+                heightLeft -= pdfHeight;
+            }
+
+            pdf.save(`Medical_Record_${user?.firstName || 'Patient'}.pdf`);
+            setToast({ message: 'Medical Record PDF downloaded successfully!', type: 'success' });
+        } catch (error) {
+            console.error('PDF Generation failed:', error);
+            setToast({ message: 'Failed to generate PDF. Falling back to print dialog.', type: 'warning' });
+            window.print();
+        }
+    };
+
+    const handleShare = () => {
+        const shareUrl = window.location.href;
+        navigator.clipboard.writeText(shareUrl).then(() => {
+            setToast({ message: 'Patient profile link copied to clipboard!', type: 'success' });
+        }).catch(err => {
+            console.error('Failed to copy: ', err);
+            setToast({ message: 'Failed to copy link.', type: 'error' });
+        });
+    };
+
     return (
         <div className="patient-dashboard-wrapper bg-[var(--background-light)] dark:bg-[var(--background-dark)] text-slate-800 dark:text-slate-100 flex h-screen w-full overflow-hidden">
 
+            {/* Direct Printable Content Wrapper (Used for PDF Export) */}
+            <div ref={printableRef} className="absolute left-[-9999px] top-0 w-[1000px] bg-white p-10 print:static print:left-0 print:w-full">
+                {/* Print Header */}
+                <div className="mb-8 border-b-2 border-slate-200 pb-6 flex justify-between items-end">
+                    <div>
+                        <h1 className="text-3xl font-bold text-black uppercase tracking-tight">Official Medical Record</h1>
+                        <p className="text-slate-500 mt-1">Generated on: {new Date().toLocaleDateString()} {new Date().toLocaleTimeString()}</p>
+                    </div>
+                    <div className="text-right">
+                        <p className="text-xl font-bold text-black">{user?.firstName} {user?.lastName}</p>
+                        <p className="text-slate-500">{user?.email}</p>
+                    </div>
+                </div>
+
+                {/* Records List for Print */}
+                <div className="space-y-6">
+                    {filteredRecords.map((record) => {
+                        const { bg, icon, tag } = getRecordStyle(record.type);
+                        return (
+                            <div key={`print-${record.id}`} className="border border-slate-200 rounded-xl p-6 bg-white shadow-sm">
+                                <div className="flex justify-between items-start mb-4">
+                                    <div className="flex items-center gap-4">
+                                        <div className={`w-12 h-12 ${bg.split(' ')[0]} rounded-lg flex items-center justify-center`}>
+                                            <span className="material-symbols-outlined text-2xl" style={{ color: 'black' }}>{icon}</span>
+                                        </div>
+                                        <div>
+                                            <h3 className="text-lg font-bold text-black">{record.title}</h3>
+                                            <p className="text-slate-500 text-sm">{formatRecordType(record.type)} • {record.doctor}</p>
+                                        </div>
+                                    </div>
+                                    <div className="text-right">
+                                        <p className="text-lg font-bold text-black">
+                                            {new Date(record.date).toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' })}
+                                        </p>
+                                        <p className="text-slate-400 text-xs uppercase font-bold tracking-widest">{tag}</p>
+                                    </div>
+                                </div>
+                                <div className="pl-16">
+                                    <p className="text-slate-700 text-sm leading-relaxed">{record.summary || 'No detailed summary available.'}</p>
+                                </div>
+                            </div>
+                        );
+                    })}
+                </div>
+
+                <div className="mt-12 pt-6 border-t border-slate-200 text-center text-slate-400 text-xs italic">
+                    This is an electronically generated medical document. Authenticity can be verified via the Medicare Secure Portal.
+                </div>
+            </div>
+
             {/* ── Left Sidebar ── */}
-            <aside className="w-64 flex-shrink-0 border-r border-slate-200 dark:border-slate-800/50 p-6 flex flex-col h-full overflow-y-auto">
+            <aside className="print:hidden w-64 glass-card border-r border-white/20 dark:border-white/5 flex flex-col items-center py-8 z-10">
                 <div className="flex items-center gap-3 mb-10 px-2 cursor-pointer group" onClick={() => navigate('/patient/dashboard')}>
                     <div className="relative">
                         <div className="absolute inset-0 bg-indigo-500 blur-lg opacity-0 group-hover:opacity-60 transition-opacity duration-500 rounded-full"></div>
@@ -95,7 +245,7 @@ function MedicalRecords() {
                         <span className="material-symbols-outlined text-[20px]">calendar_today</span>
                         Appointments
                     </Link>
-                    <Link to="#" className="flex items-center gap-3 px-4 py-3 text-slate-500 dark:text-slate-400 hover:bg-white/50 dark:hover:bg-white/5 transition rounded-xl">
+                    <Link to="/patient/messages" className="flex items-center gap-3 px-4 py-3 text-slate-500 dark:text-slate-400 hover:bg-white/50 dark:hover:bg-white/5 transition rounded-xl">
                         <span className="material-symbols-outlined text-[20px]">chat_bubble_outline</span>
                         Messages
                     </Link>
@@ -113,7 +263,7 @@ function MedicalRecords() {
                     </Link>
                 </nav>
                 <div className="space-y-2 mt-auto pt-6 border-t border-slate-200 dark:border-slate-800/50">
-                    <Link to="#" className="flex items-center gap-3 px-4 py-3 text-slate-500 dark:text-slate-400 hover:bg-white/50 dark:hover:bg-white/5 transition rounded-xl">
+                    <Link to="/patient/support" className="flex items-center gap-3 px-4 py-3 text-slate-500 dark:text-slate-400 hover:bg-white/50 dark:hover:bg-white/5 transition rounded-xl">
                         <span className="material-symbols-outlined text-[20px]">favorite_border</span>
                         Support
                     </Link>
@@ -129,14 +279,14 @@ function MedicalRecords() {
             </aside>
 
             {/* ── Main Content ── */}
-            <main className="flex-grow p-8 overflow-y-auto h-full">
-                <header className="mb-8">
+            <main className="flex-grow p-8 overflow-y-auto h-full print:p-0 print:overflow-visible">
+                <header className="mb-8 print:hidden">
                     <h2 className="text-3xl font-bold text-slate-900 dark:text-white">Medical Records</h2>
                     <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">Your complete health history — private, encrypted, and read-only.</p>
                 </header>
 
                 {/* Read-only notice */}
-                <div className="glass-card rounded-2xl border border-indigo-200/50 dark:border-indigo-800/50 bg-indigo-50/30 dark:bg-indigo-900/10 p-5 mb-6 flex gap-4 items-start">
+                <div className="print:hidden glass-card rounded-2xl border border-indigo-200/50 dark:border-indigo-800/50 bg-indigo-50/30 dark:bg-indigo-900/10 p-5 mb-6 flex gap-4 items-start">
                     <div className="p-2 bg-indigo-100 dark:bg-indigo-900/40 text-indigo-600 dark:text-indigo-400 rounded-xl">
                         <span className="material-symbols-outlined">lock</span>
                     </div>
@@ -148,8 +298,29 @@ function MedicalRecords() {
                     </div>
                 </div>
 
-                {/* Filter pills */}
-                <div className="flex gap-2 mb-6 overflow-x-auto pb-2 no-scrollbar">
+                {/* Search bar and Filter pills */}
+                <div className="print:hidden flex flex-col md:flex-row gap-4 mb-6">
+                    <div className="relative flex-grow">
+                        <input
+                            className="w-full glass-card border-white/50 dark:border-slate-700/50 rounded-2xl py-3 pl-12 pr-4 text-sm focus:ring-2 focus:ring-indigo-500 shadow-sm text-slate-800 dark:text-slate-100"
+                            placeholder="Search in records (titles, summaries, doctors)..."
+                            type="text"
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                        />
+                        <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-slate-400">search</span>
+                        {searchTerm && (
+                            <button
+                                onClick={() => setSearchTerm('')}
+                                className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+                            >
+                                <span className="material-symbols-outlined text-sm">close</span>
+                            </button>
+                        )}
+                    </div>
+                </div>
+
+                <div className="print:hidden flex gap-2 mb-6 overflow-x-auto pb-2 no-scrollbar">
                     {['all', 'consultation', 'diagnosis', 'prescription', 'lab_result', 'imaging', 'procedure', 'note'].map((type) => (
                         <button
                             key={type}
@@ -230,7 +401,7 @@ function MedicalRecords() {
             </main>
 
             {/* ── Right Sidebar ── */}
-            <aside className="w-72 flex-shrink-0 border-l border-slate-200 dark:border-slate-800/50 p-6 hidden xl:flex flex-col h-full overflow-y-auto">
+            <aside className="print:hidden w-72 flex-shrink-0 border-l border-slate-200 dark:border-slate-800/50 p-6 hidden xl:flex flex-col h-full overflow-y-auto">
                 <div className="flex items-center justify-between mb-6">
                     <h3 className="text-lg font-bold text-slate-900 dark:text-white">Record Insights</h3>
                     <ThemeToggle />
@@ -266,9 +437,9 @@ function MedicalRecords() {
                 <h3 className="text-sm font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-3">Quick Actions</h3>
                 <div className="grid grid-cols-2 gap-3">
                     {[
-                        { icon: 'download', label: 'Export PDF' },
-                        { icon: 'share', label: 'Share' },
-                        { icon: 'print', label: 'Print' },
+                        { icon: 'download', label: 'Export PDF', action: handleExportPDF },
+                        { icon: 'share', label: 'Share', action: handleShare },
+                        { icon: 'print', label: 'Print', action: handlePrint },
                         { icon: 'history', label: 'Audit Logs', action: () => navigate('/patient/audit-trail') },
                     ].map(({ icon, label, action }) => (
                         <button
@@ -281,6 +452,14 @@ function MedicalRecords() {
                         </button>
                     ))}
                 </div>
+
+                {toast && (
+                    <Toast
+                        message={toast.message}
+                        type={toast.type}
+                        onClose={() => setToast(null)}
+                    />
+                )}
             </aside>
         </div>
     );

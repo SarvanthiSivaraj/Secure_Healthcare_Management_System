@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { visitApi } from '../../api/visitApi';
-import Button from '../../components/common/Button';
-import DoctorSelectionPopup from '../../components/visit/DoctorSelectionPopup';
+import { AdminSidebar } from './HospitalAdminDashboard';
+import ThemeToggle from '../../components/common/ThemeToggle';
+import '../patient/Dashboard.css';
 import './VisitManagement.css';
 
 function VisitManagement() {
@@ -17,53 +18,19 @@ function VisitManagement() {
     const [doctors, setDoctors] = useState([]);
     const [nurses, setNurses] = useState([]);
     const [approvalData, setApprovalData] = useState({ doctorId: '', nurseId: '' });
-    const [showDoctorPopup, setShowDoctorPopup] = useState(false);
 
-    const handleScheduleVisit = () => {
-        navigate('/patient/visits/schedule');
-    };
-
-    const handleDoctorSelect = async (doctor) => {
-        try {
-            setLoading(true);
-            // Defaulting request flow to use current logged-in user context
-            // or we ask for the patient ID explicitly for admins?
-            // Assuming this acts like requesting for self if no other ID specified for now
-            const reason = prompt(`Briefly describe reason for scheduling Dr. ${doctor.firstName} ${doctor.lastName}:`);
-            if (!reason) return;
-
-            await visitApi.requestVisit({
-                doctorId: doctor.id,
-                reason: reason,
-                type: 'scheduled',
-                status: 'approved' // Automatically approve if requested by admin? Let's leave as pending to be safe
-            });
-            setShowDoctorPopup(false);
-            alert(`Visit request sent/approved to Dr. ${doctor.firstName} ${doctor.lastName}`);
-            loadVisits();
-        } catch (error) {
-            alert(error.response?.data?.message || 'Failed to request visit');
-        } finally {
-            setLoading(false);
-        }
-    };
+    const [successModal, setSuccessModal] = useState({ show: false, title: '', message: '', highlight: '' });
 
     const loadVisits = useCallback(async () => {
         setLoading(true);
         setError('');
         try {
-            console.log('🔍 Loading visits for tab:', activeTab);
             const statusFilter = activeTab === 'pending' ? 'pending' :
                 activeTab === 'active' ? null :
                     activeTab;
 
-            console.log('📡 Calling API with status filter:', statusFilter);
             const response = await visitApi.getHospitalVisits(statusFilter);
-            console.log('✅ API Response:', response);
-
-            // API returns { success: true, data: [...] }
             let filteredVisits = response.data || [];
-            console.log('📋 Filtered visits (before tab filter):', filteredVisits);
 
             if (activeTab === 'active') {
                 filteredVisits = filteredVisits.filter(v =>
@@ -75,14 +42,10 @@ function VisitManagement() {
                 );
             }
 
-            console.log('📋 Final visits:', filteredVisits);
             setVisits(filteredVisits);
         } catch (err) {
-            console.error('❌ Error loading visits:', err);
-            console.error('❌ Error response:', err.response);
             const errorMsg = err.response?.data?.message || err.message || 'Failed to load visits';
             setError(errorMsg);
-            console.error('❌ Error message:', errorMsg);
         } finally {
             setLoading(false);
         }
@@ -96,27 +59,14 @@ function VisitManagement() {
         setSelectedVisit(visit);
         setShowApprovalModal(true);
 
-        // Fetch doctors and nurses from API
         try {
-            console.log('🔍 Fetching doctors and nurses...');
             const [doctorsResponse, nursesResponse] = await Promise.all([
                 visitApi.getStaffByRole('doctor'),
                 visitApi.getStaffByRole('nurse')
             ]);
-
-            console.log('✅ Doctors response:', doctorsResponse);
-            console.log('✅ Nurses response:', nursesResponse);
-            console.log('👨‍⚕️ Doctors data:', doctorsResponse.data);
-            console.log('👩‍⚕️ Nurses data:', nursesResponse.data);
-
             setDoctors(doctorsResponse.data || []);
             setNurses(nursesResponse.data || []);
-
-            console.log('📊 Doctors state set to:', doctorsResponse.data || []);
-            console.log('📊 Nurses state set to:', nursesResponse.data || []);
         } catch (err) {
-            console.error('❌ Failed to load staff:', err);
-            console.error('❌ Error response:', err.response);
             setDoctors([]);
             setNurses([]);
         }
@@ -126,33 +76,49 @@ function VisitManagement() {
         try {
             const response = await visitApi.approveVisit(
                 selectedVisit.id,
-                null, // backend picks up existing doctor
+                approvalData.doctorId || selectedVisit.assigned_doctor_id || selectedVisit.doctor_id || null, // Pass selected or existing doctor
                 approvalData.nurseId || null
             );
             // Close modal and show success with code
             setShowApprovalModal(false);
             const approvedCode = response.data?.otp_code || response.data?.otp;
             if (approvedCode) {
-                alert(`Visit Approved! Visit Code: ${approvedCode}\n\nThis code has been sent to the patient's email.`);
+                setSuccessModal({
+                    show: true,
+                    title: 'Protocol Approved',
+                    message: "An email with this code has been securely dispatched to the patient.",
+                    highlight: approvedCode
+                });
             } else {
-                alert('Visit Approved and assigned successfully!');
+                setSuccessModal({
+                    show: true,
+                    title: 'Protocol Approved',
+                    message: 'Visit has been approved and assigned successfully!',
+                    highlight: ''
+                });
             }
 
             setApprovalData({ doctorId: '', nurseId: '' });
             setActiveTab('active'); // Switch to active tab
             loadVisits();
         } catch (err) {
-            alert(err.response?.data?.message || 'Failed to approve visit');
+            setError(err.response?.data?.message || 'Failed to approve visit');
         }
     };
 
     const handleCloseVisit = async (visitId, status) => {
         try {
             await visitApi.closeVisit(visitId, status);
-            // Silently refresh the visits list
+            // Show success message so user knows it worked
+            setSuccessModal({
+                show: true,
+                title: status === 'cancelled' ? 'Protocol Aborted' : 'Protocol Completed',
+                message: `The visit protocol was successfully ${status}.`,
+                highlight: ''
+            });
             loadVisits();
         } catch (err) {
-            alert(err.response?.data?.message || 'Failed to close visit');
+            setError(err.response?.data?.message || 'Failed to close visit');
         }
     };
 
@@ -186,131 +152,153 @@ function VisitManagement() {
     };
 
     return (
-        <div className="visit-management-container">
-            <div className="visit-management-header">
-                <div className="header-left">
-                    <h1>Visit Management</h1>
-                    <p className="subtitle">Manage patient visit requests and assignments</p>
-                </div>
-                <Button onClick={() => window.history.back()} variant="secondary" className="back-btn">
-                    ← Back
-                </Button>
-            </div>
+        <div className="admin-dashboard-wrapper bg-[var(--background-light)] dark:bg-[var(--background-dark)] text-slate-800 dark:text-slate-100 flex h-screen w-full overflow-hidden">
+            <div className="absolute top-4 right-4 z-50"><ThemeToggle /></div>
+            <AdminSidebar active="/admin/visits" />
 
-            <div className="visit-management-content">
-                {/* Schedule / Walk-in section */}
-                <div className="bg-[#1E293B] p-6 md:p-8 rounded-2xl mb-8 flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+            <main className="flex-grow p-4 md:p-8 overflow-y-auto h-full relative">
+                {/* Header */}
+                <div className="flex items-center justify-between mb-8">
                     <div>
-                        <h3 className="text-xl font-bold text-white mb-2">Schedule or Check In</h3>
-                        <p className="text-slate-400 text-sm max-w-md">Have a scheduled visit? Enter the code provided by your doctor or nurse to check in.</p>
+                        <h2 className="text-3xl font-bold text-slate-900 dark:text-white">Visit Management</h2>
+                        <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">Manage patient visit requests and assignments</p>
                     </div>
-                    <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
-                        <button
-                            className="bg-indigo-500 hover:bg-indigo-600 text-white px-6 py-3 rounded-xl text-sm font-semibold transition-all whitespace-nowrap"
-                            onClick={handleScheduleVisit}
-                        >
-                            Schedule a Visit
-                        </button>
-                        <button
-                            className="bg-teal-500 hover:bg-teal-600 text-white px-6 py-3 rounded-xl text-sm font-semibold transition-all whitespace-nowrap"
-                            onClick={() => navigate('/patient/visits/new')} // NOTE: This assumes the admin can also navigate to the walk-in point
-                        >
-                            Walk-In Visit
-                        </button>
-                    </div>
+                    <button
+                        onClick={() => navigate('/admin/dashboard')}
+                        className="flex items-center gap-2 px-5 py-2.5 rounded-2xl bg-white/50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-white dark:hover:bg-slate-800 transition-all text-sm font-bold shadow-sm group"
+                    >
+                        <span className="material-symbols-outlined text-[20px] transition-transform group-hover:-translate-x-1">arrow_back</span>
+                        Back to Dashboard
+                    </button>
                 </div>
 
-                {showDoctorPopup && (
-                    <DoctorSelectionPopup
-                        doctors={doctors}
-                        onClose={() => setShowDoctorPopup(false)}
-                        onSelect={handleDoctorSelect}
-                    />
+                {/* Tab Navigation */}
+                <div className="flex items-center gap-1 p-1 bg-white/40 dark:bg-slate-900/40 backdrop-blur-md rounded-2xl border border-slate-200/50 dark:border-slate-700/50 w-fit">
+                    {[
+                        { id: 'pending', label: 'Queued Request', icon: 'pending_actions' },
+                        { id: 'active', label: 'Active Sessions', icon: 'stethoscope' },
+                        { id: 'completed', label: 'Archived Logs', icon: 'history' }
+                    ].map(tab => (
+                        <button
+                            key={tab.id}
+                            className={`flex items-center gap-2 px-6 py-2.5 rounded-xl text-xs font-bold transition-all ${activeTab === tab.id
+                                ? 'bg-white dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 shadow-sm border border-slate-200/50 dark:border-slate-700/50'
+                                : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'
+                                }`}
+                            onClick={() => setActiveTab(tab.id)}
+                        >
+                            <span className="material-symbols-outlined text-[18px]">{tab.icon}</span>
+                            {tab.label}
+                        </button>
+                    ))}
+                </div>
+
+                {error && (
+                    <div className="bg-rose-50 dark:bg-rose-900/10 border border-rose-100 dark:border-rose-900/30 p-4 rounded-2xl text-rose-600 dark:text-rose-400 text-sm font-medium flex items-center gap-3">
+                        <span className="material-symbols-outlined">error</span>
+                        {error}
+                    </div>
                 )}
 
-                <div className="visit-tabs">
-                    <button
-                        className={`tab ${activeTab === 'pending' ? 'active' : ''}`}
-                        onClick={() => setActiveTab('pending')}
-                    >
-                        Pending
-                    </button>
-                    <button
-                        className={`tab ${activeTab === 'active' ? 'active' : ''}`}
-                        onClick={() => setActiveTab('active')}
-                    >
-                        Active
-                    </button>
-                    <button
-                        className={`tab ${activeTab === 'completed' ? 'active' : ''}`}
-                        onClick={() => setActiveTab('completed')}
-                    >
-                        Completed
-                    </button>
-                </div>
-
-                {error && <div className="error-message">{error}</div>}
-                {loading && <div className="loading-message">Loading visits...</div>}
-
-                {!loading && (
-                    <div className="visits-list">
+                {loading ? (
+                    <div className="flex flex-col items-center justify-center py-20 text-slate-400 gap-4">
+                        <span className="material-symbols-outlined animate-spin text-4xl">progress_activity</span>
+                        <p className="text-sm font-bold uppercase tracking-widest">Synchronizing Logs...</p>
+                    </div>
+                ) : (
+                    <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
                         {visits.length > 0 ? (
                             visits.map(visit => (
-                                <div key={visit.id} className="visit-card">
-                                    <div className="visit-card-header">
-                                        <div className="visit-info">
+                                <div key={visit.id} className="admin-glass-card rounded-3xl p-6 flex flex-col group hover:border-indigo-500/30 transition-all border border-transparent">
+                                    <div className="flex justify-between items-start mb-6">
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-10 h-10 rounded-xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-400 group-hover:text-indigo-600 transition-colors">
+                                                <span className="material-symbols-outlined text-xl">person</span>
+                                            </div>
+                                            <div>
+                                                <h4 className="font-bold text-slate-800 dark:text-white leading-none">
+                                                    {visit.patient_first_name} {visit.patient_last_name}
+                                                </h4>
+                                                <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-1 uppercase tracking-wider font-bold">Patient Protocol</p>
+                                            </div>
+                                        </div>
+                                        <div className="text-right">
                                             {getStatusBadge(visit.status)}
+                                            <p className="text-[9px] text-slate-400 mt-2 font-mono">{formatDate(visit.created_at)}</p>
                                         </div>
-                                        <span className="visit-time">{formatDate(visit.created_at)}</span>
                                     </div>
 
-                                    <div className="visit-card-body">
-                                        <div className="visit-detail">
-                                            <strong>Patient:</strong> {visit.patient_first_name} {visit.patient_last_name}
+                                    <div className="grid grid-cols-2 gap-4 mb-6 pt-6 border-t border-slate-100 dark:border-slate-800/50">
+                                        <div>
+                                            <p className="text-[9px] text-slate-400 uppercase tracking-widest font-black mb-1">Reason for Visit</p>
+                                            <p className="text-xs font-semibold text-slate-700 dark:text-slate-300">{visit.reason}</p>
                                         </div>
-                                        <div className="visit-detail">
-                                            <strong>Reason:</strong> {visit.reason}
-                                        </div>
-                                        {visit.symptoms && (
-                                            <div className="visit-detail">
-                                                <strong>Symptoms:</strong> {visit.symptoms}
-                                            </div>
-                                        )}
                                         {visit.doctor_first_name && (
-                                            <div className="visit-detail">
-                                                <strong>Doctor:</strong> Dr. {visit.doctor_first_name} {visit.doctor_last_name}
+                                            <div>
+                                                <p className="text-[9px] text-slate-400 uppercase tracking-widest font-black mb-1">Assigned Physician</p>
+                                                <p className="text-xs font-semibold text-indigo-600 dark:text-indigo-400 italic">Dr. {visit.doctor_first_name} {visit.doctor_last_name}</p>
                                             </div>
                                         )}
                                     </div>
 
-                                    <div className="visit-card-actions">
+                                    {visit.symptoms && (
+                                        <div className="mb-6 p-4 rounded-2xl bg-slate-50/50 dark:bg-slate-900/30 border border-slate-100 dark:border-slate-800/50">
+                                            <p className="text-[9px] text-slate-400 uppercase tracking-widest font-black mb-1">Reported Symptoms</p>
+                                            <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed italic">"{visit.symptoms}"</p>
+                                        </div>
+                                    )}
+
+                                    <div className="mt-auto flex gap-3 pt-6 border-t border-slate-100 dark:border-slate-800/50">
                                         {visit.status === 'pending' && (
                                             <>
-                                                <Button onClick={() => handleApproveClick(visit)} variant="primary">
-                                                    Approve
-                                                </Button>
-                                                <Button onClick={() => handleCloseVisit(visit.id, 'cancelled')} variant="secondary">
+                                                <button
+                                                    onClick={() => handleApproveClick(visit)}
+                                                    className="flex-grow bg-indigo-600 hover:bg-indigo-700 text-white py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all shadow-lg shadow-indigo-500/10"
+                                                >
+                                                    Approve Protocol
+                                                </button>
+                                                <button
+                                                    onClick={() => handleCloseVisit(visit.id, 'cancelled')}
+                                                    className="px-6 border border-slate-200 dark:border-slate-700 text-slate-500 hover:text-rose-500 hover:border-rose-200 transition-all rounded-2xl text-[10px] font-black uppercase tracking-widest"
+                                                >
                                                     Reject
-                                                </Button>
+                                                </button>
                                             </>
                                         )}
+                                        {['checked_in', 'in_progress'].includes(visit.status) && (
+                                            <button
+                                                onClick={() => handleCloseVisit(visit.id, 'completed')}
+                                                className="flex-grow bg-emerald-600 hover:bg-emerald-700 text-white py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all shadow-lg shadow-emerald-500/10"
+                                            >
+                                                Complete Clinical Session
+                                            </button>
+                                        )}
+                                        {visit.status === 'approved' && (
+                                            <div className="flex-grow p-3 bg-amber-50 dark:bg-amber-900/20 rounded-2xl border border-amber-100 dark:border-amber-900/30">
+                                                <p className="text-[10px] text-amber-700 dark:text-amber-400 font-bold leading-tight flex items-center gap-2">
+                                                    <span className="material-symbols-outlined text-[16px]">info</span>
+                                                    Awaiting Patient Check-in
+                                                </p>
+                                            </div>
+                                        )}
                                         {['approved', 'checked_in', 'in_progress'].includes(visit.status) && (
-                                            <>
-                                                <Button onClick={() => handleCloseVisit(visit.id, 'completed')} variant="primary">
-                                                    Complete Visit
-                                                </Button>
-                                                <Button onClick={() => handleCloseVisit(visit.id, 'cancelled')} variant="secondary">
-                                                    Cancel Visit
-                                                </Button>
-                                            </>
+                                            <button
+                                                onClick={() => handleCloseVisit(visit.id, 'cancelled')}
+                                                className="px-6 border border-slate-200 dark:border-slate-700 text-slate-500 hover:text-rose-500 hover:border-rose-200 transition-all rounded-2xl text-[10px] font-black uppercase tracking-widest"
+                                            >
+                                                Cancel
+                                            </button>
                                         )}
                                     </div>
                                 </div>
                             ))
                         ) : (
-                            <div className="no-requests-container">
-                                <div className="no-requests-icon">📅</div>
-                                <p>No {activeTab} requests</p>
+                            <div className="col-span-full py-32 flex flex-col items-center justify-center text-slate-300 dark:text-slate-600 border-2 border-dashed border-slate-200/50 dark:border-slate-800/50 rounded-[3rem] bg-white/20 dark:bg-slate-900/20 backdrop-blur-sm group">
+                                <div className="w-20 h-20 rounded-full bg-slate-50 dark:bg-slate-800 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-500">
+                                    <span className="material-symbols-outlined text-4xl opacity-50">event_busy</span>
+                                </div>
+                                <h4 className="text-xl font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.3em] opacity-80">Silent Corridor</h4>
+                                <p className="text-xs font-bold text-slate-400 dark:text-slate-500 mt-2 lowercase italic opacity-60">No pharmaceutical or clinical sessions currently queued.</p>
                             </div>
                         )}
                     </div>
@@ -319,54 +307,109 @@ function VisitManagement() {
                 {showApprovalModal && (
                     <div className="modal-overlay" onClick={() => setShowApprovalModal(false)}>
                         <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-                            <h2>Approve Visit Request</h2>
+                            <h2 className="text-xl font-bold text-slate-900 dark:text-white mb-6">Approve Visit Request</h2>
 
-                            <div className="modal-body">
-                                <div className="form-group">
-                                    <label>Patient</label>
-                                    <p>{selectedVisit?.patient_first_name} {selectedVisit?.patient_last_name}</p>
+                            <div className="space-y-6">
+                                <div className="grid grid-cols-2 gap-6">
+                                    <div>
+                                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Patient</p>
+                                        <p className="text-sm font-bold text-slate-800 dark:text-slate-200">{selectedVisit?.patient_first_name} {selectedVisit?.patient_last_name}</p>
+                                    </div>
+                                    <div>
+                                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Reason</p>
+                                        <p className="text-sm font-semibold text-slate-700 dark:text-slate-300">{selectedVisit?.reason}</p>
+                                    </div>
                                 </div>
 
                                 <div className="form-group">
-                                    <label>Reason</label>
-                                    <p>{selectedVisit?.reason}</p>
-                                </div>
-
-                                <div className="form-group">
-                                    <label>Assigned Doctor</label>
-                                    <p>Dr. {selectedVisit?.doctor_first_name} {selectedVisit?.doctor_last_name}</p>
-                                </div>
-
-                                <div className="form-group">
-                                    <label>Assign Nurse (Optional)</label>
+                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 block">Assign Medical Lead</label>
                                     <select
-                                        value={approvalData.nurseId}
-                                        onChange={(e) => setApprovalData({ ...approvalData, nurseId: e.target.value })}
+                                        value={approvalData.doctorId || selectedVisit?.assigned_doctor_id || selectedVisit?.doctor_id || ''}
+                                        onChange={(e) => setApprovalData({ ...approvalData, doctorId: e.target.value })}
+                                        className="w-full px-4 py-3 rounded-2xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-800 dark:text-white text-sm focus:ring-2 focus:ring-indigo-500 outline-none transition-all"
+                                        required
                                     >
-                                        <option value="">Select a nurse</option>
-                                        {nurses.map(nurse => (
-                                            <option key={nurse.id} value={nurse.id}>{nurse.name}</option>
+                                        <option value="">Select a doctor</option>
+                                        {doctors.map(doctor => (
+                                            <option key={doctor.id} value={doctor.id}>
+                                                Dr. {doctor.name || `${doctor.first_name || doctor.firstName} ${doctor.last_name || doctor.lastName} `}
+                                            </option>
                                         ))}
                                     </select>
                                 </div>
 
-                                <p className="info-text">
-                                    ℹ️ Patient will receive an email with the visit code after approval.
-                                </p>
+                                <div className="form-group">
+                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 block">Assign Nurse Specialist (Optional)</label>
+                                    <select
+                                        value={approvalData.nurseId}
+                                        onChange={(e) => setApprovalData({ ...approvalData, nurseId: e.target.value })}
+                                        className="w-full px-4 py-3 rounded-2xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-800 dark:text-white text-sm focus:ring-2 focus:ring-indigo-500 outline-none transition-all"
+                                    >
+                                        <option value="">Select a nurse</option>
+                                        {nurses.map(nurse => (
+                                            <option key={nurse.id} value={nurse.id}>{nurse.name || `${nurse.firstName} ${nurse.lastName} `}</option>
+                                        ))}
+                                    </select>
+                                </div>
+
+                                <div className="p-4 rounded-2xl bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-100 dark:border-indigo-900/30 flex items-start gap-3">
+                                    <span className="material-symbols-outlined text-indigo-500 mt-0.5">info</span>
+                                    <p className="text-xs text-indigo-700 dark:text-indigo-300 leading-relaxed font-medium">
+                                        Approving this protocol will generate a secure visit code and notify the patient via encrypted communication channels.
+                                    </p>
+                                </div>
                             </div>
 
-                            <div className="modal-actions">
-                                <Button onClick={() => setShowApprovalModal(false)} variant="secondary">
-                                    Cancel
-                                </Button>
-                                <Button onClick={handleApproveVisit} variant="primary">
-                                    Approve & Notify Patient
-                                </Button>
+                            <div className="flex gap-4 mt-8 pt-8 border-t border-slate-100 dark:border-slate-800">
+                                <button
+                                    onClick={() => setShowApprovalModal(false)}
+                                    className="px-8 py-3 rounded-2xl text-xs font-black uppercase tracking-widest text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all border border-slate-200 dark:border-slate-700"
+                                >
+                                    Abort
+                                </button>
+                                <button
+                                    onClick={handleApproveVisit}
+                                    className="flex-grow bg-indigo-600 hover:bg-indigo-700 text-white py-3 rounded-2xl text-xs font-black uppercase tracking-widest transition-all shadow-lg shadow-indigo-500/20"
+                                >
+                                    Authorize Approval
+                                </button>
                             </div>
                         </div>
                     </div>
                 )}
-            </div>
+
+                {successModal.show && (
+                    <div className="modal-overlay" onClick={() => setSuccessModal({ show: false, title: '', message: '', highlight: '' })}>
+                        <div className="modal-content text-center py-8" onClick={(e) => e.stopPropagation()}>
+                            <div className="w-16 h-16 rounded-full bg-emerald-100 dark:bg-emerald-900/40 flex items-center justify-center mx-auto mb-6">
+                                <span className="material-symbols-outlined text-3xl text-emerald-600 dark:text-emerald-400">check_circle</span>
+                            </div>
+                            <h2 className="text-2xl font-black text-slate-900 dark:text-white mb-2">{successModal.title}</h2>
+                            <p className="text-sm font-medium text-slate-500 dark:text-slate-400 mb-6 max-w-[280px] mx-auto leading-relaxed">
+                                {successModal.message}
+                            </p>
+
+                            {successModal.highlight && (
+                                <div className="bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 mb-8 inline-block shadow-inner">
+                                    <p className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400 mb-2">Secure Visit Code</p>
+                                    <p className="text-4xl font-mono font-black text-indigo-600 dark:text-indigo-400 tracking-widest">
+                                        {successModal.highlight}
+                                    </p>
+                                </div>
+                            )}
+
+                            <div>
+                                <button
+                                    onClick={() => setSuccessModal({ show: false, title: '', message: '', highlight: '' })}
+                                    className="px-8 py-3 bg-slate-900 hover:bg-slate-800 dark:bg-white dark:hover:bg-slate-100 dark:text-slate-900 text-white rounded-2xl text-xs font-black uppercase tracking-widest transition-all"
+                                >
+                                    Acknowledge
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                )}
+            </main>
         </div>
     );
 }

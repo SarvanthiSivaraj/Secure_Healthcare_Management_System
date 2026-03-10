@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const AdminController = require('./admin.controller');
 const { authenticate } = require('../../middleware/auth.middleware');
-const { requireRole } = require('../../middleware/rbac.middleware');
+const { requireRole, requireAdmin } = require('../../middleware/rbac.middleware');
 const { ROLES } = require('../../utils/constants');
 
 /**
@@ -14,21 +14,21 @@ const { ROLES } = require('../../utils/constants');
 router.get(
     '/organizations/pending',
     authenticate,
-    requireRole(['admin', 'system_admin']),
+    requireAdmin,
     AdminController.getPendingOrganizations
 );
 
 router.post(
     '/organizations/:orgId/approve',
     authenticate,
-    requireRole(['admin', 'system_admin']),
+    requireAdmin,
     AdminController.approveOrganization
 );
 
 router.post(
     '/organizations/:orgId/reject',
     authenticate,
-    requireRole(['admin', 'system_admin']),
+    requireAdmin,
     AdminController.rejectOrganization
 );
 
@@ -36,7 +36,7 @@ router.post(
 router.get(
     '/hospital/stats',
     authenticate,
-    requireRole(['hospital_admin', 'system_admin']),
+    requireAdmin,
     AdminController.getHospitalStats
 );
 

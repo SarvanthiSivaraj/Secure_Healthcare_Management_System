@@ -10,6 +10,7 @@ const DicomService = require('../../services/dicom.service');
 const PrescriptionValidatorService = require('../../services/prescription.validator.service');
 const DrugInteractionService = require('../../services/drug.interaction.service');
 const { checkConsent } = require('../../models/consent.model');
+const auditService = require('../../services/audit.service');
 
 class EmrController {
     // ==================== Medical Records ====================
@@ -148,8 +149,23 @@ class EmrController {
 
             const count = await MedicalRecordModel.countByPatient(patientId, type);
 
-            // Create audit log for record access
-            // Audit log removed to reduce clutter on dashboard load
+            // Create audit log ONLY if accessing user is NOT the patient owner
+            // Patients don't need to see their own "viewed records" dashboard refresh clutter
+            if (userRole !== 'PATIENT' || userId !== patientId) {
+                await auditService.createAuditLog({
+                    userId,
+                    action: 'view_patient_records',
+                    entityType: 'patient',
+                    entityId: patientId,
+                    purpose: 'Medical record review',
+                    ipAddress: req.ip,
+                    userAgent: req.get('User-Agent'),
+                    requestMethod: 'GET',
+                    requestPath: req.originalUrl,
+                    statusCode: 200,
+                    metadata: { type, patientId, recordCount: records.length, visitorRole: userRole }
+                });
+            }
 
             res.json({
                 success: true,
@@ -261,6 +277,39 @@ class EmrController {
             res.status(500).json({
                 success: false,
                 message: error.message || 'Failed to update diagnosis status'
+            });
+        }
+    }
+
+    /**
+     * Get diagnoses for a visit
+     */
+    static async getDiagnoses(req, res) {
+        try {
+            const { visitId } = req.params;
+
+            // First find a medical record for this visit
+            const records = await MedicalRecordModel.findByVisitId(visitId);
+            if (!records || records.length === 0) {
+                return res.json({
+                    success: true,
+                    data: []
+                });
+            }
+
+            // Get diagnoses for the most recent record of this visit
+            const recordId = records[0].id;
+            const diagnoses = await DiagnosisModel.findByRecordId(recordId);
+
+            res.json({
+                success: true,
+                data: diagnoses
+            });
+        } catch (error) {
+            console.error('Get diagnoses error:', error);
+            res.status(500).json({
+                success: false,
+                message: 'Failed to retrieve diagnoses'
             });
         }
     }

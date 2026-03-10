@@ -100,8 +100,9 @@ function ApproveVisitsTab() {
     const [error, setError] = useState('');
     const [showApprovalModal, setShowApprovalModal] = useState(false);
     const [selectedVisit, setSelectedVisit] = useState(null);
+    const [doctors, setDoctors] = useState([]);
     const [nurses, setNurses] = useState([]);
-    const [approvalData, setApprovalData] = useState({ nurseId: '' });
+    const [approvalData, setApprovalData] = useState({ nurseId: '', doctorId: '' });
 
     const loadVisits = useCallback(async () => {
         setLoading(true);
@@ -126,21 +127,33 @@ function ApproveVisitsTab() {
 
     const handleApproveClick = async (visit) => {
         setSelectedVisit(visit);
+        setApprovalData({ nurseId: '', doctorId: visit.assigned_doctor_id || '' });
         setShowApprovalModal(true);
         try {
-            const nursesRes = await visitApi.getStaffByRole('nurse');
+            const [nursesRes, doctorsRes] = await Promise.all([
+                visitApi.getStaffByRole('nurse'),
+                visitApi.getStaffByRole('doctor')
+            ]);
             setNurses(nursesRes.data || []);
-        } catch { setNurses([]); }
+            setDoctors(doctorsRes.data || []);
+        } catch {
+            setNurses([]);
+            setDoctors([]);
+        }
     };
 
     const handleApproveVisit = async () => {
         try {
-            const response = await visitApi.approveVisit(selectedVisit.id, null, approvalData.nurseId || null);
+            const response = await visitApi.approveVisit(
+                selectedVisit.id,
+                approvalData.doctorId || null,
+                approvalData.nurseId || null
+            );
             setShowApprovalModal(false);
             const code = response.data?.otp_code || response.data?.otp;
             if (code) alert(`✅ Visit Approved!\nVisit Code: ${code}\n\nEmail sent to patient.`);
             else alert('✅ Visit Approved and assigned!');
-            setApprovalData({ nurseId: '' });
+            setApprovalData({ nurseId: '', doctorId: '' });
             setActiveSubTab('active');
             loadVisits();
         } catch (err) {
@@ -246,6 +259,16 @@ function ApproveVisitsTab() {
                                 <p className="text-slate-700 dark:text-slate-300">{selectedVisit?.reason}</p>
                             </div>
                             <div>
+                                <label className="text-xs text-slate-400 uppercase font-bold block mb-1">Assign Doctor</label>
+                                <select
+                                    value={approvalData.doctorId}
+                                    onChange={e => setApprovalData({ ...approvalData, doctorId: e.target.value })}
+                                    className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-indigo-500 outline-none mb-3"
+                                >
+                                    <option value="">Select a doctor</option>
+                                    {doctors.map(d => <option key={d.id} value={d.id}>Dr. {d.name || `${d.first_name} ${d.last_name}`}</option>)}
+                                </select>
+
                                 <label className="text-xs text-slate-400 uppercase font-bold block mb-1">Assign Nurse (Optional)</label>
                                 <select
                                     value={approvalData.nurseId}

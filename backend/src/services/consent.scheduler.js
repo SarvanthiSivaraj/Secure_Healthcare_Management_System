@@ -103,8 +103,8 @@ const notifyExpiringConsents = async () => {
  * Start the consent scheduler
  */
 const startConsentScheduler = () => {
-    // Run consent expiration check every hour
-    cron.schedule('0 * * * *', async () => {
+    // Run consent expiration check every minute (for responsiveness)
+    cron.schedule('* * * * *', async () => {
         logger.info('Scheduled consent expiration check triggered');
         try {
             await expireConsents();

@@ -8,7 +8,8 @@ function Input({
     onChange,
     placeholder,
     error,
-    required = false
+    required = false,
+    ...rest
 }) {
     return (
         <div className="input-group">
@@ -26,6 +27,7 @@ function Input({
                 placeholder={placeholder}
                 className={`input-field ${error ? 'input-error' : ''}`}
                 required={required}
+                {...rest}
             />
             {error && <span className="error-message">{error}</span>}
         </div>

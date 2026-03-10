@@ -1,5 +1,6 @@
 const StaffInvitation = require('../models/staff_invitation.model');
 const AccountAction = require('../models/account_action.model');
+const auditService = require('./audit.service');
 const logger = require('../utils/logger');
 const { sendEmail } = require('../config/mail');
 
@@ -113,41 +114,32 @@ class StaffInvitationService {
             let userId;
 
             if (userCheck.rows.length > 0) {
-                // User exists - maybe inactive or existing user?
-                // For now, we assume we are just inviting them to a new role/org?
-                // But the requirement says "register from start", implying new users.
-                // If user exists, we'll just link them? 
-                // But let's follow the requirement: "make sure they are active and role is shown correctly"
-                // If they exist, they are likely already shown.
-                // We'll proceed to create invitation, but we won't create a NEW user.
-                userId = userCheck.rows[0].id;
-                // Ensure they are pending if they are not active? Or leave as is?
-                // For invitation flow, they should probably be 'pending' if they were 'active'?
-                // Actually, if they exist, they might be already active. Let's not force status change if they exist.
-            } else {
-                // Create new user immediately as PENDING
-                // Generate random password
-                const randomPassword = require('crypto').randomBytes(8).toString('hex');
-                const { hashPassword } = require('../services/encryption.service');
-                const passwordHash = await hashPassword(randomPassword);
-
-                // Get role ID
-                const roleRes = await db.query('SELECT id FROM roles WHERE name = $1', [role.toLowerCase()]);
-                if (roleRes.rows.length === 0) {
-                    throw new Error(`Invalid role: ${role}`);
-                }
-                const roleId = roleRes.rows[0].id;
-
-                const userQuery = `
-                    INSERT INTO users (email, password_hash, role_id, is_verified, status, first_name, last_name)
-                    VALUES ($1, $2, $3, false, 'pending', 'Staff', 'Member')
-                    RETURNING id;
-                `;
-                // Default name 'Staff Member' until they accept and update it
-
-                const userResult = await db.query(userQuery, [email, passwordHash, roleId]);
-                userId = userResult.rows[0].id;
+                // User already exists, prevent invitation from being sent as per requirements
+                throw new Error('A user with this email already exists');
             }
+
+            // Create new user immediately as PENDING
+            // Generate random password
+            const randomPassword = require('crypto').randomBytes(8).toString('hex');
+            const { hashPassword } = require('../services/encryption.service');
+            const passwordHash = await hashPassword(randomPassword);
+
+            // Get role ID
+            const roleRes = await db.query('SELECT id FROM roles WHERE name = $1', [role.toLowerCase()]);
+            if (roleRes.rows.length === 0) {
+                throw new Error(`Invalid role: ${role}`);
+            }
+            const roleId = roleRes.rows[0].id;
+
+            const userQuery = `
+                INSERT INTO users (email, password_hash, role_id, is_verified, status, first_name, last_name)
+                VALUES ($1, $2, $3, false, 'pending', 'Staff', 'Member')
+                RETURNING id;
+            `;
+            // Default name 'Staff Member' until they accept and update it
+
+            const userResult = await db.query(userQuery, [email, passwordHash, roleId]);
+            userId = userResult.rows[0].id;
 
             // Create/Ensure Staff Organization Mapping
             if (organizationId) {
@@ -183,13 +175,24 @@ class StaffInvitationService {
             // Send invitation email
             await this.sendInvitationEmail(invitation, inviterName);
 
-            // Log the action
+            // Log the action to account actions
             await AccountAction.log({
                 userId: invitedBy,
                 actionType: 'invite',
                 actionBy: invitedBy,
                 notes: `Invited ${email} as ${role}`,
                 metadata: { email, role, invitationId: invitation.id, createdUserId: userId }
+            });
+
+            // Log to system audit logs so it appears on the Audit Logs UI
+            await auditService.createAuditLog({
+                userId: invitedBy,
+                action: 'staff_onboard',
+                entityType: 'staff_invitation',
+                entityId: invitation.id,
+                purpose: `Invited ${email} as ${role}`,
+                ipAddress: 'System', // Ideally from req.ip, but System is acceptable for now
+                metadata: { email, role, targetUserId: userId }
             });
 
             logger.info(`Staff invitation created for ${email} by ${invitedBy}. Pre-created user ${userId}.`);
