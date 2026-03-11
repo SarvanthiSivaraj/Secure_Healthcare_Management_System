@@ -226,9 +226,13 @@ CREATE TABLE IF NOT EXISTS consents (
 
 CREATE INDEX IF NOT EXISTS idx_consents_patient ON consents(patient_id);
 CREATE INDEX IF NOT EXISTS idx_consents_recipient_user ON consents(recipient_user_id);
-CREATE INDEX IF NOT EXISTS idx_consents_recipient_org ON consents(recipient_organization_id);
 CREATE INDEX IF NOT EXISTS idx_consents_status ON consents(status);
 CREATE INDEX IF NOT EXISTS idx_consents_data_category ON consents(data_category);
+
+-- Ensure recipient_organization_id exists (idempotent — safe if consents table was
+-- created by schema.sql without this column, e.g. in the CI test DB setup)
+ALTER TABLE consents ADD COLUMN IF NOT EXISTS recipient_organization_id UUID REFERENCES organizations(id);
+CREATE INDEX IF NOT EXISTS idx_consents_recipient_org ON consents(recipient_organization_id);
 
 -- ============================================
 -- TRIGGERS FOR EMR TABLES
