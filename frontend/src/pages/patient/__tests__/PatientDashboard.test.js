@@ -6,7 +6,7 @@ import PatientDashboard from '../Dashboard';
 import { server } from '../../../mocks/server';
 import { rest } from 'msw';
 
-const BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+const BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
 
 jest.mock('../../../components/common/ThemeToggle', () => () => <div data-testid="theme-toggle" />);
 
@@ -59,7 +59,7 @@ describe('PatientDashboard Component (Integration)', () => {
     it('shows "no active visits in queue" when visits are empty', async () => {
         // Override visits endpoint to return empty
         server.use(
-            rest.get(`${BASE_URL}/api/visits/my`, (_req, res, ctx) => {
+            rest.get(`${BASE_URL}/visits/my-visits`, (_req, res, ctx) => {
                 return res(ctx.status(200), ctx.json({ success: true, data: [] }));
             })
         );
