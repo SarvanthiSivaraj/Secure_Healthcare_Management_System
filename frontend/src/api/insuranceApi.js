@@ -1,12 +1,4 @@
-<<<<<<< HEAD
-import axios from 'axios';
-
-import { getAuthHeader } from '../utils/tokenManager';
-
-const API_BASE = `${process.env.REACT_APP_API_URL || 'http://localhost:5000/api'}/v1/insurance`;
-=======
 import apiClient from './client';
->>>>>>> 4db6b88c7c820ce796690556f0c0443ee7b59e4d
 
 const insuranceApi = {
     getDashboardStats: async () => {
