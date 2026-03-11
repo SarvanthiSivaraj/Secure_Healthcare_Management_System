@@ -15,6 +15,7 @@ const emrRoutes = require('./modules/emr/emr.routes');
 const workflowRoutes = require('./modules/workflow/workflow.routes');
 const auditRoutes = require('./modules/audit/audit.routes');
 const patientRoutes = require('./modules/patient/patient.routes');
+const chatbotRoutes = require('./modules/chatbot/chatbot.routes');
 
 // Phase 1: Staff Management routes
 const staffRoutes = require('./modules/staff/staff.routes');
@@ -24,6 +25,7 @@ const radiologyRoutes = require('./modules/radiology/radiology.routes');
 const pharmacistRoutes = require('./modules/pharmacist/pharmacist.routes');
 const insuranceRoutes = require('./modules/insurance/insurance.routes');
 const complianceRoutes = require('./modules/compliance/compliance.routes');
+const labRoutes = require('./modules/lab/lab.routes');
 
 
 
@@ -84,11 +86,13 @@ app.use(`${API_PREFIX}/emr`, emrRoutes);
 app.use(`${API_PREFIX}/visits`, require('./modules/visit/visit.routes'));
 app.use(`${API_PREFIX}/audit`, auditRoutes);
 app.use(`${API_PREFIX}/patient`, patientRoutes);
+app.use(`${API_PREFIX}/chatbot`, chatbotRoutes);
 app.use(`${API_PREFIX}/admin`, require('./modules/admin/admin.routes'));
 app.use(`${API_PREFIX}/workflow`, workflowRoutes);
 app.use(`${API_PREFIX}/pharmacist`, pharmacistRoutes);
 app.use(`${API_PREFIX}/insurance`, insuranceRoutes);
 app.use(`${API_PREFIX}/compliance`, complianceRoutes);
+app.use(`${API_PREFIX}/lab`, labRoutes);
 
 // Mount routes (Legacy /api support for Frontend)
 app.use('/api/auth', authRoutes);
@@ -98,6 +102,7 @@ app.use('/api/emr', emrRoutes);
 app.use('/api/audit', auditRoutes);
 app.use('/api/patient', patientRoutes);
 app.use('/api/workflow', workflowRoutes);
+app.use('/api/chatbot', chatbotRoutes);
 app.use('/api/admin', require('./modules/admin/admin.routes'));
 app.use('/api/users', userRoutes);
 
@@ -111,6 +116,7 @@ app.use('/api/radiology', radiologyRoutes);
 app.use('/api/pharmacist', pharmacistRoutes);
 app.use('/api/insurance', insuranceRoutes);
 app.use('/api/compliance', complianceRoutes);
+app.use('/api/lab', labRoutes);
 
 
 

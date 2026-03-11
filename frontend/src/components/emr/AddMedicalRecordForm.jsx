@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import apiClient from '../../api/client';
 import Button from '../common/Button';
 import './AddMedicalRecordForm.css';
 
@@ -42,41 +43,22 @@ function AddMedicalRecordForm({ patientId, onSuccess, onCancel }) {
         setLoading(true);
 
         try {
-            const token = localStorage.getItem('healthcare_token');
-            const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:5004/api';
-
-            const response = await fetch(`${apiUrl}/emr/medical-records`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                },
-                body: JSON.stringify({
-                    patientId,
-                    type: formData.type,
-                    title: formData.title,
-                    description: formData.description,
-                    visitId: null
-                    // immutableFlag is set by backend automatically
-                })
+            const data = await apiClient.post('/emr/medical-records', {
+                patientId,
+                type: formData.type,
+                title: formData.title,
+                description: formData.description,
+                visitId: null
             });
 
-            const data = await response.json();
-
-            if (!response.ok) {
-                throw new Error(data.message || 'Failed to create medical record');
+            if (!data.data.success) {
+                throw new Error(data.data.message || 'Failed to create medical record');
             }
 
-            // Reset form
-            setFormData({
-                type: 'consultation',
-                title: '',
-                description: ''
-            });
-
+            setFormData({ type: 'consultation', title: '', description: '' });
             onSuccess();
         } catch (err) {
-            setError(err.message);
+            setError(err.response?.data?.message || err.message);
         } finally {
             setLoading(false);
         }

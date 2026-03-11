@@ -1,10 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import apiClient from '../../api/client';
 import AddMedicalRecordForm from '../../components/emr/AddMedicalRecordForm';
 import OrderTestsModal from '../../components/clinical/OrderTestsModal';
 import ThemeToggle from '../../components/common/ThemeToggle';
-import { getToken } from '../../utils/tokenManager';
 import './PatientRecords.css';
 
 function PatientMedicalRecords() {
@@ -28,12 +27,7 @@ function PatientMedicalRecords() {
 
     const checkConsentAccess = async () => {
         try {
-            const token = getToken();
-            const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:5003/api';
-            const response = await axios.get(
-                `${apiUrl}/consent/doctor/patients`,
-                { headers: { Authorization: `Bearer ${token}` } }
-            );
+            const response = await apiClient.get('/consent/doctor/patients');
             if (response.data.success) {
                 const patients = response.data.data || [];
                 const patientConsents = patients.filter(p => p.id === patientId);
@@ -59,12 +53,7 @@ function PatientMedicalRecords() {
 
     const fetchPatientRecords = async () => {
         try {
-            const token = getToken();
-            const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:5003/api';
-            const response = await axios.get(
-                `${apiUrl}/emr/patients/${patientId}/medical-records`,
-                { headers: { Authorization: `Bearer ${token}` } }
-            );
+            const response = await apiClient.get(`/emr/patients/${patientId}/medical-records`);
             if (response.data.success) {
                 const recordsData = response.data.data.records || [];
                 setRecords(recordsData);

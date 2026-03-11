@@ -1,7 +1,5 @@
 # Secure Healthcare Information & Patient Management System with Regulatory Compliance
 
-> **Problem Complexity: HIGH**
-
 A security-first healthcare platform designed to protect sensitive medical data through patient ownership, consent-driven access, role-based authorization, and fully auditable workflows aligned with GDPR and HIPAA principles.
 
 ---
@@ -18,24 +16,97 @@ The system is built on the principle that **trust in healthcare software must be
 
 ---
 
+## Problem Statement
+
+Healthcare data governance is inherently complex due to the involvement of multiple stakeholders and the confidential nature of medical information. Although regulatory frameworks such as GDPR and HIPAA define strict requirements for handling patient data, many existing systems fail to enforce these principles at the engineering layer.
+
+The challenge addressed in this project is to design a healthcare platform that responsibly manages sensitive medical data by embedding security, ethical, and compliance requirements directly into workflows and access control mechanisms — ensuring every data interaction is authorized, purposeful, traceable, and compliant.
+
+---
+
+## Objectives
+
+- Establish **patient ownership** of medical data  
+- Enforce a **default-deny access model**  
+- Implement **consent-driven data sharing**  
+- Support **role-based and context-aware authorization**  
+- Maintain **immutable audit trails**  
+- Ensure **compliance-ready architecture**  
+- Enable secure clinical workflows  
+- Build a resilient and trustworthy healthcare system  
+
+---
+
+## Stakeholders
+
+- Patient (Primary Data Owner)  
+- Doctor  
+- Nurse  
+- Laboratory Technician  
+- Radiologist  
+- Pharmacist  
+- Hospital Administrator  
+- Application Administrator  
+- Insurance Provider  
+- Research Organization  
+- Compliance Officer  
+
+---
+
+## System Scope
+
+The platform supports:
+
+- Patient identity and profile management  
+- Hospital, clinic, and pharmacy onboarding  
+- Staff role governance  
+- Consent lifecycle management  
+- Visit-based access control  
+- Electronic Medical Records (EMR)  
+- Clinical workflow orchestration  
+- Emergency ("Break-Glass") access governance  
+- Audit logging and compliance reporting  
+
+---
+
+## Key Features
+
+###  Security & Access Control
+- Role-Based Access Control (RBAC)  
+- Attribute-Based Access Control (ABAC)  
+- Least-privilege enforcement  
+- Default deny policy  
+- Time-bound permissions  
+- Emergency access with mandatory justification  
+
+###  Privacy & Consent Governance
+- Patient-controlled consent  
+- Purpose-based access restrictions  
+- Data-category filtering  
+- Immediate consent revocation  
+- Delegated consent for caregivers  
+- Permanent locking of highly sensitive records  
+
+###  Clinical Systems
+- Electronic Medical Records  
+- Diagnosis immutability  
+- Treatment plan versioning  
+- Digital prescriptions  
+- Lab and imaging workflows  
+- Visit lifecycle management  
+
+###  Compliance & Traceability
+- Immutable audit logs  
+- Tamper-resistant storage  
+- Encryption at rest and in transit  
+- Compliance-ready reporting  
+- Anonymized datasets for research  
+
+---
+
 ## System Architecture
 
 The platform follows a secure layered architecture designed to validate every access request before data exposure.
-
-```mermaid
-graph TD
-    FE[Frontend Patient/User Portal] --> CE[Consent Enforcement]
-    AS[Auth Service & Sessions] --> API[Healthcare APIs EMR, Workflow, Emergency]
-    CE --> |Patient Consent Checks| API
-    AS --> |Login & Auth| FE
-    API --> DB[(Healthcare Database)]
-    API --> VP[Visit, Record & Order Processing]
-    VP --> DB
-    VP --> |Security & Event Logs| AM[Audit & Security Module]
-    AM --> |Compliance Reporting| CR[Compliance Officer Dashboard]
-```
-
-### Directory Structure
 
 ```text
 Secure_Healthcare_Management_System/
@@ -76,28 +147,29 @@ Secure_Healthcare_Management_System/
 └── README.md
 ```
 
+
 ---
 
 ## Key Features
 
-### 🛡️ Security & Access Control
+###  Security & Access Control
 - **RBAC & ABAC:** Fine-grained Role-Based and Attribute-Based Access Control.
 - **Zero Trust:** Default-deny policy with least-privilege enforcement.
 - **Break-Glass Access:** Secure emergency access with mandatory justification and audit alerts.
 - **QR Code Check-in:** Secure visitor check-in using QR codes for touchless verification.
 
-### 🔒 Privacy & Consent Governance
+###  Privacy & Consent Governance
 - **Patient-Controlled Consent:** Granular control over who can access specific data categories.
 - **Purpose-Based Access:** Data access is restricted based on the clinical purpose of the visit.
 - **Immediate Revocation:** Patients can revoke consent at any time, instantly locking data.
 
-### 🏥 Clinical Systems
+###  Clinical Systems
 - **EMR Management:** Immutable diagnoses and versioned treatment plans.
 - **Digital Prescriptions:** End-to-end pharmacy workflow tracking.
 - **AI Health Screening:** Integrated AI Chatbot for preliminary health screening and symptom checking.
 - **Lab & Imaging:** Full lifecycle management for medical orders and results.
 
-### 📊 Compliance & Traceability
+###  Compliance & Traceability
 - **Immutable Audit Logs:** Every data interaction is recorded in a tamper-resistant audit trail.
 - **Encryption:** AES-256 encryption for data at rest and TLS 1.3 for data in transit.
 - **Regulatory Readiness:** Built-in reporting for HIPAA and GDPR compliance audits.
@@ -146,12 +218,10 @@ Once complete, the system is available at:
 2.  **Mobile-First Patient App:** Dedicated React Native application for patients.
 3.  **FHIR/HL7 Interoperability:** Standardized healthcare data exchange.
 4.  **Blockchain-Anchored Audit Trail:** Higher-tier immutability for logs.
-5.  **Multi-Factor Authentication:** Support for TOTP and Passkeys (FIDO2).
-6.  **Compliance Analytics:** Interactive dashboards for compliance officers.
-7.  **Federated Identity:** Integration with hospital-wide SSO systems.
-8.  **Patient Data Portability:** Structured data export (JSON/PDF).
-9.  **Anomaly Detection:** Real-time AI alerts for suspicious access patterns.
-10. **Load Testing Suite:** Automated end-to-end performance validation.
+5.  **Federated Identity:** Integration with hospital-wide SSO systems.
+6.  **Patient Data Portability:** Structured data export (JSON/PDF).
+7.  **Anomaly Detection:** Real-time AI alerts for suspicious access patterns.
+8. **Load Testing Suite:** Automated end-to-end performance validation.
 
 ---
 

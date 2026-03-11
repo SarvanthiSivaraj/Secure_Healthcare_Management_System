@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import apiClient from '../../api/client';
 import Button from '../../components/common/Button';
 import './DoctorRegistration.css';
 
@@ -31,19 +32,12 @@ function DoctorRegistration() {
         setLoading(true);
 
         try {
-            // const response = await fetch('http://localhost:5000/api/v1/users/staff/onboard', {
-            // });
-
-            const res = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5000/api'}/v1/auth/register/doctor`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                    // No auth header needed for public endpoint, but maybe good to track who did it?
-                },
-                body: JSON.stringify(formData)
+            const res = await apiClient.post('/auth/register', {
+                ...formData,
+                role: 'doctor'
             });
 
-            const data = await res.json();
+            const data = res.data;
 
             if (data.success) {
                 alert('Doctor registered successfully!');
@@ -53,7 +47,7 @@ function DoctorRegistration() {
             }
         } catch (error) {
             console.error('Registration error:', error);
-            alert('An error occurred during registration');
+            alert(error.response?.data?.message || 'An error occurred during registration');
         } finally {
             setLoading(false);
         }
