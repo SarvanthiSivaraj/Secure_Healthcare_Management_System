@@ -34,7 +34,7 @@ function DoctorRegistration() {
             // const response = await fetch('http://localhost:5000/api/v1/users/staff/onboard', {
             // });
 
-            const res = await fetch('http://localhost:5000/api/v1/auth/register/doctor', {
+            const res = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5000/api'}/v1/auth/register/doctor`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'

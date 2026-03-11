@@ -97,22 +97,38 @@ const verifyAadhaar = async (aadhaarId, email, phone) => {
     // Simulate network delay
     await new Promise(resolve => setTimeout(resolve, 800));
 
-    const data = mockAadhaarDB[aadhaarId];
-    if (!data) {
-        throw new Error('Aadhaar ID not found or invalid');
+    // Strip spaces/dashes for validation
+    const cleanId = String(aadhaarId).replace(/[\s-]/g, '');
+
+    // Basic format validation: must be 12 digits
+    if (!/^\d{12}$/.test(cleanId)) {
+        throw new Error('Aadhaar ID must be a 12-digit number');
     }
 
-    if (email && data.email !== email) {
-        throw new Error('Email does not match Aadhaar records');
+    const data = mockAadhaarDB[cleanId];
+
+    // If found in mock DB, do strict email/phone matching
+    if (data) {
+        if (email && data.email !== email) {
+            throw new Error('Email does not match Aadhaar records');
+        }
+        if (phone && data.phone !== phone) {
+            throw new Error('Phone number does not match Aadhaar records');
+        }
+        return { isValid: true, data };
     }
 
-    if (phone && data.phone !== phone) {
-        throw new Error('Phone number does not match Aadhaar records');
-    }
-
+    // For any other valid 12-digit Aadhaar, return a generic success (mock verification passes)
     return {
         isValid: true,
-        data
+        data: {
+            name: 'Verified Citizen',
+            dob: '2000-01-01',
+            gender: 'unknown',
+            address: 'Verified Address',
+            email: email || '',
+            phone: phone || ''
+        }
     };
 };
 
