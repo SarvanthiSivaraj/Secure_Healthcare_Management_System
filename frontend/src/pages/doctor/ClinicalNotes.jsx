@@ -11,7 +11,7 @@ import './ClinicalNotes.css';
 
 function ClinicalNotes() {
     const navigate = useNavigate();
-    const { user } = useContext(AuthContext);
+    // const { user } = useContext(AuthContext);
     const [searchParams] = useSearchParams();
 
     // Allow pre-selecting via URL query params (e.g. from active-visits page)
