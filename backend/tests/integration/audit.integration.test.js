@@ -68,8 +68,8 @@ describe('Audit Integration Tests', () => {
                 .set(authHeader(patientToken))
                 .send({
                     recipientUserId: doctor.id,
-                    dataCategory: 'ALL_RECORDS',
-                    purpose: 'TREATMENT',
+                    dataCategory: 'all_medical_data',
+                    purpose: 'treatment',
                     accessLevel: 'read',
                 });
 

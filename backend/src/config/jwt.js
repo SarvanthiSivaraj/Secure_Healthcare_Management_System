@@ -1,4 +1,5 @@
 const jwt = require('jsonwebtoken');
+const crypto = require('crypto');
 
 const JWT_CONFIG = {
     secret: process.env.JWT_SECRET || 'your_super_secret_jwt_key_change_this_in_production',
@@ -15,11 +16,15 @@ const JWT_CONFIG = {
  * @returns {String} JWT access token
  */
 const generateAccessToken = (payload) => {
-    return jwt.sign(payload, JWT_CONFIG.secret, {
-        expiresIn: JWT_CONFIG.expiresIn,
-        issuer: JWT_CONFIG.issuer,
-        audience: JWT_CONFIG.audience,
-    });
+    return jwt.sign(
+        { ...payload, jti: crypto.randomUUID() },
+        JWT_CONFIG.secret,
+        {
+            expiresIn: JWT_CONFIG.expiresIn,
+            issuer: JWT_CONFIG.issuer,
+            audience: JWT_CONFIG.audience,
+        }
+    );
 };
 
 /**
@@ -28,11 +33,15 @@ const generateAccessToken = (payload) => {
  * @returns {String} JWT refresh token
  */
 const generateRefreshToken = (payload) => {
-    return jwt.sign(payload, JWT_CONFIG.refreshSecret, {
-        expiresIn: JWT_CONFIG.refreshExpiresIn,
-        issuer: JWT_CONFIG.issuer,
-        audience: JWT_CONFIG.audience,
-    });
+    return jwt.sign(
+        { ...payload, jti: crypto.randomUUID() },
+        JWT_CONFIG.refreshSecret,
+        {
+            expiresIn: JWT_CONFIG.refreshExpiresIn,
+            issuer: JWT_CONFIG.issuer,
+            audience: JWT_CONFIG.audience,
+        }
+    );
 };
 
 /**

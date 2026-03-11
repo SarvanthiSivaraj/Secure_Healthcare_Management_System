@@ -165,16 +165,18 @@ async function createVerifiedUser(role = 'patient', overrides = {}) {
 async function insertOrg(overrides = {}) {
     const pool = getPool();
     const licenseNumber = overrides.licenseNumber || `LIC${uuidv4().slice(0, 8).toUpperCase()}`;
+    const hospitalCode = overrides.hospitalCode || `HC${uuidv4().slice(0, 6).toUpperCase()}`;
 
     const result = await pool.query(
         `INSERT INTO organizations
-            (name, type, license_number, status, admin_user_id)
-         VALUES ($1, $2, $3, 'active', $4)
+            (name, type, license_number, hospital_code, status, admin_user_id)
+         VALUES ($1, $2, $3, $4, 'active', $5)
          RETURNING *`,
         [
             overrides.name || 'Test Hospital',
             overrides.type || 'hospital',
             licenseNumber,
+            hospitalCode,
             overrides.adminUserId || null,
         ]
     );
@@ -298,8 +300,8 @@ async function grantConsent(patientId, recipientUserId, options = {}) {
         [
             patientId,
             recipientUserId,
-            options.dataCategory || 'ALL_RECORDS',
-            options.purpose || 'TREATMENT',
+            options.dataCategory || 'all_medical_data',
+            options.purpose || 'treatment',
             options.accessLevel || 'read',
         ]
     );

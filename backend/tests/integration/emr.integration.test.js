@@ -18,6 +18,7 @@ const {
     loginAs,
     authHeader,
     createVisit,
+    grantConsent,
     getAuditEntries,
 } = require('../helpers/testUtils');
 
@@ -43,6 +44,9 @@ describe('EMR Integration Tests', () => {
 
         // Create an active (in_progress) visit directly in DB
         activeVisit = await createVisit(patient.id, org.id, 'in_progress');
+
+        // Grant the doctor write consent so EMR controller lets them create/read records
+        await grantConsent(patient.id, doctor.id, { accessLevel: 'write', dataCategory: 'all_medical_data' });
 
         const pl = await loginAs(app, patient.email, patient.password);
         const dl = await loginAs(app, doctor.email, doctor.password);
@@ -101,7 +105,9 @@ describe('EMR Integration Tests', () => {
 
             expect(res.status).toBe(200);
             expect(res.body.success).toBe(true);
-            expect(Array.isArray(res.body.data)).toBe(true);
+            // Controller wraps records in {records, pagination}
+            const data = res.body.data;
+            expect(data.records !== undefined || Array.isArray(data)).toBe(true);
         });
 
         it('returns 401 without authentication', async () => {

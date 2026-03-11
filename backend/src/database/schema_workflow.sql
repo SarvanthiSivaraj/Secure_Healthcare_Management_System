@@ -1,27 +1,62 @@
 -- ============================================================
 -- Clinical Workflow Schema (Epic 4)
--- Visit lifecycle, imaging, and reporting workflows
+-- Visit lifecycle, imaging, and lab order workflows
 -- ============================================================
 
--- Imaging orders table (if not already created by schema_emr.sql)
-CREATE TABLE IF NOT EXISTS imaging_orders (
+-- ============================================================
+-- LAB ORDERS TABLE
+-- ============================================================
+CREATE TABLE IF NOT EXISTS lab_orders (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    patient_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    ordering_physician_id UUID REFERENCES users(id),
-    organization_id UUID REFERENCES organizations(id),
-    study_type VARCHAR(100) NOT NULL,
-    body_part VARCHAR(100),
-    clinical_indication TEXT,
+    visit_id UUID REFERENCES visits(id) ON DELETE CASCADE,
+    ordered_by UUID REFERENCES users(id),
+    test_name VARCHAR(255) NOT NULL,
+    test_code VARCHAR(100),
+    test_category VARCHAR(100),
     priority VARCHAR(20) DEFAULT 'routine' CHECK (priority IN ('routine', 'urgent', 'stat')),
-    status VARCHAR(30) DEFAULT 'ordered' CHECK (status IN ('ordered', 'scheduled', 'in_progress', 'completed', 'cancelled')),
-    scheduled_at TIMESTAMP,
-    completed_at TIMESTAMP,
+    routed_to_department VARCHAR(255),
+    clinical_indication TEXT,
     notes TEXT,
+    status VARCHAR(30) DEFAULT 'ordered' CHECK (status IN ('ordered', 'collected', 'in_progress', 'completed', 'cancelled')),
+    lab_result_id UUID,
+    specimen_collected_at TIMESTAMP,
+    result_available_at TIMESTAMP,
     created_at TIMESTAMP DEFAULT NOW(),
     updated_at TIMESTAMP DEFAULT NOW()
 );
 
--- Radiology reports
+-- ============================================================
+-- IMAGING ORDERS TABLE
+-- (replaces the mismatched version in schema_workflow.sql)
+-- ============================================================
+CREATE TABLE IF NOT EXISTS imaging_orders (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    visit_id UUID REFERENCES visits(id) ON DELETE CASCADE,
+    patient_id UUID REFERENCES users(id) ON DELETE CASCADE,
+    ordered_by UUID REFERENCES users(id),
+    ordering_physician_id UUID REFERENCES users(id),
+    organization_id UUID REFERENCES organizations(id),
+    imaging_type VARCHAR(100),
+    study_type VARCHAR(100),
+    body_part VARCHAR(100),
+    priority VARCHAR(20) DEFAULT 'routine' CHECK (priority IN ('routine', 'urgent', 'stat')),
+    routed_to_department VARCHAR(255),
+    clinical_indication TEXT,
+    contrast_used BOOLEAN DEFAULT FALSE,
+    notes TEXT,
+    status VARCHAR(30) DEFAULT 'ordered' CHECK (status IN ('ordered', 'scheduled', 'in_progress', 'completed', 'cancelled')),
+    imaging_report_id UUID,
+    scheduled_time TIMESTAMP,
+    scheduled_at TIMESTAMP,
+    performed_at TIMESTAMP,
+    completed_at TIMESTAMP,
+    created_at TIMESTAMP DEFAULT NOW(),
+    updated_at TIMESTAMP DEFAULT NOW()
+);
+
+-- ============================================================
+-- RADIOLOGY REPORTS TABLE
+-- ============================================================
 CREATE TABLE IF NOT EXISTS radiology_reports (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     imaging_order_id UUID REFERENCES imaging_orders(id) ON DELETE CASCADE,
@@ -41,7 +76,9 @@ CREATE TABLE IF NOT EXISTS radiology_reports (
     updated_at TIMESTAMP DEFAULT NOW()
 );
 
--- Visit notes (SOAP notes)
+-- ============================================================
+-- VISIT NOTES TABLE (SOAP notes)
+-- ============================================================
 CREATE TABLE IF NOT EXISTS visit_notes (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     visit_id UUID REFERENCES visits(id) ON DELETE CASCADE,
@@ -58,6 +95,10 @@ CREATE TABLE IF NOT EXISTS visit_notes (
 );
 
 -- Indexes for performance
+CREATE INDEX IF NOT EXISTS idx_lab_orders_visit ON lab_orders(visit_id);
+CREATE INDEX IF NOT EXISTS idx_lab_orders_status ON lab_orders(status);
+CREATE INDEX IF NOT EXISTS idx_lab_orders_department ON lab_orders(routed_to_department);
+CREATE INDEX IF NOT EXISTS idx_imaging_orders_visit ON imaging_orders(visit_id);
 CREATE INDEX IF NOT EXISTS idx_imaging_orders_patient ON imaging_orders(patient_id);
 CREATE INDEX IF NOT EXISTS idx_imaging_orders_status ON imaging_orders(status);
 CREATE INDEX IF NOT EXISTS idx_radiology_reports_patient ON radiology_reports(patient_id);
