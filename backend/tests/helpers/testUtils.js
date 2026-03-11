@@ -164,23 +164,20 @@ async function createVerifiedUser(role = 'patient', overrides = {}) {
  */
 async function insertOrg(overrides = {}) {
     const pool = getPool();
-    const hospitalCode = `H${Math.floor(10000 + Math.random() * 90000)}`;
     const licenseNumber = overrides.licenseNumber || `LIC${uuidv4().slice(0, 8).toUpperCase()}`;
 
     const result = await pool.query(
         `INSERT INTO organizations
-            (name, type, license_number, status, hospital_code, admin_user_id)
-         VALUES ($1, $2, $3, 'active', $4, $5)
-         RETURNING id, hospital_code`,
+            (name, type, license_number, status, admin_user_id)
+         VALUES ($1, $2, $3, 'active', $4)
+         RETURNING *`,
         [
             overrides.name || 'Test Hospital',
             overrides.type || 'hospital',
             licenseNumber,
-            hospitalCode,
             overrides.adminUserId || null,
         ]
     );
-
     return result.rows[0];
 }
 
