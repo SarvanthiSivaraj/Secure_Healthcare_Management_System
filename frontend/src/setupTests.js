@@ -1,5 +1,8 @@
 import '@testing-library/jest-dom';
+import { TextEncoder, TextDecoder } from 'util';
 
+global.TextEncoder = TextEncoder;
+global.TextDecoder = TextDecoder;
 // Robust mock for matchMedia which is not implemented in jsdom
 Object.defineProperty(window, 'matchMedia', {
     writable: true,
