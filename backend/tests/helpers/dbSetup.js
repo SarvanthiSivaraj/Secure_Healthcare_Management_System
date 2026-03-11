@@ -1,10 +1,13 @@
 /**
  * Jest globalSetup – runs once before all integration test suites.
- * Applies all DB schema SQL files to the test database.
+ *
+ * 1. Connects to the "postgres" maintenance DB to CREATE the test DB if it
+ *    doesn't already exist (idempotent).
+ * 2. Then connects to the test DB and applies all schema SQL files.
  */
 'use strict';
 
-const { Pool } = require('pg');
+const { Pool, Client } = require('pg');
 const fs = require('fs');
 const path = require('path');
 require('dotenv').config({ path: path.resolve(__dirname, '../../.env.test') });
@@ -16,18 +19,40 @@ const SCHEMA_FILES = [
     path.resolve(__dirname, '../../src/database/schema_workflow.sql'),
 ];
 
-module.exports = async function globalSetup() {
-    const pool = new Pool({
-        host: process.env.DB_HOST || 'localhost',
-        port: parseInt(process.env.DB_PORT) || 5433,
-        database: process.env.DB_NAME || 'healthcare_test_db',
-        user: process.env.DB_USER || 'postgres',
-        password: process.env.DB_PASSWORD || 'postgres',
-    });
+const DB_CONFIG = {
+    host: process.env.DB_HOST || 'localhost',
+    port: parseInt(process.env.DB_PORT) || 5433,
+    user: process.env.DB_USER || 'postgres',
+    password: process.env.DB_PASSWORD || 'postgres',
+};
+const TEST_DB_NAME = process.env.DB_NAME || 'healthcare_test_db';
 
+module.exports = async function globalSetup() {
+    // ── Step 1: Create test DB if it doesn't exist ────────────────────────────
+    // Connect to default postgres database to issue CREATE DATABASE
+    const adminClient = new Client({ ...DB_CONFIG, database: 'postgres' });
+    try {
+        await adminClient.connect();
+        const exists = await adminClient.query(
+            `SELECT 1 FROM pg_database WHERE datname = $1`,
+            [TEST_DB_NAME]
+        );
+        if (exists.rowCount === 0) {
+            // Cannot use parameterised queries for CREATE DATABASE
+            await adminClient.query(`CREATE DATABASE "${TEST_DB_NAME}"`);
+            console.log(`\n🆕 Created test database: ${TEST_DB_NAME}`);
+        } else {
+            console.log(`\n✅ Test database already exists: ${TEST_DB_NAME}`);
+        }
+    } finally {
+        await adminClient.end();
+    }
+
+    // ── Step 2: Apply schema files ────────────────────────────────────────────
+    const pool = new Pool({ ...DB_CONFIG, database: TEST_DB_NAME });
     const client = await pool.connect();
     try {
-        console.log('\n🗄️  Setting up test database schema...');
+        console.log('🗄️  Setting up test database schema...');
 
         for (const schemaFile of SCHEMA_FILES) {
             if (!fs.existsSync(schemaFile)) {
