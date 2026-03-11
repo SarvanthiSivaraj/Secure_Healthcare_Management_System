@@ -43,7 +43,6 @@ function VisitCard({ visit, onAction, showActions = true, userRole = 'patient' }
     };
 
     const visitDate = getVisitDate();
-    const visitCode = getProp(visit, 'otpCode', 'otp_code');
     const visitType = getProp(visit, 'visitType', 'type');
 
     return (

@@ -18,7 +18,7 @@ function WorkflowDashboard() {
     // Determine back destination based on role
     const isAdmin = ['ADMIN', 'SYSTEM_ADMIN', 'HOSPITAL_ADMIN'].includes(user?.role?.toUpperCase());
     const backPath = isAdmin ? '/admin/dashboard' : '/staff/dashboard';
-    const backLabel = isAdmin ? 'Back to Admin Portal' : 'Back to Staff Portal';
+
 
 
     useEffect(() => {

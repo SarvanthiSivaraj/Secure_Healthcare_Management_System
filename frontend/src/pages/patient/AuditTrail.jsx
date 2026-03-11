@@ -7,7 +7,7 @@ import '../patient/Dashboard.css';
 
 function AuditTrail() {
     const navigate = useNavigate();
-    const { user, logout } = useContext(AuthContext);
+    const { logout } = useContext(AuthContext);
 
     const [logs, setLogs] = useState([]);
     const [loading, setLoading] = useState(true);

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useContext } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { QRCodeSVG } from 'qrcode.react';
 import ThemeToggle from '../../components/common/ThemeToggle';
 import '../patient/Dashboard.css';
@@ -21,7 +21,6 @@ import {
 import { CSS } from '@dnd-kit/utilities';
 import { visitApi } from '../../api/visitApi';
 import { AuthContext } from '../../context/AuthContext';
-import Button from '../../components/common/Button';
 
 /* ─────────────────── helpers ─────────────────── */
 const formatTimeAgo = (dateString) => {
@@ -351,11 +350,9 @@ function WalkInQRTab() {
 
 /* ════════════════ TAB 3: Appointment Scheduling ════════════════ */
 function AppointmentSchedulingTab() {
-    const [visits, setVisits] = useState([]);
     const [loading, setLoading] = useState(false);
     const [saving, setSaving] = useState(false);
     const [savedDoctors, setSavedDoctors] = useState({});
-    // doctorGroups: { doctorId: { doctorName, visits: [...] } }
     const [doctorGroups, setDoctorGroups] = useState({});
 
     const sensors = useSensors(
@@ -370,7 +367,6 @@ function AppointmentSchedulingTab() {
             const allVisits = (response.data || []).filter(v =>
                 ['pending', 'approved'].includes(v.status) && v.assigned_doctor_id
             );
-            setVisits(allVisits);
 
             // Group by doctor
             const groups = {};
@@ -518,7 +514,7 @@ function AppointmentSchedulingTab() {
 
 /* ════════════════ Main Receptionist Page ════════════════ */
 function ReceptionistVisitManagement() {
-    const { user, logout } = useContext(AuthContext);
+    const { logout } = useContext(AuthContext);
     const navigate = useNavigate();
     const [activeTab, setActiveTab] = useState('approve');
 

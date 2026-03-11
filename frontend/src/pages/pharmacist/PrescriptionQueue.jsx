@@ -17,6 +17,7 @@ const PrescriptionQueue = () => {
 
     useEffect(() => {
         fetchPrescriptions();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [filter]);
 
     const fetchPrescriptions = async () => {
