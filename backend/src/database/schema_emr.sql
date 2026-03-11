@@ -10,18 +10,37 @@ CREATE TABLE IF NOT EXISTS visits (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     patient_id UUID REFERENCES users(id) ON DELETE CASCADE NOT NULL,
     organization_id UUID REFERENCES organizations(id) NOT NULL,
-    status VARCHAR(20) DEFAULT 'scheduled' CHECK (status IN ('scheduled', 'checked_in', 'in_progress', 'completed', 'cancelled', 'no_show')),
-    visit_code VARCHAR(20) UNIQUE NOT NULL,
+    status VARCHAR(50) DEFAULT 'pending',
+    visit_code VARCHAR(50) UNIQUE,
     visit_type VARCHAR(50) DEFAULT 'consultation',
+    type VARCHAR(50) DEFAULT 'walk_in',
+    priority VARCHAR(20) DEFAULT 'normal',
     chief_complaint TEXT,
-    check_in_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    symptoms TEXT,
+    assigned_doctor_id UUID REFERENCES users(id),
+    assigned_nurse_id UUID REFERENCES users(id),
+    otp_code VARCHAR(20),
+    otp_expires_at TIMESTAMP,
+    otp_verified BOOLEAN DEFAULT FALSE,
+    access_level VARCHAR(20) DEFAULT 'read',
+    scheduled_time TIMESTAMP,
+    check_in_time TIMESTAMP,
     check_out_time TIMESTAMP,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- Ensure visit_code exists (idempotent for existing tables)
-ALTER TABLE visits ADD COLUMN IF NOT EXISTS visit_code VARCHAR(20);
+-- Idempotent additions for tables that may already exist without these columns
+ALTER TABLE visits ADD COLUMN IF NOT EXISTS assigned_doctor_id UUID REFERENCES users(id);
+ALTER TABLE visits ADD COLUMN IF NOT EXISTS assigned_nurse_id UUID REFERENCES users(id);
+ALTER TABLE visits ADD COLUMN IF NOT EXISTS otp_code VARCHAR(20);
+ALTER TABLE visits ADD COLUMN IF NOT EXISTS otp_expires_at TIMESTAMP;
+ALTER TABLE visits ADD COLUMN IF NOT EXISTS otp_verified BOOLEAN DEFAULT FALSE;
+ALTER TABLE visits ADD COLUMN IF NOT EXISTS access_level VARCHAR(20) DEFAULT 'read';
+ALTER TABLE visits ADD COLUMN IF NOT EXISTS scheduled_time TIMESTAMP;
+ALTER TABLE visits ADD COLUMN IF NOT EXISTS symptoms TEXT;
+ALTER TABLE visits ADD COLUMN IF NOT EXISTS type VARCHAR(50) DEFAULT 'walk_in';
+ALTER TABLE visits ADD COLUMN IF NOT EXISTS priority VARCHAR(20) DEFAULT 'normal';
 
 CREATE INDEX IF NOT EXISTS idx_visits_patient ON visits(patient_id);
 CREATE INDEX IF NOT EXISTS idx_visits_organization ON visits(organization_id);
@@ -226,9 +245,13 @@ CREATE TABLE IF NOT EXISTS consents (
 
 CREATE INDEX IF NOT EXISTS idx_consents_patient ON consents(patient_id);
 CREATE INDEX IF NOT EXISTS idx_consents_recipient_user ON consents(recipient_user_id);
-CREATE INDEX IF NOT EXISTS idx_consents_recipient_org ON consents(recipient_organization_id);
 CREATE INDEX IF NOT EXISTS idx_consents_status ON consents(status);
 CREATE INDEX IF NOT EXISTS idx_consents_data_category ON consents(data_category);
+
+-- Ensure recipient_organization_id exists (idempotent — safe if consents table was
+-- created by schema.sql without this column, e.g. in the CI test DB setup)
+ALTER TABLE consents ADD COLUMN IF NOT EXISTS recipient_organization_id UUID REFERENCES organizations(id);
+CREATE INDEX IF NOT EXISTS idx_consents_recipient_org ON consents(recipient_organization_id);
 
 -- ============================================
 -- TRIGGERS FOR EMR TABLES

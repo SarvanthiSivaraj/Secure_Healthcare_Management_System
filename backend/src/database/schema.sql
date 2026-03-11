@@ -77,6 +77,7 @@ CREATE TABLE IF NOT EXISTS organizations (
     email VARCHAR(255),
     verified BOOLEAN DEFAULT FALSE,
     admin_user_id UUID REFERENCES users(id),
+    hospital_code VARCHAR(20) UNIQUE,
     status VARCHAR(20) DEFAULT 'pending' CHECK (status IN ('active', 'inactive', 'pending', 'suspended', 'rejected')),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP

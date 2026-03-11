@@ -10,7 +10,11 @@
     "db:seed": "node src/database/seed.js",
     "db:setup:all": "node src/database/setup_full_db.js",
     "test": "vitest run",
-    "test:integration": "jest --testPathPattern=tests/integration",
+    "test:unit": "vitest run",
+    "test:unit:watch": "vitest",
+    "test:integration": "cross-env NODE_ENV=test jest --config jest.config.js --testPathPattern=tests/integration --runInBand --forceExit",
+    "test:integration:watch": "cross-env NODE_ENV=test jest --config jest.config.js --testPathPattern=tests/integration --runInBand --watch",
+    "test:ci": "npm run test:unit && npm run test:integration",
     "test:vitest": "vitest run",
     "test:vitest:watch": "vitest"
   },
@@ -45,6 +49,7 @@
     "winston": "^3.11.0"
   },
   "devDependencies": {
+    "cross-env": "^7.0.3",
     "jest": "^29.7.0",
     "nodemon": "^3.0.2",
     "supertest": "^6.3.3",

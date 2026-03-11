@@ -111,8 +111,33 @@ services:
     profiles:
       - tools
 
+  # ── PostgreSQL Test Database (isolated, port 5433) ──────
+  postgres-test:
+    image: postgres:15-alpine
+    container_name: healthcare_db_test
+    restart: "no"
+    environment:
+      POSTGRES_DB: healthcare_test_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_data_test:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d healthcare_test_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    networks:
+      - healthcare_dev
+    profiles:
+      - test
+
 volumes:
   postgres_data_dev:
+    driver: local
+  postgres_data_test:
     driver: local
   backend_uploads_dev:
     driver: local

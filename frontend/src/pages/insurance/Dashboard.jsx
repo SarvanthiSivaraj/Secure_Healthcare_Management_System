@@ -40,7 +40,7 @@ function InsuranceDashboard() {
     }, []);
 
     const handleLogout = () => { logout(); navigate('/login'); };
-    const formatDate = (d) => new Date(d).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    // const formatDate = (d) => new Date(d).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 
     const statCards = [
         { label: 'Pending Claims', value: stats.pendingClaims, icon: 'pending_actions', color: 'amber' },

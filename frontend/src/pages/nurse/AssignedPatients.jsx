@@ -6,7 +6,7 @@ import ThemeToggle from '../../components/common/ThemeToggle';
 import '../../pages/patient/Dashboard.css'; // Reusing global structural styles
 
 const AssignedPatients = () => {
-    const { logout, user } = useAuth();
+    const { logout } = useAuth();
     const navigate = useNavigate();
     const location = useLocation();
 

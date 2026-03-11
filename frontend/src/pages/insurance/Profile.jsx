@@ -46,15 +46,7 @@ function InsuranceProfile() {
         finally { setSaving(false); }
     };
 
-    const fields = [
-        { key: 'firstName', label: 'First Name' },
-        { key: 'lastName', label: 'Last Name' },
-        { key: 'email', label: 'Email', type: 'email' },
-        { key: 'phone', label: 'Phone' },
-        { key: 'department', label: 'Department' },
-        { key: 'company', label: 'Company' },
-        { key: 'role', label: 'Role / Title' },
-    ];
+
 
     const initials = (profile?.firstName?.[0] || profile?.email?.[0] || '?').toUpperCase();
     const fullName = [profile?.firstName, profile?.lastName].filter(Boolean).join(' ') || profile?.email || 'Insurance Agent';

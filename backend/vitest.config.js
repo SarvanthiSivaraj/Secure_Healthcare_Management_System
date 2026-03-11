@@ -6,6 +6,7 @@ module.exports = defineConfig({
         clearMocks: true,
         restoreMocks: true,
         globals: true,
-        include: ['tests/**/*.test.js'],
+        include: ['tests/unit/**/*.test.js'],
+        exclude: ['tests/integration/**', 'node_modules/**'],
     },
 });

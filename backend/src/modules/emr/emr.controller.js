@@ -114,10 +114,10 @@ class EmrController {
             const { patientId } = req.params;
             const { type, limit, offset } = req.query;
             const userId = req.user.id;
-            const userRole = req.user.role;
+            const userRole = req.user.roleName || req.user.role; // auth middleware provides roleName
 
             // Patients can only view their own records
-            if (userRole === 'PATIENT' && patientId !== userId) {
+            if (userRole === 'patient' && patientId !== userId) {
                 return res.status(403).json({
                     success: false,
                     message: 'You can only view your own medical records'
@@ -151,7 +151,7 @@ class EmrController {
 
             // Create audit log ONLY if accessing user is NOT the patient owner
             // Patients don't need to see their own "viewed records" dashboard refresh clutter
-            if (userRole !== 'PATIENT' || userId !== patientId) {
+            if (userRole !== 'patient' || userId !== patientId) {
                 await auditService.createAuditLog({
                     userId,
                     action: 'view_patient_records',

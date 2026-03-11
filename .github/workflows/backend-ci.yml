@@ -2,44 +2,69 @@ name: Backend CI
 
 on:
   push:
-    branches: [main]
+    branches: [main, develop]
     paths:
       - 'backend/**'
       - '.github/workflows/backend-ci.yml'
   pull_request:
-    branches: [main]
+    branches: [main, develop]
     paths:
       - 'backend/**'
       - '.github/workflows/backend-ci.yml'
 
 jobs:
+  # ─────────────────────────────────────────────────────────────────────────────
+  # Unit + Integration Test Job
+  # ─────────────────────────────────────────────────────────────────────────────
   test:
-    name: Test & Build Backend
+    name: Unit & Integration Tests
     runs-on: ubuntu-latest
-    
+
     strategy:
       matrix:
         node-version: [20.x]
-    
+
     services:
-      postgres:
+      postgres-test:
         image: postgres:15-alpine
         env:
           POSTGRES_DB: healthcare_test_db
           POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: test_password
+          POSTGRES_PASSWORD: postgres
         ports:
-          - 5432:5432
+          - 5433:5432
         options: >-
           --health-cmd pg_isready
-          --health-interval 10s
+          --health-interval 5s
           --health-timeout 5s
-          --health-retries 5
+          --health-retries 10
+
+    env:
+      NODE_ENV: test
+      DB_HOST: localhost
+      DB_PORT: 5433
+      DB_NAME: healthcare_test_db
+      DB_USER: postgres
+      DB_PASSWORD: postgres
+      JWT_SECRET: test_jwt_secret_key_for_ci_pipeline_32chars
+      JWT_REFRESH_SECRET: test_jwt_refresh_secret_key_for_ci_32ch
+      JWT_EXPIRES_IN: 24h
+      ENCRYPTION_KEY: 74657374656e6372797074696f6e6b657931323334353637383930313233343530
+      BCRYPT_ROUNDS: 4
+      CORS_ORIGIN: "*"
+      OTP_EXPIRY_MINUTES: 60
+      OTP_MAX_ATTEMPTS: 10
+      RATE_LIMIT_MAX_REQUESTS: 10000
+      LOGIN_RATE_LIMIT_MAX_ATTEMPTS: 100
+      OTP_RATE_LIMIT_MAX_ATTEMPTS: 100
+      API_VERSION: v1
 
     steps:
+      # ── Checkout ──────────────────────────────────────────────────────────────
       - name: Checkout code
         uses: actions/checkout@v4
 
+      # ── Node.js ───────────────────────────────────────────────────────────────
       - name: Setup Node.js ${{ matrix.node-version }}
         uses: actions/setup-node@v4
         with:
@@ -47,91 +72,67 @@ jobs:
           cache: 'npm'
           cache-dependency-path: backend/package-lock.json
 
+      # ── Install dependencies ───────────────────────────────────────────────────
       - name: Install dependencies
         working-directory: ./backend
         run: npm ci
 
-      - name: Run linting
+      # ── Wait for Postgres ─────────────────────────────────────────────────────
+      - name: Wait for test database to be ready
+        run: |
+          for i in {1..20}; do
+            pg_isready -h localhost -p 5433 -U postgres && echo "Postgres is ready!" && break
+            echo "Waiting for postgres... attempt $i"
+            sleep 2
+          done
+
+      # ── Apply Database Schema ─────────────────────────────────────────────────
+      - name: Apply database schema to test DB
         working-directory: ./backend
         run: |
-          if grep -q '"lint"' package.json; then
-            npm run lint || echo "No lint script found, skipping"
-          else
-            echo "No lint script configured"
-          fi
-        continue-on-error: true
+          for schema in \
+            src/database/schema.sql \
+            src/database/schema_emr.sql \
+            src/database/schema_staff_management.sql \
+            src/database/schema_workflow.sql; do
+            if [ -f "$schema" ]; then
+              echo "Applying $schema..."
+              PGPASSWORD=postgres psql -h localhost -p 5433 -U postgres -d healthcare_test_db -f "$schema" \
+                || echo "Warning: some statements in $schema returned errors (may be safe to ignore if tables already exist)"
+            else
+              echo "Skipping $schema (not found)"
+            fi
+          done
 
-      - name: Setup test database
+      # ── Unit Tests (Vitest) ───────────────────────────────────────────────────
+      - name: Run unit tests (Vitest)
         working-directory: ./backend
-        env:
-          DB_HOST: localhost
-          DB_PORT: 5432
-          DB_NAME: healthcare_test_db
-          DB_USER: postgres
-          DB_PASSWORD: test_password
-          NODE_ENV: test
-        run: |
-          echo "Database migration would run here"
-          # Uncomment when migrations are ready
-          # npm run db:migrate
+        run: npm run test:unit
 
-      - name: Run unit tests
+      # ── Integration Tests (Jest + Supertest) ──────────────────────────────────
+      - name: Run integration tests (Jest + Supertest)
         working-directory: ./backend
-        env:
-          DB_HOST: localhost
-          DB_PORT: 5432
-          DB_NAME: healthcare_test_db
-          DB_USER: postgres
-          DB_PASSWORD: test_password
-          NODE_ENV: test
-          JWT_SECRET: test_jwt_secret_key_for_ci_pipeline
-          JWT_REFRESH_SECRET: test_jwt_refresh_secret_key_for_ci
-          ENCRYPTION_KEY: test_encryption_key_32_chars_long
-        run: |
-          npm test
+        run: npm run test:integration
 
-      - name: Run integration tests
-        working-directory: ./backend
-        env:
-          DB_HOST: localhost
-          DB_PORT: 5432
-          DB_NAME: healthcare_test_db
-          DB_USER: postgres
-          DB_PASSWORD: test_password
-          NODE_ENV: test
-          JWT_SECRET: test_jwt_secret_key_for_ci_pipeline
-          JWT_REFRESH_SECRET: test_jwt_refresh_secret_key_for_ci
-          ENCRYPTION_KEY: test_encryption_key_32_chars_long
-        run: |
-          if grep -q '"test:integration"' package.json; then
-            npm run test:integration || echo "Integration tests completed with warnings"
-          else
-            echo "No integration test script configured"
-          fi
-        continue-on-error: true
-
-      - name: Upload coverage reports
-        if: matrix.node-version == '20.x'
-        uses: codecov/codecov-action@v3
+      # ── Coverage Upload ───────────────────────────────────────────────────────
+      - name: Upload unit test coverage
+        if: always() && matrix.node-version == '20.x'
+        uses: codecov/codecov-action@v4
         with:
           files: ./backend/coverage/lcov.info
-          flags: backend
-          name: backend-coverage
+          flags: backend-unit
+          name: backend-unit-coverage
         continue-on-error: true
 
-      - name: Run security audit
+      # ── Security Audit ────────────────────────────────────────────────────────
+      - name: Run npm security audit
         working-directory: ./backend
         run: npm audit --audit-level=moderate
         continue-on-error: true
 
-      - name: Build verification
-        working-directory: ./backend
-        env:
-          NODE_ENV: production
-        run: |
-          echo "Build verification successful"
-          node -e "console.log('Node.js version:', process.version)"
-
+  # ─────────────────────────────────────────────────────────────────────────────
+  # Docker Build Verification
+  # ─────────────────────────────────────────────────────────────────────────────
   build-docker:
     name: Build Docker Image
     runs-on: ubuntu-latest
@@ -157,6 +158,5 @@ jobs:
           cache-to: type=gha,mode=max
           target: production
 
-      - name: Test Docker image
-        run: |
-          docker images | grep healthcare-backend || echo "Image built successfully"
+      - name: Verify Docker image built
+        run: docker images | grep healthcare-backend || echo "Image built successfully"

@@ -1,5 +1,5 @@
 import React from 'react';
-import Button from '../common/Button';
+// import Button from '../common/Button';
 import './ConsentCard.css';
 function ConsentCard({ consent, onRevoke, onEdit }) {
     const formatDate = (dateString) => {
@@ -106,8 +106,8 @@ function ConsentCard({ consent, onRevoke, onEdit }) {
                 </div>
                 <div className="flex flex-col items-end">
                     <span className={`px-3 py-1 bg-indigo-600 text-white text-[10px] font-bold rounded-lg truncate max-w-[120px] shadow-sm uppercase ${isExpired ? 'bg-slate-400' :
-                            isActive ? 'bg-indigo-600' :
-                                'bg-red-500'
+                        isActive ? 'bg-indigo-600' :
+                            'bg-red-500'
                         }`}>
                         {isExpired ? 'EXPIRED' : consent.status}
                     </span>

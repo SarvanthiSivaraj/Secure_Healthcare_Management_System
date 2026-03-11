@@ -137,7 +137,7 @@ class LabOrderModel {
                 SELECT 
                     lo.*,
                     u.first_name || ' ' || u.last_name as ordered_by_name,
-                    lr.test_results
+                    lr.results_data
                 FROM lab_orders lo
                 LEFT JOIN users u ON lo.ordered_by = u.id
                 LEFT JOIN lab_results lr ON lo.lab_result_id = lr.id
