@@ -26,7 +26,7 @@ const getImagingIcon = (type) => {
 function ImagingQueue() {
     const navigate = useNavigate();
     const [searchParams] = useSearchParams();
-    const { user, logout } = useContext(AuthContext);
+    const { logout } = useContext(AuthContext);
 
     const [orders, setOrders] = useState([]);
     const [loading, setLoading] = useState(true);

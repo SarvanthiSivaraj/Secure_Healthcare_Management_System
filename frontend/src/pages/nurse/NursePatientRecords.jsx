@@ -8,7 +8,7 @@ import '../../pages/patient/Dashboard.css';
 const NursePatientRecords = () => {
     const { id: patientId } = useParams();
     const navigate = useNavigate();
-    const { logout } = useAuth();
+    useAuth();
 
     const [records, setRecords] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -18,6 +18,7 @@ const NursePatientRecords = () => {
 
     useEffect(() => {
         fetchRecords();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [patientId]);
 
     const fetchRecords = async () => {

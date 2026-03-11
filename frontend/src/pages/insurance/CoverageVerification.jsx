@@ -2,7 +2,6 @@ import React, { useContext, useState } from 'react';
 import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { AuthContext } from '../../context/AuthContext';
 import insuranceApi from '../../api/insuranceApi';
-import ThemeToggle from '../../components/common/ThemeToggle';
 import '../../pages/patient/Dashboard.css';
 
 const navItems = [

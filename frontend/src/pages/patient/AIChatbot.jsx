@@ -7,7 +7,7 @@ import './AIChatbot.css';
 
 function AIChatbot() {
     const navigate = useNavigate();
-    const { user } = useContext(AuthContext);
+    useContext(AuthContext);
     const [messages, setMessages] = useState([]);
     const [input, setInput] = useState('');
     const [sessionId, setSessionId] = useState(null);

@@ -1,5 +1,4 @@
 import React from 'react';
-import Button from '../common/Button';
 import './ConsentCard.css';
 function ConsentCard({ consent, onRevoke, onEdit }) {
     const formatDate = (dateString) => {

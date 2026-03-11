@@ -18,7 +18,7 @@ function Visits() {
     const [showCheckIn, setShowCheckIn] = useState(false);
     const [successMessage, setSuccessMessage] = useState('');
     const [showDoctorPopup, setShowDoctorPopup] = useState(false);
-    const [doctors, setDoctors] = useState([]);
+    const [doctors] = useState([]);
 
     const handleScheduleVisit = () => {
         navigate('/patient/visits/schedule');
