@@ -11,8 +11,7 @@ function DataExplorer() {
     const [loading, setLoading] = useState(true);
     const [activeTab, setActiveTab] = useState('symptoms'); // 'symptoms' or 'treatments'
 
-    const userStr = localStorage.getItem('user');
-    const user = userStr ? JSON.parse(userStr) : null;
+
 
     useEffect(() => {
         const fetchExplorerData = async () => {
