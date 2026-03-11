@@ -138,7 +138,7 @@ describe('Security Integration Tests', () => {
         const protectedRoutes = [
             { method: 'get', path: '/api/auth/verify' },
             { method: 'get', path: '/api/consent/active' },
-            { method: 'get', path: '/api/visits/my' },
+            { method: 'get', path: '/api/visits/my-visits' },
             { method: 'post', path: '/api/emr/medical-records' },
             { method: 'post', path: '/api/consent/grant' },
             { method: 'post', path: '/api/auth/logout' },

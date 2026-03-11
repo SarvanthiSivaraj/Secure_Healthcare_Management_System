@@ -108,10 +108,10 @@ describe('Visit Integration Tests', () => {
 
     // ── Get My Visits (Patient) ────────────────────────────────────────────────
 
-    describe('GET /api/visits/my', () => {
+    describe('GET /api/visits/my-visits', () => {
         it('patient can view their own visits', async () => {
             const res = await request(app)
-                .get('/api/visits/my')
+                .get('/api/visits/my-visits')
                 .set(authHeader(patientToken));
 
             expect(res.status).toBe(200);
