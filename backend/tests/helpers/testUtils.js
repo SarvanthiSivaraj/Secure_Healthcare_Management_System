@@ -70,7 +70,6 @@ async function truncateAll() {
             prescriptions,
             diagnoses,
             medical_records,
-            lab_orders,
             imaging_orders,
             visit_staff_assignments,
             visits,
