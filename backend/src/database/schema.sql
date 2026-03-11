@@ -127,6 +127,8 @@ CREATE TABLE IF NOT EXISTS patient_profiles (
     state VARCHAR(100),
     country VARCHAR(100),
     postal_code VARCHAR(20),
+    insurance_provider VARCHAR(255),
+    insurance_policy_number VARCHAR(100),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );

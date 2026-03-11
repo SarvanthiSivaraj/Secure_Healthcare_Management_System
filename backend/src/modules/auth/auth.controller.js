@@ -84,17 +84,32 @@ const registerPatient = async (req, res) => {
             });
         }
 
-        // Check if user already exists
-        const existingUser = await findUserByEmailOrPhone(email || phone);
-        if (existingUser && existingUser.status !== 'pending') {
-            return res.status(HTTP_STATUS.CONFLICT).json({
-                success: false,
-                message: ERROR_MESSAGES.USER_ALREADY_EXISTS,
-            });
+        // Check if user already exists (email)
+        if (email) {
+            const existingUserByEmail = await findUserByEmailOrPhone(email);
+            if (existingUserByEmail && existingUserByEmail.status !== 'pending') {
+                return res.status(HTTP_STATUS.CONFLICT).json({
+                    success: false,
+                    message: 'User with this email already exists',
+                });
+            }
         }
 
-        const isReRegistering = !!existingUser;
-        const userId = existingUser ? existingUser.id : null;
+        // Check if user already exists (phone)
+        if (phone) {
+            const existingUserByPhone = await findUserByEmailOrPhone(phone);
+            if (existingUserByPhone && existingUserByPhone.status !== 'pending') {
+                return res.status(HTTP_STATUS.CONFLICT).json({
+                    success: false,
+                    message: 'User with this phone number already exists',
+                });
+            }
+        }
+
+        // Determine if we are re-registering a pending user
+        const existingUser = await findUserByEmailOrPhone(email || phone);
+        const isReRegistering = existingUser && existingUser.status === 'pending';
+        const userId = isReRegistering ? existingUser.id : null;
 
         // Verify Aadhaar with Mock Service
         if (govtId) { // check if govtId is provided first, though usually required for patients
@@ -170,7 +185,6 @@ const registerPatient = async (req, res) => {
             // Create or Update patient profile
             let profile;
             if (isReRegistering) {
-
                 // Generate a health ID if they somehow don't have one, but they should if they were partially registered
                 // For safety, we'll use a new one if it's missing
                 const existingProfileQuery = 'SELECT unique_health_id FROM patient_profiles WHERE user_id = $1';
@@ -285,7 +299,26 @@ const registerPatient = async (req, res) => {
             },
         });
     } catch (error) {
-        logger.error('Patient registration failed:', error);
+        logger.error('Patient registration failed:', {
+            message: error.message,
+            code: error.code,
+            detail: error.detail,
+            stack: error.stack
+        });
+
+        // Handle database unique constraint violations
+        if (error.code === '23505') {
+            let message = 'User with this information already exists';
+            if (error.constraint === 'users_email_key') message = 'User with this email already exists';
+            if (error.constraint === 'users_phone_key') message = 'User with this phone number already exists';
+            if (error.constraint === 'patient_profiles_govt_id_hash_key') message = 'Patient with this Government ID already exists';
+
+            return res.status(HTTP_STATUS.CONFLICT).json({
+                success: false,
+                message,
+            });
+        }
+
         res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
             success: false,
             message: ERROR_MESSAGES.INTERNAL_ERROR,

@@ -95,6 +95,17 @@ app.use(`${API_PREFIX}/compliance`, complianceRoutes);
 app.use(`${API_PREFIX}/lab`, labRoutes);
 
 // Mount routes (Legacy /api support for Frontend)
+// Temporary debug routes
+app.get('/debug-columns', async (req, res) => {
+    try {
+        const { query } = require('./config/db');
+        const result = await query("SELECT column_name FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'patient_profiles' ORDER BY ordinal_position");
+        res.json({ columns: result.rows.map(x => x.column_name) });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/consent', consentRoutes);
